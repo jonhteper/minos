@@ -1,0 +1,11 @@
+# Editor
+.idea
+.vscode
+
+# Cargo target
+/target
+
+#cargo build
+/Cargo.lock
+
+

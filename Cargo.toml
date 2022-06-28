@@ -1,0 +1,16 @@
+[package]
+name = "minos"
+version = "0.1.0"
+edition = "2021"
+authors = ["johnteper <git@johnteper.me>"]
+description = "Authorization library"
+homepage = "https://github.com/jonhteper/minos"
+license = "MIT"
+repository = "https://github.com/jonhteper/minos"
+
+[profile.release]
+lto = true
+
+[dependencies]
+heimdall_errors = "0.1.0"
+chrono = "0.4.19"
