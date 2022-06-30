@@ -198,14 +198,14 @@ pub struct ResourceType {
 ///
 #[derive(PartialEq, Debug, Clone, PartialOrd)]
 pub struct Policy {
-    /// authorization duration, in seconds (max 65535 ~ 1092 min ~ 18 hours)
+    /// authorization duration, in seconds (recommended max duration: 65535 ~ 1092 min ~ 18 hours)
     pub(crate) duration: u16,
 
     /// Use only for objects with real owner. If you want set only Permission::Create,
     /// use other authorization policy.
     pub(crate) by_owner: bool,
 
-    /// Restricts the authorization to only users with specific roles
+    /// Restricts the authorization to only users with specific groups
     pub(crate) groups_ids: Option<Vec<GroupId>>,
 
     /// permissions granted
