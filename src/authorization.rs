@@ -1,10 +1,12 @@
 use crate::errors::{ErrorKind, MinosError};
-use crate::user::UserAttributes;
-use crate::utils::datetime_now;
-use chrono::{Duration, NaiveDateTime};
-
 use crate::group::GroupId;
-use crate::Status;
+use crate::resources::{Owner, ResourceType};
+use crate::user::UserAttributes;
+use crate::utils::{datetime_now, string_as_datetime};
+use crate::{utils, Status};
+use chrono::{Duration, NaiveDateTime};
+use jsonwebtoken::{EncodingKey, Header};
+use serde::Serialize;
 
 #[derive(Debug, PartialEq, Copy, Clone, PartialOrd)]
 /// Users permissions, defines what a user is allowed to do.
@@ -104,6 +106,77 @@ impl Permission {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct AuthorizationClaims {
+    pub(crate) permissions: Vec<String>,
+    pub(crate) userId: String,
+    pub(crate) resourceId: String,
+    pub(crate) resourceType: String,
+    pub(crate) expiration: String,
+}
+
+impl AuthorizationClaims {
+    pub fn new(
+        permissions: Vec<String>,
+        user_id: String,
+        resource_id: String,
+        resource_type: String,
+        expiration: String,
+    ) -> Self {
+        Self {
+            permissions,
+            userId: user_id,
+            resourceId: resource_id,
+            resourceType: resource_type,
+            expiration,
+        }
+    }
+    pub fn permissions(&self) -> &Vec<String> {
+        &self.permissions
+    }
+    pub fn user_id(&self) -> &str {
+        &self.userId
+    }
+    pub fn resource_id(&self) -> &str {
+        &self.resourceId
+    }
+    pub fn resource_type(&self) -> &str {
+        &self.resourceType
+    }
+    pub fn expiration(&self) -> &str {
+        &self.expiration
+    }
+
+    fn string_permissions_to_vec_permissions(&self) -> Vec<Permission> {
+        self.permissions
+            .clone()
+            .into_iter()
+            .map(|p| Permission::from(p.as_str()))
+            .collect()
+    }
+
+    pub fn as_authorization(
+        &self,
+        resource_type: &ResourceType,
+    ) -> Result<Authorization, MinosError> {
+        if &self.resourceType != &resource_type.label {
+            return Err(MinosError::new(
+                ErrorKind::Io,
+                "The resource types not match",
+            ));
+        }
+
+        Ok(Authorization {
+            permissions: self.string_permissions_to_vec_permissions(),
+            user_id: self.userId.clone(),
+            resource_id: self.resourceId.clone(),
+            resource_type: resource_type.clone(),
+            expiration: string_as_datetime(&self.expiration)?,
+        })
+    }
+}
+
 /// Users authorizations
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub struct Authorization {
@@ -115,8 +188,6 @@ pub struct Authorization {
 }
 
 impl Authorization {
-    // TODO: check if constructor is necessary
-
     pub fn permissions(&self) -> &Vec<Permission> {
         &self.permissions
     }
@@ -169,24 +240,29 @@ impl Authorization {
 
         Ok(())
     }
-}
 
-#[derive(Debug, PartialEq, Clone, PartialOrd)]
-pub enum Owner {
-    User(String),
-    Group(String),
-}
+    fn permissions_as_vec_string(&self) -> Vec<String> {
+        self.permissions
+            .clone()
+            .into_iter()
+            .map(|p| p.to_string())
+            .collect()
+    }
 
-pub trait Resource {
-    fn id(&self) -> &str;
-    fn resource_type(&self) -> ResourceType;
-}
+    pub(crate) fn as_claims(&self) -> AuthorizationClaims {
+        AuthorizationClaims {
+            permissions: self.permissions_as_vec_string(),
+            userId: self.user_id.clone(),
+            resourceId: self.resource_id.clone(),
+            resourceType: self.resource_type.label.clone(),
+            expiration: self.expiration.format(utils::DATETIME_FMT).to_string(),
+        }
+    }
 
-#[derive(PartialEq, Debug, Clone, PartialOrd)]
-pub struct ResourceType {
-    pub(crate) label: String,
-    pub(crate) owner: Option<Owner>,
-    pub(crate) policies: Vec<Policy>,
+    pub fn token(&self, header: &Header, key: &EncodingKey) -> Result<String, MinosError> {
+        let claims = &self.as_claims();
+        Ok(jsonwebtoken::encode(header, &claims, key)?)
+    }
 }
 
 /// Defines the access and modification rules for a resource. It has two types of

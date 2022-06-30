@@ -14,3 +14,5 @@ lto = true
 [dependencies]
 heimdall_errors = "0.1.0"
 chrono = "0.4.19"
+jsonwebtoken = "8.1.1"
+serde = { version="1.0.137", features = ["derive"] }

@@ -2,10 +2,12 @@
 pub mod authorization;
 pub mod errors;
 pub mod group;
-#[cfg(test)]
-mod test;
+pub mod resources;
 pub mod user;
 mod utils;
+
+#[cfg(test)]
+mod test;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Status {

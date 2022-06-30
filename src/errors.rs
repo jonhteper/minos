@@ -1,12 +1,12 @@
 use chrono::format::ParseError;
 use heimdall_errors::implement_error;
 use std::fmt::{Display, Formatter, Result};
-use std::io;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum ErrorKind {
     Io,
     Chrono,
+    JWT,
     Authorization,
 
     /// Auth rules collision
@@ -60,3 +60,4 @@ impl From<&MinosError> for MinosError {
 
 implement_error!(MinosError, std::io::Error, ErrorKind::Io);
 implement_error!(MinosError, ParseError, ErrorKind::Chrono);
+implement_error!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
