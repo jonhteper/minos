@@ -213,7 +213,31 @@ pub struct Policy {
 }
 
 impl Policy {
-    // TODO: constructor and gets
+    pub fn new(
+        duration: u16,
+        by_owner: bool,
+        groups_ids: Option<Vec<GroupId>>,
+        permissions: Vec<Permission>,
+    ) -> Self {
+        Self {
+            duration,
+            by_owner,
+            groups_ids,
+            permissions,
+        }
+    }
+    pub fn duration(&self) -> u16 {
+        self.duration
+    }
+    pub fn by_owner(&self) -> bool {
+        self.by_owner
+    }
+    pub fn groups_ids(&self) -> &Option<Vec<GroupId>> {
+        &self.groups_ids
+    }
+    pub fn permissions(&self) -> &Vec<Permission> {
+        &self.permissions
+    }
 }
 
 pub struct AuthorizationBuilder<'b> {
