@@ -326,18 +326,17 @@ impl<'b> AuthorizationBuilder<'b> {
     }
 
     fn check_groups(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        if let Some(ids) = &self.policy.groups_ids {
-            let groups = &user.groups;
-            let groups_ids: Vec<&str> = groups.into_iter().map(|g| g.as_str()).collect();
-
-            for id in ids {
-                if !groups_ids.contains(&id.as_str()) {
-                    return Err(MinosError::new(
-                        ErrorKind::Authorization,
-                        "The user is not in the correct group",
-                    ));
+        if let Some(possible_ids) = &self.policy.groups_ids {
+            for id in possible_ids {
+                if user.groups.contains(&id) {
+                    return Ok(());
                 }
             }
+
+            return Err(MinosError::new(
+                ErrorKind::Authorization,
+                "The user is not in the correct group",
+            ));
         }
 
         Ok(())
