@@ -1,4 +1,5 @@
 #[cfg(test)]
+use std::time::Instant;
 use crate::authorization::{Authorization, AuthorizationClaims};
 use crate::authorization::{AuthorizationBuilder, Permission, Policy};
 use crate::errors::MinosError;
@@ -87,10 +88,10 @@ fn authorization_by_user_test() {
 }
 
 #[test]
-fn authorization_by_groups() {
+fn authorization_by_group() {
     let message = Message {
         id: "example-message-id".to_string(),
-        owner: Owner::User(regular_user().id.clone()),
+        owner: Owner::User(regular_user().id),
         policies: vec![Policy {
             duration: 200,
             by_owner: false,
@@ -100,9 +101,7 @@ fn authorization_by_groups() {
     };
 
     let reader_user = admin_user();
-
     let policy = &message.policies[0];
-
     let auth = AuthorizationBuilder::new(&policy)
         .build(&message.id, &message.resource_type(), &reader_user)
         .expect("Error building Authorization");
@@ -111,6 +110,32 @@ fn authorization_by_groups() {
         .check(message.id(), &reader_user, &Permission::Read)
         .expect("Error with authorization");
 }
+
+#[test]
+fn unauthorized() {
+    let message = Message {
+        id: "example-message-id".to_string(),
+        owner: Owner::Group(admin_group().id.to_string()),
+        policies: vec![Policy {
+            duration: 30,
+            by_owner: false,
+            groups_ids: Some(vec![admin_group().id]),
+            permissions: Permission::crud(),
+        }],
+    };
+
+    let invalid_user = regular_user();
+    let policy = &message.policies[0];
+    let _ = AuthorizationBuilder::new(&policy)
+        .build(&message.id, &message.resource_type(), &invalid_user)
+        .expect_err("Authorization should not be able to be created");
+    let auth = AuthorizationBuilder::new(&policy)
+        .build(&message.id, &message.resource_type(), &admin_user())
+        .expect("Error building auth");
+    let _ = auth.check(&message.id, &invalid_user, &Permission::Read)
+        .expect_err("The user should not be able to read the resource");
+}
+
 
 #[test]
 fn authorization_as_claims() -> Result<(), MinosError> {
@@ -137,4 +162,32 @@ fn authorization_as_claims() -> Result<(), MinosError> {
     assert_eq!(&generate_claims, &&generated_auth.as_claims());
 
     Ok(())
+}
+
+#[test]
+fn multi_groups() {
+    let bench_instant = Instant::now();
+    let message = Message {
+        id: "example-message-id".to_string(),
+        owner: Owner::Group(admin_group().id.to_string()),
+        policies: vec![Policy {
+            duration: 30,
+            by_owner: false,
+            groups_ids: Some(vec![GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"),GroupId::from("other.group.id"),GroupId::from("2.group.id"), GroupId::from("3.group.id"), admin_group().id]),
+            permissions: Permission::crud(),
+        }],
+    };
+    let reader_user = admin_user();
+    let policy = &message.policies[0];
+
+    let auth = AuthorizationBuilder::new(&policy)
+        .build(&message.id, &message.resource_type(), &reader_user)
+        .expect("Error building auth");
+    let _ = auth.check(&message.id, &reader_user, &Permission::Read)
+        .expect("Error with auth checking");
+
+
+    println!("len: {}", &message.policies[0].groups_ids.as_ref().unwrap().len());
+    println!("Multi-group benchmark: {:.2?}", bench_instant.elapsed());
+
 }
