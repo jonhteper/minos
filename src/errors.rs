@@ -60,4 +60,12 @@ impl From<&MinosError> for MinosError {
 
 implement_error!(MinosError, std::io::Error, ErrorKind::Io);
 implement_error!(MinosError, ParseError, ErrorKind::Chrono);
-implement_error!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
+
+#[cfg(feature = "jwt")]
+mod jwt_feature {
+    use heimdall_errors::implement_error;
+    use jsonwebtoken;
+    use super::{MinosError, ErrorKind};
+
+    implement_error!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
+}

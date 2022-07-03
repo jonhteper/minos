@@ -6,6 +6,9 @@ pub mod resources;
 pub mod user;
 mod utils;
 
+#[cfg(feature = "jwt")]
+pub mod jwt;
+
 #[cfg(test)]
 mod test;
 
