@@ -176,7 +176,7 @@ impl Authorization {
 /// Care must be taken to use the authorization policies correctly, because when building the
 /// Authorization with the AuthorizationBuilder, it will return an error.
 ///
-#[derive(PartialEq, Debug, Clone, PartialOrd)]
+#[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
 pub struct Policy {
     /// authorization duration, in seconds (recommended max duration: 65535 ~ 1092 min ~ 18 hours)
     pub(crate) duration: u16,

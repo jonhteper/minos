@@ -242,6 +242,7 @@ fn multi_groups() {
 }
 
 #[cfg(feature = "jwt")]
+#[cfg(test)]
 mod jwt_test {
     use crate::authorization::{Authorization, Permission};
     use crate::errors::MinosError;
@@ -310,5 +311,58 @@ mod jwt_test {
             .expect("Error obtaining claims ");
 
         assert_eq!(&auth_claims, &decoded_claims)
+    }
+}
+
+#[cfg(feature = "toml_storage")]
+#[cfg(test)]
+mod toml_test {
+    use crate::errors::MinosError;
+    use crate::toml::TomlFile;
+    use std::env;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::PathBuf;
+    use std::time::Instant;
+    use crate::resources::{Owner, ResourceType};
+
+    static FILE_CONTENT: &str = r#"
+            label = "example resource"
+            owner = {user = true, group = false}
+
+            [[policies]]
+            duration = 120
+            by_owner = true
+            permissions = ["create", "read", "update", "delete"]
+
+            [[policies]]
+            duration = 300
+            by_owner = false
+            groups_ids = ["example-group-id-1", "example-group-id-2"]
+            permissions = ["read"]
+        "#;
+
+    fn create_temp_file() -> Result<PathBuf, MinosError> {
+        let mut path = env::temp_dir();
+        path.push("example.resource.toml");
+        let mut file = File::create(&path)?;
+
+        let _ = file.write_all(&FILE_CONTENT.as_bytes())?;
+
+        Ok(path)
+    }
+
+    #[test]
+    fn resource_type_by_file() -> Result<(), MinosError> {
+        let bench_instant = Instant::now();
+        let path = create_temp_file()?;
+        let toml_file = TomlFile::try_from(path)?;
+        let mut resource_type = ResourceType::try_from(toml_file)?;
+        resource_type.owner = Some(Owner::User("user-id".to_string()));
+
+        println!("{:#?}", resource_type);
+        println!("resource type by file benchmark: {:?}", bench_instant.elapsed());
+
+        Ok(())
     }
 }

@@ -6,12 +6,18 @@ pub enum Owner {
     Group(String),
 }
 
+impl Default for Owner {
+    fn default() -> Self {
+        Self::User("".to_string())
+    }
+}
+
 pub trait Resource {
     fn id(&self) -> &str;
     fn resource_type(&self) -> ResourceType;
 }
 
-#[derive(PartialEq, Debug, Clone, PartialOrd)]
+#[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
 pub struct ResourceType {
     pub(crate) label: String,
     pub(crate) owner: Option<Owner>,

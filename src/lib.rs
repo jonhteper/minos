@@ -9,6 +9,9 @@ mod utils;
 #[cfg(feature = "jwt")]
 pub mod jwt;
 
+#[cfg(feature = "toml_storage")]
+mod toml;
+
 #[cfg(test)]
 mod test;
 

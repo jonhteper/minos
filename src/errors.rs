@@ -9,6 +9,12 @@ pub enum ErrorKind {
     JWT,
     Authorization,
 
+    #[cfg(feature = "toml_storage")]
+    BadExtension,
+
+    #[cfg(feature = "toml_storage")]
+    Toml,
+
     /// Auth rules collision
     IncompatibleAuthPolicy,
 }
@@ -63,9 +69,18 @@ implement_error!(MinosError, ParseError, ErrorKind::Chrono);
 
 #[cfg(feature = "jwt")]
 mod jwt_feature {
+    use super::{ErrorKind, MinosError};
     use heimdall_errors::implement_error;
     use jsonwebtoken;
-    use super::{MinosError, ErrorKind};
 
     implement_error!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
+}
+
+#[cfg(feature = "toml_storage")]
+mod toml_feature {
+    use super::{ErrorKind, MinosError};
+    use heimdall_errors::implement_error;
+    use toml::de::Error;
+
+    implement_error!(MinosError, Error, ErrorKind::Toml);
 }
