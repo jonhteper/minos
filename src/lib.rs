@@ -1,4 +1,4 @@
-///! Authorization library
+/// Authorization library
 pub mod authorization;
 pub mod errors;
 pub mod group;
