@@ -66,7 +66,7 @@ impl AuthorizationClaims {
     ) -> Result<Authorization, MinosError> {
         if &self.resourceType != &resource_type.label {
             return Err(MinosError::new(
-                ErrorKind::Io,
+                ErrorKind::Authorization,
                 "The resource types not match",
             ));
         }
