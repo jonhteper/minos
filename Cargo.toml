@@ -12,7 +12,7 @@ repository = "https://github.com/jonhteper/minos"
 lto = true
 
 [dependencies]
-heimdall_errors = "0.1.0"
+heimdall_errors = "0.2.0"
 chrono = "0.4.19"
 jsonwebtoken = { version = "8.1.1", optional = true}
 serde = { version="1.0.137", features = ["derive"], optional = true }

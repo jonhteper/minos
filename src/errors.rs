@@ -1,12 +1,13 @@
 use chrono::format::ParseError;
-use heimdall_errors::implement_error;
+use heimdall_errors::{implement_error, implement_error_with_kind};
 use std::fmt::{Display, Formatter, Result};
+use std::io;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ErrorKind {
-    Io,
+    Io(io::ErrorKind),
     Chrono,
-    JWT,
+    JWT(jsonwebtoken::errors::ErrorKind),
     Authorization,
 
     #[cfg(feature = "toml_storage")]
@@ -40,7 +41,7 @@ impl MinosError {
     }
 
     pub fn kind(&self) -> ErrorKind {
-        self.kind
+        self.kind.clone()
     }
 }
 
@@ -58,22 +59,22 @@ impl Display for MinosError {
 impl From<&MinosError> for MinosError {
     fn from(error: &MinosError) -> Self {
         MinosError {
-            kind: error.kind,
+            kind: error.kind.clone(),
             message: error.to_string(),
         }
     }
 }
 
-implement_error!(MinosError, std::io::Error, ErrorKind::Io);
+implement_error_with_kind!(MinosError, std::io::Error, ErrorKind::Io);
 implement_error!(MinosError, ParseError, ErrorKind::Chrono);
 
 #[cfg(feature = "jwt")]
 mod jwt_feature {
     use super::{ErrorKind, MinosError};
-    use heimdall_errors::implement_error;
+    use heimdall_errors::implement_error_with_kind;
     use jsonwebtoken;
 
-    implement_error!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
+    implement_error_with_kind!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
 }
 
 #[cfg(feature = "toml_storage")]
