@@ -3,12 +3,16 @@ use heimdall_errors::{implement_error, implement_error_with_kind};
 use std::fmt::{Display, Formatter, Result};
 use std::io;
 
+#[cfg(feature = "jwt")]
+use jsonwebtoken;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorKind {
     Io(io::ErrorKind),
     Chrono,
+
+    #[cfg(feature = "jwt")]
     JWT(jsonwebtoken::errors::ErrorKind),
-    Authorization,
 
     #[cfg(feature = "toml_storage")]
     BadExtension,
@@ -18,6 +22,7 @@ pub enum ErrorKind {
 
     /// Auth rules collision
     IncompatibleAuthPolicy,
+    Authorization,
 }
 
 impl ErrorKind {
