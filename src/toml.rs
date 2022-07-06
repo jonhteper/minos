@@ -56,10 +56,8 @@ struct StoredOwner {
 }
 
 impl StoredOwner {
-
-    /// Warning: if id attribute not exists, the default value is an empty String
+    /// Warning: if id attribute not exists, the default value will be an empty String
     fn maybe_owner(&self) -> Option<Owner> {
-
         let id = match &self.id {
             None => "".to_string(),
             Some(id) => id.clone(),

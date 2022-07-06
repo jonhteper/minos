@@ -318,13 +318,13 @@ mod jwt_test {
 #[cfg(test)]
 mod toml_test {
     use crate::errors::MinosError;
+    use crate::resources::{Owner, ResourceType};
     use crate::toml::TomlFile;
     use std::env;
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
     use std::time::Instant;
-    use crate::resources::{Owner, ResourceType};
 
     static FILE_CONTENT: &str = r#"
             label = "example resource"
@@ -361,7 +361,10 @@ mod toml_test {
         resource_type.owner = Some(Owner::User("user-id".to_string()));
 
         println!("{:#?}", resource_type);
-        println!("resource type by file benchmark: {:?}", bench_instant.elapsed());
+        println!(
+            "resource type by file benchmark: {:?}",
+            bench_instant.elapsed()
+        );
 
         Ok(())
     }
