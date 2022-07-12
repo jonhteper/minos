@@ -1,12 +1,15 @@
 [package]
 name = "minos"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["johnteper <git@johnteper.me>"]
 description = "Authorization library"
 homepage = "https://github.com/jonhteper/minos"
 license = "MIT"
 repository = "https://github.com/jonhteper/minos"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [profile.release]
 lto = true

@@ -36,5 +36,17 @@ pub struct Group {
 }
 
 impl Group {
-    // TODO: implementations
+    pub fn new(id: GroupId, alias: String, status: Status) -> Self {
+        Self { id, alias, status }
+    }
+
+    pub fn id(&self) -> &GroupId {
+        &self.id
+    }
+    pub fn alias(&self) -> &str {
+        &self.alias
+    }
+    pub fn status(&self) -> Status {
+        self.status
+    }
 }
