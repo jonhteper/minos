@@ -22,5 +22,7 @@ serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
 
 [features]
+all = ["jwt", "toml_storage", "custom_permission"]
 jwt = ["jsonwebtoken", "serde"]
 toml_storage = ["serde", "toml"]
+custom_permission = []

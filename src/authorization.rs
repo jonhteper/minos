@@ -6,10 +6,10 @@ use crate::utils::datetime_now;
 use crate::Status;
 use chrono::{Duration, NaiveDateTime};
 
-#[derive(Debug, PartialEq, Copy, Clone, PartialOrd)]
+#[derive(Debug, PartialEq, Clone, PartialOrd)]
 /// Users permissions, defines what a user is allowed to do.
 pub enum Permission {
-    /// The user can create an object
+    /// The user can create the source
     Create,
     /// The user can read the source
     Read,
@@ -17,8 +17,13 @@ pub enum Permission {
     Update,
     /// The user can delete the source
     Delete,
+
+    /// The user can perform a specific action
+    #[cfg(feature = "custom_permission")]
+    Custom(String),
 }
 
+#[cfg(not(feature = "custom_permission"))]
 impl From<u8> for Permission {
     fn from(n: u8) -> Self {
         match n {
@@ -36,6 +41,7 @@ impl ToString for Permission {
     }
 }
 
+#[cfg(not(feature = "custom_permission"))]
 impl From<&str> for Permission {
     fn from(str: &str) -> Self {
         if str == Permission::Create.to_string() {
@@ -50,9 +56,27 @@ impl From<&str> for Permission {
     }
 }
 
+#[cfg(feature = "custom_permission")]
+impl From<&str> for Permission {
+    fn from(str: &str) -> Self {
+        if str == Permission::Create.to_string() {
+            Permission::Create
+        } else if str == Permission::Update.to_string() {
+            Permission::Update
+        } else if str == Permission::Delete.to_string() {
+            Permission::Delete
+        } else if str == Permission::Read.to_string() {
+            Permission::Read
+        } else {
+            Permission::Custom(str.to_string())
+        }
+    }
+}
+
 impl Permission {
+    #[cfg(not(feature = "custom_permission"))]
     pub fn as_u8(&self) -> u8 {
-        *self as u8
+        self.clone() as u8
     }
 
     /// Return simple explanation for permission required
@@ -309,7 +333,7 @@ impl<'b> AuthorizationBuilder<'b> {
     ) -> Result<Authorization, MinosError> {
         if user.status != Status::Active {
             return Err(MinosError::new(
-                ErrorKind::Authorization,
+                ErrorKind::InactiveUser,
                 "The user is not active",
             ));
         }
