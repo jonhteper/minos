@@ -23,3 +23,22 @@ pub struct ResourceType {
     pub(crate) owner: Option<Owner>,
     pub(crate) policies: Vec<Policy>,
 }
+
+impl ResourceType {
+    pub fn new(label: String, owner: Option<Owner>, policies: Vec<Policy>) -> Self {
+        Self {
+            label,
+            owner,
+            policies,
+        }
+    }
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+    pub fn owner(&self) -> &Option<Owner> {
+        &self.owner
+    }
+    pub fn policies(&self) -> &Vec<Policy> {
+        &self.policies
+    }
+}
