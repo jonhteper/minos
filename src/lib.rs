@@ -4,7 +4,7 @@ pub mod errors;
 pub mod group;
 pub mod resources;
 pub mod user;
-mod utils;
+pub mod utils;
 
 #[cfg(feature = "jwt")]
 pub mod jwt;
