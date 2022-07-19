@@ -1,6 +1,5 @@
 use crate::authorization::{Authorization, Permission};
-use crate::errors::{ErrorKind, MinosError};
-use crate::resources::ResourceType;
+use crate::errors::MinosError;
 use crate::utils;
 use crate::utils::string_as_datetime;
 use chrono::NaiveDateTime;
@@ -36,18 +35,23 @@ impl AuthorizationClaims {
             exp: expiration.timestamp(),
         }
     }
+
     pub fn permissions(&self) -> &Vec<String> {
         &self.permissions
     }
+
     pub fn user_id(&self) -> &str {
         &self.userId
     }
+
     pub fn resource_id(&self) -> &str {
         &self.resourceId
     }
+
     pub fn resource_type(&self) -> &str {
         &self.resourceType
     }
+
     pub fn expiration(&self) -> &str {
         &self.expiration
     }
@@ -60,22 +64,12 @@ impl AuthorizationClaims {
             .collect()
     }
 
-    pub fn as_authorization(
-        &self,
-        resource_type: &ResourceType,
-    ) -> Result<Authorization, MinosError> {
-        if &self.resourceType != &resource_type.label {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The resource types not match",
-            ));
-        }
-
+    pub fn as_authorization(&self) -> Result<Authorization, MinosError> {
         Ok(Authorization {
             permissions: self.string_permissions_to_vec_permissions(),
             user_id: self.userId.clone(),
             resource_id: self.resourceId.clone(),
-            resource_type: resource_type.clone(),
+            resource_type: self.resourceType.clone(),
             expiration: string_as_datetime(&self.expiration)?,
         })
     }
@@ -95,7 +89,7 @@ impl From<Authorization> for AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
             userId: auth.user_id,
             resourceId: auth.resource_id,
-            resourceType: auth.resource_type.label,
+            resourceType: auth.resource_type,
             expiration: auth.expiration.format(utils::DATETIME_FMT).to_string(),
             exp: auth.expiration.timestamp(),
         }
@@ -106,9 +100,9 @@ impl From<&Authorization> for AuthorizationClaims {
     fn from(auth: &Authorization) -> Self {
         AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
-            userId: auth.user_id.clone(),
-            resourceId: auth.resource_id.clone(),
-            resourceType: auth.resource_type.label.clone(),
+            userId: auth.user_id().to_string(),
+            resourceId: auth.resource_id().to_string(),
+            resourceType: auth.resource_type().to_string(),
             expiration: auth.expiration.format(utils::DATETIME_FMT).to_string(),
             exp: auth.expiration.timestamp(),
         }
