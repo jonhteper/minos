@@ -110,7 +110,7 @@ pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
     pub(crate) user_id: String,
     pub(crate) resource_id: String,
-    pub(crate) resource_type: ResourceType,
+    pub(crate) resource_type: String,
     pub(crate) expiration: NaiveDateTime,
 }
 
@@ -118,13 +118,16 @@ impl Authorization {
     pub fn permissions(&self) -> &Vec<Permission> {
         &self.permissions
     }
+
     pub fn user_id(&self) -> &str {
         &self.user_id
     }
+
     pub fn resource_id(&self) -> &str {
         &self.resource_id
     }
-    pub fn resource_type(&self) -> &ResourceType {
+
+    pub fn resource_type(&self) -> &str {
         &self.resource_type
     }
     pub fn expiration(&self) -> NaiveDateTime {
@@ -221,16 +224,16 @@ impl Policy {
 }
 
 pub struct AuthorizationBuilder<'b> {
-    policy: &'b Policy,
+    resource_type: &'b ResourceType,
 }
 
 impl<'b> AuthorizationBuilder<'b> {
-    pub fn new(policy: &'b Policy) -> Self {
-        Self { policy }
+    pub fn new(resource_type: &'b ResourceType) -> Self {
+        Self { resource_type }
     }
 
-    fn check_groups(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        if let Some(possible_ids) = &self.policy.groups_ids {
+    fn check_groups(&self, user: &UserAttributes, policy: &Policy) -> Result<(), MinosError> {
+        if let Some(possible_ids) = &policy.groups_ids {
             for id in possible_ids {
                 if user.groups.contains(&id) {
                     return Ok(());
@@ -246,7 +249,7 @@ impl<'b> AuthorizationBuilder<'b> {
         Ok(())
     }
 
-    fn same_group_check(&self, group_id: GroupId, user: &UserAttributes) -> Result<(), MinosError> {
+    fn same_group_check(group_id: GroupId, user: &UserAttributes) -> Result<(), MinosError> {
         if !&user.groups.contains(&group_id) {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
@@ -257,7 +260,7 @@ impl<'b> AuthorizationBuilder<'b> {
         Ok(())
     }
 
-    fn same_user_check(&self, user_id: &str, user: &UserAttributes) -> Result<(), MinosError> {
+    fn same_user_check(user_id: &str, user: &UserAttributes) -> Result<(), MinosError> {
         if user_id != &user.id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
@@ -267,11 +270,41 @@ impl<'b> AuthorizationBuilder<'b> {
         Ok(())
     }
 
-    /// Create a Authorization based in Policy and User
-    pub fn build(
+    fn by_owner_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
+        match &self.resource_type.owner {
+            None => {
+                return Err(MinosError::new(
+                    ErrorKind::IncompatibleAuthPolicy,
+                    "The resource haven't an owner",
+                ));
+            }
+            Some(owner) => match owner {
+                Owner::User(id) => Self::same_user_check(id, &user)?,
+                Owner::Group(id) => Self::same_group_check(GroupId::from(id.as_str()), &user)?,
+            },
+        }
+
+        Ok(())
+    }
+
+    /// Create an Authorization based in Policy, resource id, and User. This function unlike,
+    /// [`build`], checks if the policy is malformed.
+    ///
+    /// # Errors
+    /// This function will return an error in three cases:
+    /// * [`InactiveUser`]: The user is not active.
+    /// * [`IncompatibleAuthPolicy`]: The policy not corresponds to resource type or the attribute
+    ///   `by_owner` is true, but the resource not have an owner.
+    /// * [`Authorization`]: The user not have any permissions available.
+    ///
+    /// [`build`]: AuthorizationBuilder::build
+    /// [`InactiveUser`]: ErrorKind::InactiveUser
+    /// [`IncompatibleAuthPolicy`]: ErrorKind::IncompatibleAuthPolicy
+    /// [`Authorization`]: ErrorKind::Authorization
+    pub fn build_by_policy(
         &self,
+        policy: &Policy,
         resource_id: &str,
-        resource_type: &ResourceType,
         user: &UserAttributes,
     ) -> Result<Authorization, MinosError> {
         if user.status != Status::Active {
@@ -281,29 +314,73 @@ impl<'b> AuthorizationBuilder<'b> {
             ));
         }
 
-        if self.policy.by_owner {
-            match &resource_type.owner {
-                None => {
-                    return Err(MinosError::new(
-                        ErrorKind::IncompatibleAuthPolicy,
-                        "The resource haven't an owner",
-                    ));
-                }
-                Some(owner) => match owner {
-                    Owner::User(id) => self.same_user_check(id, &user)?,
-                    Owner::Group(id) => self.same_group_check(GroupId::from(id.as_str()), &user)?,
-                },
-            }
+        if !&self.resource_type.policies.contains(&policy) {
+            return Err(MinosError::new(
+                ErrorKind::IncompatibleAuthPolicy,
+                "The policy not corresponds to resource type",
+            ));
+        }
+
+        if policy.by_owner {
+            let _ = self.by_owner_check(&user)?;
         } else {
-            let _ = self.check_groups(&user)?;
+            let _ = self.check_groups(&user, &policy)?;
         }
 
         Ok(Authorization {
-            permissions: self.policy.permissions.clone(),
+            permissions: policy.permissions.clone(),
             user_id: user.id.clone(),
             resource_id: resource_id.to_string(),
-            resource_type: resource_type.clone(),
-            expiration: datetime_now() + Duration::seconds(60 * 5),
+            resource_type: self.resource_type.label.clone(),
+            expiration: datetime_now() + Duration::seconds(policy.duration.clone() as i64),
+        })
+    }
+
+    /// Create an Authorization based in resource id and User. Check all policies and assign all
+    ///  permissions available to the user, but assign the shortest duration found.
+    ///
+    /// # Errors
+    /// This function will return an error only in two cases:
+    /// * [`InactiveUser`]: The user is not active.
+    /// * [`Authorization`]: The user not have any permissions available.
+    ///
+    /// [`InactiveUser`]: ErrorKind::InactiveUser
+    /// [`Authorization`]: ErrorKind::Authorization
+    pub fn build(
+        &self,
+        resource_id: &str,
+        user: &UserAttributes,
+    ) -> Result<Authorization, MinosError> {
+        if user.status != Status::Active {
+            return Err(MinosError::new(
+                ErrorKind::Authorization,
+                "The user is not active",
+            ));
+        }
+
+        let mut permissions = vec![];
+        let mut durations = vec![];
+        for policy in &self.resource_type.policies {
+            match self.build_by_policy(&policy, &resource_id, &user) {
+                Ok(mut auth) => {
+                    permissions.append(&mut auth.permissions);
+                    durations.push(&policy.duration);
+                }
+                Err(_) => continue,
+            }
+        }
+
+        durations.sort();
+        let seconds = **durations
+            .get(0)
+            .ok_or(MinosError::new(ErrorKind::Authorization, "Not authorized"))?;
+
+        Ok(Authorization {
+            permissions: permissions,
+            user_id: user.id.clone(),
+            resource_id: resource_id.to_string(),
+            resource_type: self.resource_type.label.clone(),
+            expiration: datetime_now() + Duration::seconds(seconds as i64),
         })
     }
 }
