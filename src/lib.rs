@@ -10,7 +10,7 @@ pub mod utils;
 pub mod jwt;
 
 #[cfg(feature = "toml_storage")]
-mod toml;
+pub mod toml;
 
 #[cfg(test)]
 mod test;
