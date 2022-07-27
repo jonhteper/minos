@@ -1,6 +1,6 @@
 [package]
 name = "minos"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 authors = ["johnteper <git@johnteper.me>"]
 description = "Authorization library"
@@ -11,9 +11,6 @@ repository = "https://github.com/jonhteper/minos"
 [package.metadata.docs.rs]
 all-features = true
 
-[profile.release]
-lto = true
-
 [dependencies]
 heimdall_errors = "0.2.0"
 chrono = "0.4.19"
@@ -22,7 +19,7 @@ serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
 
 [features]
-all = ["jwt", "toml_storage", "custom_permission"]
+full = ["jwt", "toml_storage", "custom_permission"]
 jwt = ["jsonwebtoken", "serde"]
 toml_storage = ["serde", "toml"]
 custom_permission = []
