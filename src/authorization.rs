@@ -158,12 +158,7 @@ impl Authorization {
         self.expiration
     }
 
-    pub fn check(
-        &self,
-        resource_id: &str,
-        user: &UserAttributes,
-        required_permission: &Permission,
-    ) -> Result<(), MinosError> {
+    fn basic_check(&self, resource_id: &str, user: &UserAttributes) -> Result<(), MinosError> {
         if &self.resource_id != resource_id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
@@ -185,11 +180,42 @@ impl Authorization {
             ));
         }
 
+        Ok(())
+    }
+
+    pub fn check(
+        &self,
+        resource_id: &str,
+        user: &UserAttributes,
+        required_permission: &Permission,
+    ) -> Result<(), MinosError> {
+        let _ = self.basic_check(resource_id, user)?;
+
         if !&self.permissions.contains(&required_permission) {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
                 &required_permission.required_msg(),
             ));
+        }
+
+        Ok(())
+    }
+
+    pub fn multi_permissions_check(
+        &self,
+        resource_id: &str,
+        user: &UserAttributes,
+        required_permissions: &Vec<Permission>,
+    ) -> Result<(), MinosError> {
+        let _ = self.basic_check(resource_id, user)?;
+
+        for permission in required_permissions {
+            if !&self.permissions.contains(permission) {
+                return Err(MinosError::new(
+                    ErrorKind::Authorization,
+                    &permission.required_msg(),
+                ));
+            }
         }
 
         Ok(())
