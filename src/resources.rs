@@ -13,8 +13,9 @@ impl Default for Owner {
 }
 
 pub trait Resource {
+    type Error;
     fn id(&self) -> String;
-    fn resource_type(&self) -> ResourceType;
+    fn resource_type(&self) -> Result<ResourceType, Self::Error>;
 }
 
 #[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
