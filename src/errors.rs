@@ -87,7 +87,9 @@ mod jwt_feature {
 mod toml_feature {
     use super::{ErrorKind, MinosError};
     use heimdall_errors::implement_error;
+    use toml;
     use toml::de::Error;
 
     implement_error!(MinosError, Error, ErrorKind::Toml);
+    implement_error!(MinosError, toml::ser::Error, ErrorKind::Toml);
 }
