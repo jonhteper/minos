@@ -13,7 +13,7 @@ impl Default for Owner {
 }
 
 pub trait Resource {
-    fn id(&self) -> &str;
+    fn id(&self) -> String;
     fn resource_type(&self) -> ResourceType;
 }
 
