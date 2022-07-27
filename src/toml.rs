@@ -1,3 +1,5 @@
+//! This module allows you save an read [`ResourceType`] in toml files
+
 use crate::authorization::{Permission, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::group::GroupId;
@@ -20,7 +22,7 @@ impl TomlFile {
         Ok(content)
     }
 
-    /// Crea el archivo en el path indicado.
+    /// Create the .toml file in the path
     pub fn create(resource_type: &ResourceType, path: &PathBuf) -> Result<Self, MinosError> {
         let stored_rs = StoredResourceType::from(resource_type.clone());
         let content = toml::to_string(&stored_rs)?;

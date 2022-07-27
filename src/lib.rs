@@ -1,4 +1,6 @@
 //! Authorization library
+//!
+//! *Warning*: In this crate, all datetimes using `Utc::now`
 pub mod authorization;
 pub mod errors;
 pub mod group;

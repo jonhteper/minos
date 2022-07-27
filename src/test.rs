@@ -54,15 +54,16 @@ struct Message {
 }
 
 impl Resource for Message {
+    type Error = MinosError;
     fn id(&self) -> String {
         String::from(&self.id)
     }
-    fn resource_type(&self) -> ResourceType {
-        ResourceType {
+    fn resource_type(&self) -> Result<ResourceType, Self::Error> {
+        Ok(ResourceType {
             label: "".to_string(),
             owner: Some(self.owner.clone()),
             policies: self.policies.clone(),
-        }
+        })
     }
 }
 
@@ -79,7 +80,7 @@ fn authorization_by_user_test() {
         }],
     };
 
-    let auth = AuthorizationBuilder::new(&message.resource_type())
+    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
         .build(&message.id, &regular_user())
         .expect("Error building Authorization");
 
@@ -102,7 +103,7 @@ fn authorization_by_group() {
     };
 
     let reader_user = admin_user();
-    let auth = AuthorizationBuilder::new(&message.resource_type())
+    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
         .build(&message.id, &reader_user)
         .expect("Error building Authorization");
 
@@ -125,10 +126,10 @@ fn unauthorized() {
     };
 
     let invalid_user = regular_user();
-    let _ = AuthorizationBuilder::new(&message.resource_type())
+    let _ = AuthorizationBuilder::new(&message.resource_type().unwrap())
         .build(&message.id, &invalid_user)
         .expect_err("Authorization should not be able to be created");
-    let auth = AuthorizationBuilder::new(&message.resource_type())
+    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
         .build(&message.id, &admin_user())
         .expect("Error building auth");
     let _ = auth
@@ -224,7 +225,7 @@ fn multi_groups() {
         }],
     };
     let reader_user = admin_user();
-    let auth = AuthorizationBuilder::new(&message.resource_type())
+    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
         .build(&message.id, &reader_user)
         .expect("Error building auth");
     let _ = auth
@@ -238,6 +239,38 @@ fn multi_groups() {
     println!("Multi-group benchmark: {:.2?}", bench_instant.elapsed());
 }
 
+#[test]
+fn multi_permissions() {
+    let message = Message {
+        id: "message-id".to_string(),
+        owner: Owner::User(regular_user().id.clone()),
+        policies: vec![Policy {
+            duration: 60,
+            by_owner: true,
+            groups_ids: None,
+            permissions: Permission::crud(),
+        }],
+    };
+    let user = regular_user();
+    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
+        .build(&message.id, &user)
+        .expect("Error building Authorization");
+
+    auth.multi_permissions_check(
+        &message.id(),
+        &user,
+        &vec![Permission::Read, Permission::Delete],
+    )
+    .expect("Error with authorization check");
+
+    auth.multi_permissions_check(
+        &message.id(),
+        &user,
+        &vec![Permission::Read, Permission::from("sign")],
+    )
+        .expect_err("The authorization check must failed");
+}
+
 #[cfg(feature = "jwt")]
 #[cfg(test)]
 mod jwt_test {
@@ -245,8 +278,8 @@ mod jwt_test {
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
     use crate::resources::ResourceType;
-    use crate::utils::{datetime_now, formatted_datetime_now};
-    use chrono::Duration;
+    use crate::utils::formatted_datetime_now;
+    use chrono::{Duration, Utc};
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
 
     #[test]
@@ -294,7 +327,7 @@ mod jwt_test {
             user_id.to_string(),
             resource_id.to_string(),
             resource_type.to_string(),
-            datetime_now()
+            Utc::now().naive_utc()
                 .checked_add_signed(Duration::seconds(30))
                 .unwrap(),
         );
@@ -328,7 +361,7 @@ mod toml_test {
     use crate::errors::MinosError;
     use crate::group::GroupId;
     use crate::resources::Owner::User;
-    use crate::resources::{Owner, ResourceType};
+    use crate::resources::ResourceType;
     use crate::test::create_temp_file;
     use crate::toml::TomlFile;
     use std::env;
