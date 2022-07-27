@@ -268,7 +268,7 @@ fn multi_permissions() {
         &user,
         &vec![Permission::Read, Permission::from("sign")],
     )
-        .expect_err("The authorization check must failed");
+    .expect_err("The authorization check must failed");
 }
 
 #[cfg(feature = "jwt")]
@@ -327,7 +327,8 @@ mod jwt_test {
             user_id.to_string(),
             resource_id.to_string(),
             resource_type.to_string(),
-            Utc::now().naive_utc()
+            Utc::now()
+                .naive_utc()
                 .checked_add_signed(Duration::seconds(30))
                 .unwrap(),
         );
