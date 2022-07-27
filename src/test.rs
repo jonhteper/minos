@@ -1,4 +1,3 @@
-use crate::authorization::Authorization;
 use crate::authorization::{AuthorizationBuilder, Permission, Policy};
 use crate::errors::MinosError;
 use crate::group::{Group, GroupId};
@@ -6,14 +5,13 @@ use crate::resources::Owner;
 use crate::resources::Resource;
 use crate::resources::ResourceType;
 use crate::user::UserAttributes;
-use crate::utils::formatted_datetime_now;
 use crate::Status;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-#[cfg(test)]
 use std::time::Instant;
+#[cfg(test)]
 
 fn users_group() -> Group {
     Group {
@@ -56,8 +54,8 @@ struct Message {
 }
 
 impl Resource for Message {
-    fn id(&self) -> &str {
-        &self.id
+    fn id(&self) -> String {
+        String::from(&self.id)
     }
     fn resource_type(&self) -> ResourceType {
         ResourceType {
@@ -86,7 +84,7 @@ fn authorization_by_user_test() {
         .expect("Error building Authorization");
 
     let _ = auth
-        .check(message.id(), &regular_user(), &Permission::Create)
+        .check(&message.id(), &regular_user(), &Permission::Create)
         .expect("Error with authorization");
 }
 
@@ -109,7 +107,7 @@ fn authorization_by_group() {
         .expect("Error building Authorization");
 
     let _ = auth
-        .check(message.id(), &reader_user, &Permission::Read)
+        .check(&message.id(), &reader_user, &Permission::Read)
         .expect("Error with authorization");
 }
 
@@ -249,7 +247,7 @@ mod jwt_test {
     use crate::resources::ResourceType;
     use crate::utils::{datetime_now, formatted_datetime_now};
     use chrono::Duration;
-    use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
+    use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
 
     #[test]
     fn authorization_as_claims() -> Result<(), MinosError> {
@@ -326,27 +324,30 @@ fn create_temp_file(content: &str) -> Result<PathBuf, MinosError> {
 #[cfg(feature = "toml_storage")]
 #[cfg(test)]
 mod toml_test {
+    use crate::authorization::{Permission, Policy};
     use crate::errors::MinosError;
+    use crate::group::GroupId;
+    use crate::resources::Owner::User;
     use crate::resources::{Owner, ResourceType};
     use crate::test::create_temp_file;
     use crate::toml::TomlFile;
+    use std::env;
     use std::time::Instant;
 
     static FILE_CONTENT: &str = r#"
-            label = "example resource"
-            owner = {user = true, group = false}
+    label = "example resource"
+    owner = {user = true, group = false}
 
-            [[policies]]
-            duration = 120
-            by_owner = true
-            permissions = ["create", "read", "update", "delete"]
+    [[policies]]
+    duration = 120
+    by_owner = true
+    permissions = ["create", "read", "update", "delete"]
 
-            [[policies]]
-            duration = 300
-            by_owner = false
-            groups_ids = ["example-group-id-1", "example-group-id-2"]
-            permissions = ["read"]
-        "#;
+    [[policies]]
+    duration = 300
+    by_owner = false
+    groups_ids = ["example-group-id-1", "example-group-id-2"]
+    permissions = ["read"]"#;
 
     #[test]
     fn resource_type_by_file() -> Result<(), MinosError> {
@@ -354,13 +355,43 @@ mod toml_test {
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(path)?;
         let mut resource_type = ResourceType::try_from(toml_file)?;
-        resource_type.owner = Some(Owner::User("user-id".to_string()));
+        resource_type.owner = Some(User("user-id".to_string()));
 
         println!("{:#?}", resource_type);
         println!(
             "resource type by file benchmark: {:?}",
             bench_instant.elapsed()
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn file_by_resource_type() -> Result<(), MinosError> {
+        let mut path = env::temp_dir();
+        path.push("ref.resource_type.toml");
+        let resource_type = ResourceType::new(
+            "example resource".to_string(),
+            Some(User("".to_string())),
+            vec![
+                Policy::new(120, true, None, Permission::crud()),
+                Policy::new(
+                    300,
+                    false,
+                    Some(vec![
+                        GroupId::from("example-group-id-1"),
+                        GroupId::from("example-group-id-2"),
+                    ]),
+                    vec![Permission::Read],
+                ),
+            ],
+        );
+        let _ = TomlFile::create(&resource_type, &path)?;
+        let path = create_temp_file(FILE_CONTENT)?;
+        let toml_file = TomlFile::try_from(path)?;
+        let saved_resource_type = ResourceType::try_from(toml_file)?;
+
+        assert_eq!(resource_type, saved_resource_type);
 
         Ok(())
     }
