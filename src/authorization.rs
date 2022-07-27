@@ -2,9 +2,8 @@ use crate::errors::{ErrorKind, MinosError};
 use crate::group::GroupId;
 use crate::resources::{Owner, ResourceType};
 use crate::user::UserAttributes;
-use crate::utils::datetime_now;
 use crate::Status;
-use chrono::{Duration, NaiveDateTime};
+use chrono::{Duration, NaiveDateTime, Utc};
 
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 /// Users permissions, defines what a user is allowed to do.
@@ -166,7 +165,7 @@ impl Authorization {
             ));
         }
 
-        if self.expiration <= datetime_now() {
+        if self.expiration <= Utc::now().naive_utc() {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
                 "The Authorization is expired",
@@ -382,7 +381,7 @@ impl<'b> AuthorizationBuilder<'b> {
             user_id: user.id.clone(),
             resource_id: resource_id.to_string(),
             resource_type: self.resource_type.label.clone(),
-            expiration: datetime_now() + Duration::seconds(policy.duration.clone() as i64),
+            expiration: Utc::now().naive_utc() + Duration::seconds(policy.duration.clone() as i64),
         })
     }
 
@@ -426,11 +425,11 @@ impl<'b> AuthorizationBuilder<'b> {
             .ok_or(MinosError::new(ErrorKind::Authorization, "Not authorized"))?;
 
         Ok(Authorization {
-            permissions: permissions,
+            permissions,
             user_id: user.id.clone(),
             resource_id: resource_id.to_string(),
             resource_type: self.resource_type.label.clone(),
-            expiration: datetime_now() + Duration::seconds(seconds as i64),
+            expiration: Utc::now().naive_utc() + Duration::seconds(seconds as i64),
         })
     }
 }
