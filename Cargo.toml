@@ -1,6 +1,6 @@
 [package]
 name = "minos"
-version = "0.5.0"
+version = "0.6.0-dev.1"
 edition = "2021"
 authors = ["johnteper <git@johnteper.me>"]
 description = "Authorization library"
@@ -19,7 +19,8 @@ serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
 
 [features]
-full = ["jwt", "toml_storage", "custom_permission"]
+full = ["jwt", "toml_storage", "custom_permission"] # For security, not includes unsafe_setters
 jwt = ["jsonwebtoken", "serde"]
 toml_storage = ["serde", "toml"]
 custom_permission = []
+unsafe_setters = [] # Active this feature if you want implement your own resource type's storage
