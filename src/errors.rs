@@ -22,6 +22,7 @@ pub enum ErrorKind {
 
     /// Auth rules collision
     IncompatibleAuthPolicy,
+    ResourceType,
     InactiveUser,
     Authorization,
 }
