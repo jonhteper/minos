@@ -58,6 +58,11 @@ impl Resource for Message {
     fn id(&self) -> String {
         String::from(&self.id)
     }
+
+    fn owner(&self) -> Result<Option<Owner>, Self::Error> {
+        Ok(Some(self.owner.clone()))
+    }
+
     fn resource_type(&self) -> Result<ResourceType, Self::Error> {
         Ok(ResourceType {
             label: "".to_string(),
