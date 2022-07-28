@@ -60,7 +60,6 @@ impl ResourceType {
         self.policies = policies;
     }
 
-
     /// Modify the owner id securely. Use this method if the ResourceType are built.
     ///
     /// **Warning**: You can't really change the owner, only the id. If the owner is an [`Owner::User`] can't
@@ -68,27 +67,35 @@ impl ResourceType {
     /// # Errors
     /// * The resource type not have an owner
     /// * The owner id is not empty, and the param `overwrite` is not true
-    pub fn safe_set_owner(&mut self, owner_id: &str, overwrite: bool) -> Result<(), MinosError>  {
+    pub fn safe_set_owner(&mut self, owner_id: &str, overwrite: bool) -> Result<(), MinosError> {
         if self.owner.is_none() {
-            return Err(MinosError::new(ErrorKind::ResourceType, "The resource type not have an owner"));
+            return Err(MinosError::new(
+                ErrorKind::ResourceType,
+                "The resource type not have an owner",
+            ));
         }
 
         self.owner = match self.owner.as_ref().unwrap() {
             Owner::User(id) => {
                 if !id.is_empty() && !overwrite {
-                    return Err(MinosError::new(ErrorKind::ResourceType, "The id is not empty"));
+                    return Err(MinosError::new(
+                        ErrorKind::ResourceType,
+                        "The id is not empty",
+                    ));
                 }
                 Some(Owner::User(owner_id.to_string()))
-            },
-            Owner::Group(id ) => {
+            }
+            Owner::Group(id) => {
                 if !id.is_empty() && !overwrite {
-                    return Err(MinosError::new(ErrorKind::ResourceType, "The id is not empty"));
+                    return Err(MinosError::new(
+                        ErrorKind::ResourceType,
+                        "The id is not empty",
+                    ));
                 }
                 Some(Owner::Group(owner_id.to_string()))
-            },
+            }
         };
 
         Ok(())
     }
-
 }
