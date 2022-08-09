@@ -30,23 +30,8 @@ impl GroupId {
 #[derive(PartialEq, Debug, Clone, Default)]
 /// Groups users and defines the permissions of the users belonging to it.
 pub struct Group {
-    pub(crate) id: GroupId,
-    pub(crate) alias: String,
-    pub(crate) status: Status,
+    pub id: GroupId,
+    pub alias: String,
+    pub status: Status,
 }
 
-impl Group {
-    pub fn new(id: GroupId, alias: String, status: Status) -> Self {
-        Self { id, alias, status }
-    }
-
-    pub fn id(&self) -> &GroupId {
-        &self.id
-    }
-    pub fn alias(&self) -> &str {
-        &self.alias
-    }
-    pub fn status(&self) -> Status {
-        self.status
-    }
-}
