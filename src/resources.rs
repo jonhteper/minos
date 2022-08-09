@@ -13,6 +13,15 @@ impl Default for Owner {
     }
 }
 
+impl ToString for Owner {
+    fn to_string(&self) -> String {
+        match self {
+            Owner::User(id) => id.clone(),
+            Owner::Group(id) => id.clone(),
+        }
+    }
+}
+
 pub trait Resource {
     type Error;
     fn id(&self) -> String;
