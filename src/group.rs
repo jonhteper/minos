@@ -34,4 +34,3 @@ pub struct Group {
     pub alias: String,
     pub status: Status,
 }
-

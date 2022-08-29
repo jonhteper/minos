@@ -1,9 +1,9 @@
 use crate::authorization::{AuthorizationBuilder, Permission, Policy};
 use crate::errors::MinosError;
 use crate::group::{Group, GroupId};
-use crate::resources::Owner;
 use crate::resources::Resource;
 use crate::resources::ResourceType;
+use crate::resources::{Owner, OwnerType};
 use crate::user::UserAttributes;
 use crate::Status;
 use std::env;
@@ -49,6 +49,7 @@ fn admin_user() -> UserAttributes {
 
 struct Message {
     id: String,
+    owner_type: OwnerType,
     owner: Owner,
     policies: Vec<Policy>,
 }
@@ -66,7 +67,7 @@ impl Resource for Message {
     fn resource_type(&self) -> Result<ResourceType, Self::Error> {
         Ok(ResourceType {
             label: "".to_string(),
-            owner: Some(self.owner.clone()),
+            owner_type: self.owner_type,
             policies: self.policies.clone(),
         })
     }
@@ -76,6 +77,7 @@ impl Resource for Message {
 fn authorization_by_user_test() {
     let message = Message {
         id: "example-message-id".to_string(),
+        owner_type: OwnerType::User,
         owner: Owner::User(regular_user().id.clone()),
         policies: vec![Policy {
             duration: 60,
@@ -85,9 +87,10 @@ fn authorization_by_user_test() {
         }],
     };
 
-    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
-        .build(&message.id, &regular_user())
-        .expect("Error building Authorization");
+    let auth =
+        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
+            .build(&message.id, &regular_user())
+            .expect("Error building Authorization");
 
     let _ = auth
         .check(&message.id(), &regular_user(), &Permission::Create)
@@ -98,6 +101,7 @@ fn authorization_by_user_test() {
 fn authorization_by_group() {
     let message = Message {
         id: "example-message-id".to_string(),
+        owner_type: OwnerType::User,
         owner: Owner::User(regular_user().id),
         policies: vec![Policy {
             duration: 200,
@@ -108,9 +112,10 @@ fn authorization_by_group() {
     };
 
     let reader_user = admin_user();
-    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
-        .build(&message.id, &reader_user)
-        .expect("Error building Authorization");
+    let auth =
+        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
+            .build(&message.id, &reader_user)
+            .expect("Error building Authorization");
 
     let _ = auth
         .check(&message.id(), &reader_user, &Permission::Read)
@@ -121,6 +126,7 @@ fn authorization_by_group() {
 fn unauthorized() {
     let message = Message {
         id: "example-message-id".to_string(),
+        owner_type: OwnerType::Group,
         owner: Owner::Group(admin_group().id.to_string()),
         policies: vec![Policy {
             duration: 30,
@@ -131,12 +137,13 @@ fn unauthorized() {
     };
 
     let invalid_user = regular_user();
-    let _ = AuthorizationBuilder::new(&message.resource_type().unwrap())
+    let _ = AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
         .build(&message.id, &invalid_user)
         .expect_err("Authorization should not be able to be created");
-    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
-        .build(&message.id, &admin_user())
-        .expect("Error building auth");
+    let auth =
+        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
+            .build(&message.id, &admin_user())
+            .expect("Error building auth");
     let _ = auth
         .check(&message.id, &invalid_user, &Permission::Read)
         .expect_err("The user should not be able to read the resource");
@@ -147,6 +154,7 @@ fn multi_groups() {
     let bench_instant = Instant::now();
     let message = Message {
         id: "example-message-id".to_string(),
+        owner_type: OwnerType::Group,
         owner: Owner::Group(admin_group().id.to_string()),
         policies: vec![Policy {
             duration: 30,
@@ -230,9 +238,10 @@ fn multi_groups() {
         }],
     };
     let reader_user = admin_user();
-    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
-        .build(&message.id, &reader_user)
-        .expect("Error building auth");
+    let auth =
+        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
+            .build(&message.id, &reader_user)
+            .expect("Error building auth");
     let _ = auth
         .check(&message.id, &reader_user, &Permission::Read)
         .expect("Error with auth checking");
@@ -246,9 +255,11 @@ fn multi_groups() {
 
 #[test]
 fn multi_permissions() {
+    let user = regular_user();
     let message = Message {
         id: "message-id".to_string(),
-        owner: Owner::User(regular_user().id.clone()),
+        owner_type: OwnerType::User,
+        owner: Owner::User(user.id.clone()),
         policies: vec![Policy {
             duration: 60,
             by_owner: true,
@@ -256,10 +267,10 @@ fn multi_permissions() {
             permissions: Permission::crud(),
         }],
     };
-    let user = regular_user();
-    let auth = AuthorizationBuilder::new(&message.resource_type().unwrap())
-        .build(&message.id, &user)
-        .expect("Error building Authorization");
+    let auth =
+        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
+            .build(&message.id, &user)
+            .expect("Error building Authorization");
 
     auth.multi_permissions_check(
         &message.id(),
@@ -282,7 +293,7 @@ mod jwt_test {
     use crate::authorization::{Authorization, Permission};
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
-    use crate::resources::ResourceType;
+    use crate::resources::{OwnerType, ResourceType};
     use crate::utils::formatted_datetime_now;
     use chrono::{Duration, Utc};
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
@@ -291,7 +302,7 @@ mod jwt_test {
     fn authorization_as_claims() -> Result<(), MinosError> {
         let resource_type = ResourceType {
             label: "resource".to_string(),
-            owner: None,
+            owner_type: OwnerType::None,
             policies: vec![],
         };
 
@@ -367,7 +378,7 @@ mod toml_test {
     use crate::errors::MinosError;
     use crate::group::GroupId;
     use crate::resources::Owner::User;
-    use crate::resources::ResourceType;
+    use crate::resources::{OwnerType, ResourceType};
     use crate::test::create_temp_file;
     use crate::toml::TomlFile;
     use std::env;
@@ -375,7 +386,7 @@ mod toml_test {
 
     static FILE_CONTENT: &str = r#"
     label = "example resource"
-    owner = {user = true, group = false}
+    owner_type = {user = true, group = false}
 
     [[policies]]
     duration = 120
@@ -393,8 +404,7 @@ mod toml_test {
         let bench_instant = Instant::now();
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(path)?;
-        let mut resource_type = ResourceType::try_from(toml_file)?;
-        resource_type.owner = Some(User("user-id".to_string()));
+        let resource_type = ResourceType::try_from(toml_file)?;
 
         println!("{:#?}", resource_type);
         println!(
@@ -411,7 +421,7 @@ mod toml_test {
         path.push("ref.resource_type.toml");
         let resource_type = ResourceType::new(
             "example resource".to_string(),
-            Some(User("".to_string())),
+            OwnerType::User,
             vec![
                 Policy::new(120, true, None, Permission::crud()),
                 Policy::new(
@@ -450,7 +460,7 @@ mod custom_permission_test {
 
     static FILE_CONTENT: &str = r#"
             label = "payment blog post"
-            owner = {user = false, group = true}
+            owner_type = {user = false, group = true}
 
             [[policies]]
             duration = 120
@@ -483,13 +493,13 @@ mod custom_permission_test {
     fn custom_permissions_by_file() -> Result<(), MinosError> {
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(path)?;
-        let mut payment_blog_post_rt = ResourceType::try_from(toml_file)?;
-        payment_blog_post_rt.owner = Some(Owner::Group("editors-group-id".to_string()));
+        let payment_blog_post_rt = ResourceType::try_from(toml_file)?;
+        let payment_blog_post_owner = Some(Owner::Group("editors-group-id".to_string()));
 
         let default_id = "DEFAULT_ID";
         let user_attr = editor_user();
-        let auth =
-            AuthorizationBuilder::new(&payment_blog_post_rt).build(&default_id, &user_attr)?;
+        let auth = AuthorizationBuilder::new(&payment_blog_post_rt, payment_blog_post_owner)
+            .build(&default_id, &user_attr)?;
         let _ = auth.check(
             &default_id,
             &user_attr,

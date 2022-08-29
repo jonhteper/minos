@@ -1,6 +1,6 @@
 [package]
 name = "minos"
-version = "0.6.0-dev.1"
+version = "0.6.0-dev.2"
 edition = "2021"
 authors = ["johnteper <git@johnteper.me>"]
 description = "Authorization library"

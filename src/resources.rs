@@ -1,5 +1,17 @@
 use crate::authorization::Policy;
-use crate::errors::{ErrorKind, MinosError};
+
+#[derive(Debug, PartialEq, Clone, PartialOrd, Copy)]
+pub enum OwnerType {
+    User,
+    Group,
+    None,
+}
+
+impl Default for OwnerType {
+    fn default() -> Self {
+        Self::None
+    }
+}
 
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub enum Owner {
@@ -32,31 +44,31 @@ pub trait Resource {
 #[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
 pub struct ResourceType {
     pub(crate) label: String,
-    pub(crate) owner: Option<Owner>,
+    pub(crate) owner_type: OwnerType,
     pub(crate) policies: Vec<Policy>,
 }
 
 impl ResourceType {
-    pub fn new(label: String, owner: Option<Owner>, policies: Vec<Policy>) -> Self {
+    pub fn new(label: String, owner_type: OwnerType, policies: Vec<Policy>) -> Self {
         Self {
             label,
-            owner,
+            owner_type,
             policies,
         }
     }
     pub fn label(&self) -> &str {
         &self.label
     }
-    pub fn owner(&self) -> &Option<Owner> {
-        &self.owner
+    pub fn owner_type(&self) -> OwnerType {
+        self.owner_type
     }
     pub fn policies(&self) -> &Vec<Policy> {
         &self.policies
     }
 
     #[cfg(feature = "unsafe_setters")]
-    pub fn set_owner(&mut self, owner: Owner) {
-        self.owner = Some(owner)
+    pub fn set_owner_type(&mut self, owner_type: OwnerType) {
+        self.owner_type = owner_type
     }
 
     #[cfg(feature = "unsafe_setters")]
@@ -67,44 +79,5 @@ impl ResourceType {
     #[cfg(feature = "unsafe_setters")]
     pub fn set_policies(&mut self, policies: Vec<Policy>) {
         self.policies = policies;
-    }
-
-    /// Modify the owner id securely. Use this method if the ResourceType are built.
-    ///
-    /// **Warning**: You can't really change the owner, only the id. If the owner is an [`Owner::User`] can't
-    /// change to [`Owner::Group`]
-    /// # Errors
-    /// * The resource type not have an owner
-    /// * The owner id is not empty, and the param `overwrite` is not true
-    pub fn safe_set_owner(&mut self, owner_id: &str, overwrite: bool) -> Result<(), MinosError> {
-        if self.owner.is_none() {
-            return Err(MinosError::new(
-                ErrorKind::ResourceType,
-                "The resource type not have an owner",
-            ));
-        }
-
-        self.owner = match self.owner.as_ref().unwrap() {
-            Owner::User(id) => {
-                if !id.is_empty() && !overwrite {
-                    return Err(MinosError::new(
-                        ErrorKind::ResourceType,
-                        "The id is not empty",
-                    ));
-                }
-                Some(Owner::User(owner_id.to_string()))
-            }
-            Owner::Group(id) => {
-                if !id.is_empty() && !overwrite {
-                    return Err(MinosError::new(
-                        ErrorKind::ResourceType,
-                        "The id is not empty",
-                    ));
-                }
-                Some(Owner::Group(owner_id.to_string()))
-            }
-        };
-
-        Ok(())
     }
 }

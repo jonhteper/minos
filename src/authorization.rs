@@ -1,6 +1,6 @@
 use crate::errors::{ErrorKind, MinosError};
 use crate::group::GroupId;
-use crate::resources::{Owner, ResourceType};
+use crate::resources::{Owner, OwnerType, ResourceType};
 use crate::user::UserAttributes;
 use crate::Status;
 use chrono::{Duration, NaiveDateTime, Utc};
@@ -274,11 +274,15 @@ impl Policy {
 
 pub struct AuthorizationBuilder<'b> {
     resource_type: &'b ResourceType,
+    owner: Option<Owner>,
 }
 
 impl<'b> AuthorizationBuilder<'b> {
-    pub fn new(resource_type: &'b ResourceType) -> Self {
-        Self { resource_type }
+    pub fn new(resource_type: &'b ResourceType, owner: Option<Owner>) -> Self {
+        Self {
+            resource_type,
+            owner,
+        }
     }
 
     fn check_groups(&self, user: &UserAttributes, policy: &Policy) -> Result<(), MinosError> {
@@ -298,40 +302,67 @@ impl<'b> AuthorizationBuilder<'b> {
         Ok(())
     }
 
-    fn same_group_check(group_id: GroupId, user: &UserAttributes) -> Result<(), MinosError> {
-        if !&user.groups.contains(&group_id) {
-            return Err(MinosError::new(
+    fn same_group_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
+        match &self.owner {
+            None => Err(MinosError::new(
                 ErrorKind::Authorization,
-                "The user is not in the owning group",
-            ));
-        }
+                "The resource not have an owner",
+            )),
+            Some(owner) => match owner {
+                Owner::User(_) => Err(MinosError::new(
+                    ErrorKind::Authorization,
+                    "The owner of resource is an user",
+                )),
+                Owner::Group(id) => {
+                    if !&user.groups.contains(&GroupId::from(id.as_str())) {
+                        return Err(MinosError::new(
+                            ErrorKind::Authorization,
+                            "The user is not in the owning group",
+                        ));
+                    }
 
-        Ok(())
+                    Ok(())
+                }
+            },
+        }
     }
 
-    fn same_user_check(user_id: &str, user: &UserAttributes) -> Result<(), MinosError> {
-        if user_id != &user.id {
-            return Err(MinosError::new(
+    fn same_user_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
+        match &self.owner {
+            None => Err(MinosError::new(
                 ErrorKind::Authorization,
-                "The user is not the owner",
-            ));
+                "The resource not have an owner",
+            )),
+            Some(owner) => match owner {
+                Owner::User(user_id) => {
+                    if user_id != &user.id {
+                        return Err(MinosError::new(
+                            ErrorKind::Authorization,
+                            "The user is not the owner",
+                        ));
+                    }
+
+                    Ok(())
+                }
+                Owner::Group(_) => Err(MinosError::new(
+                    ErrorKind::Authorization,
+                    "The owner of resource is a group",
+                )),
+            },
         }
-        Ok(())
     }
 
     fn by_owner_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        match &self.resource_type.owner {
-            None => {
+        match &self.resource_type.owner_type {
+            OwnerType::None => {
                 return Err(MinosError::new(
                     ErrorKind::IncompatibleAuthPolicy,
                     "The resource haven't an owner",
                 ));
             }
-            Some(owner) => match owner {
-                Owner::User(id) => Self::same_user_check(id, &user)?,
-                Owner::Group(id) => Self::same_group_check(GroupId::from(id.as_str()), &user)?,
-            },
-        }
+            OwnerType::User => self.same_user_check(&user)?,
+            OwnerType::Group => self.same_group_check(&user)?,
+        };
 
         Ok(())
     }

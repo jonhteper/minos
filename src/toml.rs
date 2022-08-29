@@ -3,7 +3,7 @@
 use crate::authorization::{Permission, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::group::GroupId;
-use crate::resources::{Owner, ResourceType};
+use crate::resources::{Owner, OwnerType, ResourceType};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -61,64 +61,45 @@ impl TryFrom<PathBuf> for TomlFile {
 
 #[cfg(feature = "toml_storage")]
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
-struct StoredOwner {
+struct StoredOwnerType {
     user: Option<bool>,
     group: Option<bool>,
-    id: Option<String>,
 }
 
-impl StoredOwner {
-    /// Warning: if id attribute not exists, the default value will be an empty String
-    fn maybe_owner(&self) -> Option<Owner> {
-        let id = match &self.id {
-            None => "".to_string(),
-            Some(id) => id.clone(),
-        };
-
+impl StoredOwnerType {
+    fn as_owner_type(&self) -> OwnerType {
         if let Some(user) = self.user {
             if user {
-                return Some(Owner::User(id));
+                return OwnerType::User;
             }
         }
 
         if let Some(group) = self.group {
             if group {
-                return Some(Owner::Group(id));
+                return OwnerType::Group;
             }
         }
 
-        None
+        OwnerType::None
     }
 }
 
 #[cfg(feature = "toml_storage")]
-impl From<Owner> for StoredOwner {
-    fn from(owner: Owner) -> Self {
-        return match owner {
-            Owner::User(id) => {
-                let optional_id = match id.is_empty() {
-                    true => None,
-                    false => Some(id),
-                };
-
-                Self {
-                    user: Some(true),
-                    group: None,
-                    id: optional_id,
-                }
-            }
-            Owner::Group(id) => {
-                let optional_id = match id.is_empty() {
-                    true => None,
-                    false => Some(id),
-                };
-
-                Self {
-                    user: None,
-                    group: Some(true),
-                    id: optional_id,
-                }
-            }
+impl From<OwnerType> for StoredOwnerType {
+    fn from(owner_type: OwnerType) -> Self {
+        return match owner_type {
+            OwnerType::User => Self {
+                user: Some(true),
+                group: None,
+            },
+            OwnerType::Group => Self {
+                user: None,
+                group: Some(true),
+            },
+            OwnerType::None => Self {
+                user: None,
+                group: None,
+            },
         };
     }
 }
@@ -191,7 +172,7 @@ impl From<Policy> for StoredPolicy {
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
 struct StoredResourceType {
     label: Option<String>,
-    owner: Option<StoredOwner>,
+    owner_type: Option<StoredOwnerType>,
     policies: Option<Vec<StoredPolicy>>,
 }
 
@@ -213,9 +194,9 @@ impl StoredResourceType {
 #[cfg(feature = "toml_storage")]
 impl From<ResourceType> for StoredResourceType {
     fn from(resource_type: ResourceType) -> Self {
-        let owner = match resource_type.owner {
-            None => None,
-            Some(owner) => Some(StoredOwner::from(owner)),
+        let owner = match resource_type.owner_type {
+            OwnerType::None => None,
+            _ => Some(StoredOwnerType::from(resource_type.owner_type)),
         };
         let policies = resource_type
             .policies
@@ -225,7 +206,7 @@ impl From<ResourceType> for StoredResourceType {
 
         Self {
             label: Some(resource_type.label),
-            owner,
+            owner_type: owner,
             policies: Some(policies),
         }
     }
@@ -240,9 +221,9 @@ impl From<StoredResourceType> for ResourceType {
             Some(label) => label.clone(),
         };
 
-        resource_type.owner = match &stored.owner {
-            None => None,
-            Some(owner) => owner.maybe_owner().clone(),
+        resource_type.owner_type = match &stored.owner_type {
+            None => OwnerType::None,
+            Some(owner) => owner.as_owner_type(),
         };
 
         resource_type.policies = stored.string_policies_as_policies();
