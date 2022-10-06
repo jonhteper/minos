@@ -182,22 +182,25 @@ impl Authorization {
         Ok(())
     }
 
-    pub fn check(
-        &self,
-        resource_id: &str,
-        user: &UserAttributes,
-        required_permission: &Permission,
-    ) -> Result<(), MinosError> {
-        let _ = self.basic_check(resource_id, user)?;
-
-        if !&self.permissions.contains(&required_permission) {
+    pub fn search_permission(&self, permission: Permission) -> Result<(), MinosError> {
+        if !&self.permissions.contains(&permission) {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
-                &required_permission.required_msg(),
+                &permission.required_msg(),
             ));
         }
 
         Ok(())
+    }
+
+    pub fn check(
+        &self,
+        resource_id: &str,
+        user: &UserAttributes,
+        required_permission: Permission,
+    ) -> Result<(), MinosError> {
+        let _ = self.basic_check(resource_id, user)?;
+        self.search_permission(required_permission)
     }
 
     pub fn multi_permissions_check(
