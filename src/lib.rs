@@ -7,6 +7,7 @@ pub mod group;
 pub mod resources;
 pub mod user;
 pub mod utils;
+pub mod prelude;
 
 #[cfg(feature = "jwt")]
 pub mod jwt;
