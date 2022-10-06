@@ -1,4 +1,5 @@
-use crate::authorization::Policy;
+use crate::authorization::{Authorization, Policy};
+use crate::user::UserAttributes;
 
 #[derive(Debug, PartialEq, Clone, PartialOrd, Copy)]
 pub enum OwnerType {
@@ -39,6 +40,13 @@ pub trait Resource {
     fn id(&self) -> String;
     fn owner(&self) -> Result<Option<Owner>, Self::Error>;
     fn resource_type(&self) -> Result<ResourceType, Self::Error>;
+
+    #[cfg(feature = "resource_utils")]
+    /// The Resource can implement its own rules to generate an authorization, for more
+    /// specific cases than those provided by the ResourceType rules.
+    ///
+    /// [`AuthorizationBuilder::new`]: crate::authorization::AuthorizationBuilder::new
+    fn authorize(&self, user: &UserAttributes) -> Result<Authorization, Self::Error>;
 }
 
 #[derive(PartialEq, Debug, Clone, PartialOrd, Default)]

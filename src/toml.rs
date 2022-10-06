@@ -3,7 +3,7 @@
 use crate::authorization::{Permission, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::group::GroupId;
-use crate::resources::{Owner, OwnerType, ResourceType};
+use crate::resources::{OwnerType, ResourceType};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
