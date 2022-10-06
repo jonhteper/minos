@@ -1,5 +1,5 @@
-use crate::authorization::{AuthorizationBuilder, Permission, Policy};
-use crate::errors::MinosError;
+use crate::authorization::{Authorization, AuthorizationBuilder, Permission, Policy};
+use crate::errors::{ErrorKind, MinosError};
 use crate::group::{Group, GroupId};
 use crate::resources::Resource;
 use crate::resources::ResourceType;
@@ -71,6 +71,10 @@ impl Resource for Message {
             policies: self.policies.clone(),
         })
     }
+
+    fn authorize(&self, user: &UserAttributes) -> Result<Authorization, Self::Error> {
+        AuthorizationBuilder::new(&self.resource_type()?, self.owner()?).build(&self.id(), &user)
+    }
 }
 
 #[test]
@@ -87,13 +91,10 @@ fn authorization_by_user_test() {
         }],
     };
 
-    let auth =
-        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
-            .build(&message.id, &regular_user())
-            .expect("Error building Authorization");
-
-    let _ = auth
-        .check(&message.id(), &regular_user(), &Permission::Create)
+    let _ = message
+        .authorize(&regular_user())
+        .expect("Error building Authorization")
+        .search_permission(Permission::Create)
         .expect("Error with authorization");
 }
 
@@ -112,14 +113,11 @@ fn authorization_by_group() {
     };
 
     let reader_user = admin_user();
-    let auth =
-        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
-            .build(&message.id, &reader_user)
-            .expect("Error building Authorization");
-
-    let _ = auth
-        .check(&message.id(), &reader_user, &Permission::Read)
-        .expect("Error with authorization");
+    let _auth = message
+        .authorize(&reader_user)
+        .expect("Error building Authorization")
+        .search_permission(Permission::Read)
+        .expect("Error with permission");
 }
 
 #[test]
@@ -137,15 +135,15 @@ fn unauthorized() {
     };
 
     let invalid_user = regular_user();
-    let _ = AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
-        .build(&message.id, &invalid_user)
+    let _ = message
+        .authorize(&invalid_user)
         .expect_err("Authorization should not be able to be created");
-    let auth =
-        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
-            .build(&message.id, &admin_user())
-            .expect("Error building auth");
+    let auth = message
+        .authorize(&admin_user())
+        .expect("Error building auth");
+
     let _ = auth
-        .check(&message.id, &invalid_user, &Permission::Read)
+        .check(&message.id, &invalid_user, Permission::Read)
         .expect_err("The user should not be able to read the resource");
 }
 
@@ -238,13 +236,11 @@ fn multi_groups() {
         }],
     };
     let reader_user = admin_user();
-    let auth =
-        AuthorizationBuilder::new(&message.resource_type().unwrap(), message.owner().unwrap())
-            .build(&message.id, &reader_user)
-            .expect("Error building auth");
-    let _ = auth
-        .check(&message.id, &reader_user, &Permission::Read)
-        .expect("Error with auth checking");
+    let _auth = message
+        .authorize(&reader_user)
+        .expect("Error building auth")
+        .search_permission(Permission::Read)
+        .expect("Error with permission");
 
     println!(
         "len: {}",
@@ -503,7 +499,7 @@ mod custom_permission_test {
         let _ = auth.check(
             &default_id,
             &user_attr,
-            &Permission::Custom("read_post".to_string()),
+            Permission::Custom("read_post".to_string()),
         )?;
 
         Ok(())
