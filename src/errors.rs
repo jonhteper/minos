@@ -20,10 +20,13 @@ pub enum ErrorKind {
     #[cfg(feature = "toml_storage")]
     Toml,
 
-    /// Auth rules collision
+    /// Authorization rules collision
     IncompatibleAuthPolicy,
-    ResourceType,
-    InactiveUser,
+    EmptyId,
+    InvalidPermission,
+    /// It is recommended to use this error when using a custom-made implementation of [`Resource::authorize`].
+    ///
+    /// [`Resource::authorize`]: crate::resources::Resource::authorize
     Authorization,
 }
 

@@ -1,13 +1,17 @@
 //! Authorization library
 //!
-//! *Warning*: In this crate, all datetimes using `Utc::now`
+use std::fmt::{Display, Formatter};
+use crate::errors::{ErrorKind, MinosError};
+
+pub mod agent;
 pub mod authorization;
 pub mod errors;
-pub mod group;
 pub mod prelude;
 pub mod resources;
-pub mod user;
 pub mod utils;
+
+#[cfg(feature = "authorization_builder")]
+pub mod authorization_builder;
 
 #[cfg(feature = "jwt")]
 pub mod jwt;
@@ -18,47 +22,40 @@ pub mod toml;
 #[cfg(test)]
 mod test;
 
-#[derive(PartialEq, Debug, Copy, Clone)]
-pub enum Status {
-    Deleted,
-    Disabled,
-    Inactive,
-    Active,
-}
+#[derive(PartialOrd, PartialEq, Clone, Debug)]
+pub struct NonEmptyString(String);
 
-impl Status {
-    pub fn as_usize(&self) -> usize {
-        *self as usize
-    }
-    pub fn as_u8(&self) -> u8 {
-        *self as u8
-    }
-}
-
-impl From<usize> for Status {
-    fn from(n: usize) -> Status {
-        match n {
-            3 => Status::Active,
-            2 => Status::Inactive,
-            1 => Status::Disabled,
-            _ => Status::Deleted,
+impl TryFrom<&str> for NonEmptyString {
+    type Error = MinosError;
+    fn try_from(str: &str) -> Result<Self, Self::Error> {
+        if str.trim().is_empty() {
+            return Err(MinosError::new(
+                ErrorKind::EmptyId,
+                "The identifier can't be an empty string",
+            ));
         }
+
+        Ok(Self(str.to_string()))
+    }
+}
+/*
+impl ToString for NonEmptyString {
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+}*/
+
+impl Display for NonEmptyString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
-impl From<u8> for Status {
-    fn from(n: u8) -> Status {
-        match n {
-            3 => Status::Active,
-            2 => Status::Inactive,
-            1 => Status::Disabled,
-            _ => Status::Deleted,
+impl NonEmptyString {
+    pub fn from_str(str: &str) -> Option<Self> {
+        match str.trim().is_empty() {
+            true => None,
+            false => Some(Self(str.to_string())),
         }
-    }
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::Inactive
     }
 }

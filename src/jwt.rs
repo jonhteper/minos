@@ -1,40 +1,36 @@
 //! This module allows you to convert authorizations to jwt and validate them.
-
 use crate::authorization::{Authorization, Permission};
 use crate::errors::MinosError;
-use crate::utils;
-use crate::utils::string_as_datetime;
-use chrono::NaiveDateTime;
+use crate::utils::none_as_empty_string;
+use crate::NonEmptyString;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[serde(rename_all = "camelCase")]
 #[cfg(feature = "jwt")]
 pub struct AuthorizationClaims {
     pub(crate) permissions: Vec<String>,
-    pub(crate) userId: String,
-    pub(crate) resourceId: String,
-    pub(crate) resourceType: String,
-    pub(crate) expiration: String,
-    exp: i64,
+    pub(crate) agent_id: String,
+    pub(crate) resource_id: String,
+    pub(crate) resource_type: String,
+    pub(crate) expiration: u64,
 }
 
 impl AuthorizationClaims {
     pub fn new(
         permissions: Vec<String>,
-        user_id: String,
+        agent_id: String,
         resource_id: String,
         resource_type: String,
-        expiration: NaiveDateTime,
+        expiration: u64,
     ) -> Self {
         Self {
             permissions,
-            userId: user_id,
-            resourceId: resource_id,
-            resourceType: resource_type,
-            expiration: expiration.to_string(),
-            exp: expiration.timestamp(),
+            agent_id,
+            resource_id,
+            resource_type,
+            expiration,
         }
     }
 
@@ -43,19 +39,19 @@ impl AuthorizationClaims {
     }
 
     pub fn user_id(&self) -> &str {
-        &self.userId
+        &self.agent_id
     }
 
     pub fn resource_id(&self) -> &str {
-        &self.resourceId
+        &self.resource_id
     }
 
     pub fn resource_type(&self) -> &str {
-        &self.resourceType
+        &self.resource_type
     }
 
-    pub fn expiration(&self) -> &str {
-        &self.expiration
+    pub fn expiration(&self) -> u64 {
+        self.expiration
     }
 
     fn string_permissions_to_vec_permissions(&self) -> Vec<Permission> {
@@ -69,10 +65,10 @@ impl AuthorizationClaims {
     pub fn as_authorization(&self) -> Result<Authorization, MinosError> {
         Ok(Authorization {
             permissions: self.string_permissions_to_vec_permissions(),
-            user_id: self.userId.clone(),
-            resource_id: self.resourceId.clone(),
-            resource_type: self.resourceType.clone(),
-            expiration: string_as_datetime(&self.expiration)?,
+            agent_id: NonEmptyString::try_from(self.agent_id.as_str())?,
+            resource_id: NonEmptyString::try_from(self.resource_id.as_str())?,
+            resource_type: NonEmptyString::from_str(&self.resource_type),
+            expiration: self.expiration,
         })
     }
 
@@ -89,24 +85,10 @@ impl From<Authorization> for AuthorizationClaims {
     fn from(auth: Authorization) -> Self {
         AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
-            userId: auth.user_id,
-            resourceId: auth.resource_id,
-            resourceType: auth.resource_type,
-            expiration: auth.expiration.format(utils::DATETIME_FMT).to_string(),
-            exp: auth.expiration.timestamp(),
-        }
-    }
-}
-
-impl From<&Authorization> for AuthorizationClaims {
-    fn from(auth: &Authorization) -> Self {
-        AuthorizationClaims {
-            permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
-            userId: auth.user_id().to_string(),
-            resourceId: auth.resource_id().to_string(),
-            resourceType: auth.resource_type().to_string(),
-            expiration: auth.expiration.format(utils::DATETIME_FMT).to_string(),
-            exp: auth.expiration.timestamp(),
+            agent_id: auth.agent_id.to_string(),
+            resource_id: auth.resource_id.to_string(),
+            resource_type: none_as_empty_string(auth.resource_type.clone()),
+            expiration: auth.expiration,
         }
     }
 }

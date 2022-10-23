@@ -1,37 +1,22 @@
+use crate::agent::Agent;
 use crate::errors::{ErrorKind, MinosError};
-use crate::group::GroupId;
-use crate::resources::{Owner, OwnerType, ResourceType};
-use crate::user::UserAttributes;
-use crate::Status;
-use chrono::{Duration, NaiveDateTime, Utc};
+use crate::NonEmptyString;
+use chrono::Utc;
 
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
-/// Users permissions, defines what a user is allowed to do.
+/// Agents permissions, defines what a user is allowed to do.
 pub enum Permission {
-    /// The user can create the source
+    /// The agent can create the source
     Create,
-    /// The user can read the source
+    /// The agent can read the source
     Read,
-    /// The user can edit the source, but can't delete the source
+    /// The agent can edit the source, but can't delete the source
     Update,
-    /// The user can delete the source
+    /// The agent can delete the source
     Delete,
 
-    /// The user can perform a specific action
-    #[cfg(feature = "custom_permission")]
+    /// The agent can perform a specific action
     Custom(String),
-}
-
-#[cfg(not(feature = "custom_permission"))]
-impl From<u8> for Permission {
-    fn from(n: u8) -> Self {
-        match n {
-            3 => Permission::Delete,
-            2 => Permission::Update,
-            1 => Permission::Create,
-            _ => Permission::Read,
-        }
-    }
 }
 
 impl ToString for Permission {
@@ -40,44 +25,19 @@ impl ToString for Permission {
     }
 }
 
-#[cfg(not(feature = "custom_permission"))]
 impl From<&str> for Permission {
     fn from(str: &str) -> Self {
-        if str == Permission::Create.to_string() {
-            Permission::Create
-        } else if str == Permission::Update.to_string() {
-            Permission::Update
-        } else if str == Permission::Delete.to_string() {
-            Permission::Delete
-        } else {
-            Permission::Read
-        }
-    }
-}
-
-#[cfg(feature = "custom_permission")]
-impl From<&str> for Permission {
-    fn from(str: &str) -> Self {
-        if str == Permission::Create.to_string() {
-            Permission::Create
-        } else if str == Permission::Update.to_string() {
-            Permission::Update
-        } else if str == Permission::Delete.to_string() {
-            Permission::Delete
-        } else if str == Permission::Read.to_string() {
-            Permission::Read
-        } else {
-            Permission::Custom(str.to_string())
+        match str {
+            "create" => Self::Create,
+            "read" => Self::Read,
+            "update" => Self::Update,
+            "delete" => Self::Delete,
+            _ => Self::Custom(str.to_string()),
         }
     }
 }
 
 impl Permission {
-    #[cfg(not(feature = "custom_permission"))]
-    pub fn as_u8(&self) -> u8 {
-        self.clone() as u8
-    }
-
     /// Return simple explanation for permission required
     ///
     ///# Examples
@@ -127,55 +87,54 @@ impl Permission {
     }
 }
 
-/// Users authorizations
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
-    pub(crate) user_id: String,
-    pub(crate) resource_id: String,
-    pub(crate) resource_type: String,
-    pub(crate) expiration: NaiveDateTime,
+    pub(crate) agent_id: NonEmptyString,
+    pub(crate) resource_id: NonEmptyString,
+    pub(crate) resource_type: Option<NonEmptyString>,
+    pub(crate) expiration: u64,
 }
 
 impl Authorization {
-    pub fn permissions(&self) -> &Vec<Permission> {
-        &self.permissions
+    pub fn permissions(&self) -> Vec<Permission> {
+        self.permissions.clone()
     }
 
-    pub fn user_id(&self) -> &str {
-        &self.user_id
+    pub fn agent_id(&self) -> String {
+        self.agent_id.to_string()
     }
 
-    pub fn resource_id(&self) -> &str {
-        &self.resource_id
+    pub fn resource_id(&self) -> String {
+        self.resource_id.to_string()
     }
 
-    pub fn resource_type(&self) -> &str {
-        &self.resource_type
+    pub fn resource_type(&self) -> Option<NonEmptyString> {
+        self.resource_type.clone()
     }
-    pub fn expiration(&self) -> NaiveDateTime {
+    pub fn expiration(&self) -> u64 {
         self.expiration
     }
 
-    fn basic_check(&self, resource_id: &str, user: &UserAttributes) -> Result<(), MinosError> {
-        if &self.resource_id != resource_id {
+    fn basic_check<A: Agent>(&self, resource_id: &str, agent: &A) -> Result<(), MinosError> {
+        if &self.resource_id.to_string() != resource_id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
                 "Authorization created for another resource",
             ));
         }
 
-        if self.expiration <= Utc::now().naive_utc() {
+        if self.expiration <= Utc::now().timestamp() as u64 {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
                 "The Authorization is expired",
             ));
         }
 
-        if &user.id != &self.user_id {
+        if &agent.id() != &self.agent_id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
-                &format!("This Authorization is not for the user {}", &user.id),
+                &format!("This Authorization is not for the user {}", agent.id()),
             ));
         }
 
@@ -193,23 +152,23 @@ impl Authorization {
         Ok(())
     }
 
-    pub fn check(
+    pub fn check<A: Agent>(
         &self,
         resource_id: &str,
-        user: &UserAttributes,
+        agent: &A,
         required_permission: Permission,
     ) -> Result<(), MinosError> {
-        let _ = self.basic_check(resource_id, user)?;
+        let _ = self.basic_check(resource_id, agent)?;
         self.search_permission(required_permission)
     }
 
-    pub fn multi_permissions_check(
+    pub fn multi_permissions_check<A: Agent>(
         &self,
         resource_id: &str,
-        user: &UserAttributes,
+        agent: &A,
         required_permissions: &Vec<Permission>,
     ) -> Result<(), MinosError> {
-        let _ = self.basic_check(resource_id, user)?;
+        let _ = self.basic_check(resource_id, agent)?;
 
         for permission in required_permissions {
             if !&self.permissions.contains(permission) {
@@ -233,15 +192,15 @@ impl Authorization {
 ///
 #[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
 pub struct Policy {
-    /// authorization duration, in seconds (recommended max duration: 65535 ~ 1092 min ~ 18 hours)
-    pub(crate) duration: u16,
+    /// authorization duration, in seconds
+    pub(crate) duration: u64,
 
     /// Use only for objects with real owner. If you want set only Permission::Create,
     /// use other authorization policy.
     pub(crate) by_owner: bool,
 
-    /// Restricts the authorization to only users with specific groups
-    pub(crate) groups_ids: Option<Vec<GroupId>>,
+    /// Restricts the authorization to only agents in specific groups
+    pub(crate) groups_ids: Option<Vec<NonEmptyString>>,
 
     /// permissions granted
     pub(crate) permissions: Vec<Permission>,
@@ -249,9 +208,9 @@ pub struct Policy {
 
 impl Policy {
     pub fn new(
-        duration: u16,
+        duration: u64,
         by_owner: bool,
-        groups_ids: Option<Vec<GroupId>>,
+        groups_ids: Option<Vec<NonEmptyString>>,
         permissions: Vec<Permission>,
     ) -> Self {
         Self {
@@ -261,209 +220,16 @@ impl Policy {
             permissions,
         }
     }
-    pub fn duration(&self) -> u16 {
+    pub fn duration(&self) -> u64 {
         self.duration
     }
     pub fn by_owner(&self) -> bool {
         self.by_owner
     }
-    pub fn groups_ids(&self) -> &Option<Vec<GroupId>> {
+    pub fn groups_ids(&self) -> &Option<Vec<NonEmptyString>> {
         &self.groups_ids
     }
     pub fn permissions(&self) -> &Vec<Permission> {
         &self.permissions
-    }
-}
-
-pub struct AuthorizationBuilder<'b> {
-    resource_type: &'b ResourceType,
-    owner: Option<Owner>,
-}
-
-impl<'b> AuthorizationBuilder<'b> {
-    pub fn new(resource_type: &'b ResourceType, owner: Option<Owner>) -> Self {
-        Self {
-            resource_type,
-            owner,
-        }
-    }
-
-    fn check_groups(&self, user: &UserAttributes, policy: &Policy) -> Result<(), MinosError> {
-        if let Some(possible_ids) = &policy.groups_ids {
-            for id in possible_ids {
-                if user.groups.contains(&id) {
-                    return Ok(());
-                }
-            }
-
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The user is not in the correct group",
-            ));
-        }
-
-        Ok(())
-    }
-
-    fn same_group_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        match &self.owner {
-            None => Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The resource not have an owner",
-            )),
-            Some(owner) => match owner {
-                Owner::User(_) => Err(MinosError::new(
-                    ErrorKind::Authorization,
-                    "The owner of resource is an user",
-                )),
-                Owner::Group(id) => {
-                    if !&user.groups.contains(&GroupId::from(id.as_str())) {
-                        return Err(MinosError::new(
-                            ErrorKind::Authorization,
-                            "The user is not in the owning group",
-                        ));
-                    }
-
-                    Ok(())
-                }
-            },
-        }
-    }
-
-    fn same_user_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        match &self.owner {
-            None => Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The resource not have an owner",
-            )),
-            Some(owner) => match owner {
-                Owner::User(user_id) => {
-                    if user_id != &user.id {
-                        return Err(MinosError::new(
-                            ErrorKind::Authorization,
-                            "The user is not the owner",
-                        ));
-                    }
-
-                    Ok(())
-                }
-                Owner::Group(_) => Err(MinosError::new(
-                    ErrorKind::Authorization,
-                    "The owner of resource is a group",
-                )),
-            },
-        }
-    }
-
-    fn by_owner_check(&self, user: &UserAttributes) -> Result<(), MinosError> {
-        match &self.resource_type.owner_type {
-            OwnerType::None => {
-                return Err(MinosError::new(
-                    ErrorKind::IncompatibleAuthPolicy,
-                    "The resource haven't an owner",
-                ));
-            }
-            OwnerType::User => self.same_user_check(&user)?,
-            OwnerType::Group => self.same_group_check(&user)?,
-        };
-
-        Ok(())
-    }
-
-    /// Create an Authorization based in Policy, resource id, and User. This function unlike,
-    /// [`build`], checks if the policy is malformed.
-    ///
-    /// # Errors
-    /// This function will return an error in three cases:
-    /// * [`InactiveUser`]: The user is not active.
-    /// * [`IncompatibleAuthPolicy`]: The policy not corresponds to resource type or the attribute
-    ///   `by_owner` is true, but the resource not have an owner.
-    /// * [`Authorization`]: The user not have any permissions available.
-    ///
-    /// [`build`]: AuthorizationBuilder::build
-    /// [`InactiveUser`]: ErrorKind::InactiveUser
-    /// [`IncompatibleAuthPolicy`]: ErrorKind::IncompatibleAuthPolicy
-    /// [`Authorization`]: ErrorKind::Authorization
-    pub fn build_by_policy(
-        &self,
-        policy: &Policy,
-        resource_id: &str,
-        user: &UserAttributes,
-    ) -> Result<Authorization, MinosError> {
-        if user.status != Status::Active {
-            return Err(MinosError::new(
-                ErrorKind::InactiveUser,
-                "The user is not active",
-            ));
-        }
-
-        if !&self.resource_type.policies.contains(&policy) {
-            return Err(MinosError::new(
-                ErrorKind::IncompatibleAuthPolicy,
-                "The policy not corresponds to resource type",
-            ));
-        }
-
-        if policy.by_owner {
-            let _ = self.by_owner_check(&user)?;
-        } else {
-            let _ = self.check_groups(&user, &policy)?;
-        }
-
-        Ok(Authorization {
-            permissions: policy.permissions.clone(),
-            user_id: user.id.clone(),
-            resource_id: resource_id.to_string(),
-            resource_type: self.resource_type.label.clone(),
-            expiration: Utc::now().naive_utc() + Duration::seconds(policy.duration.clone() as i64),
-        })
-    }
-
-    /// Create an Authorization based in resource id and User. Check all policies and assign all
-    ///  permissions available to the user, but assign the shortest duration found.
-    ///
-    /// # Errors
-    /// This function will return an error only in two cases:
-    /// * [`InactiveUser`]: The user is not active.
-    /// * [`Authorization`]: The user not have any permissions available.
-    ///
-    /// [`InactiveUser`]: ErrorKind::InactiveUser
-    /// [`Authorization`]: ErrorKind::Authorization
-    pub fn build(
-        &self,
-        resource_id: &str,
-        user: &UserAttributes,
-    ) -> Result<Authorization, MinosError> {
-        if user.status != Status::Active {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The user is not active",
-            ));
-        }
-
-        let mut permissions = vec![];
-        let mut durations = vec![];
-        for policy in &self.resource_type.policies {
-            match self.build_by_policy(&policy, &resource_id, &user) {
-                Ok(mut auth) => {
-                    permissions.append(&mut auth.permissions);
-                    durations.push(&policy.duration);
-                }
-                Err(_) => continue,
-            }
-        }
-
-        durations.sort();
-        let seconds = **durations
-            .get(0)
-            .ok_or(MinosError::new(ErrorKind::Authorization, "Not authorized"))?;
-
-        Ok(Authorization {
-            permissions,
-            user_id: user.id.clone(),
-            resource_id: resource_id.to_string(),
-            resource_type: self.resource_type.label.clone(),
-            expiration: Utc::now().naive_utc() + Duration::seconds(seconds as i64),
-        })
     }
 }
