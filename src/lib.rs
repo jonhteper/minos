@@ -1,17 +1,15 @@
 //! Authorization library
 //!
-use std::fmt::{Display, Formatter};
 use crate::errors::{ErrorKind, MinosError};
+use std::fmt::{Display, Formatter};
 
 pub mod agent;
 pub mod authorization;
+pub mod authorization_builder;
 pub mod errors;
 pub mod prelude;
 pub mod resources;
 pub mod utils;
-
-#[cfg(feature = "authorization_builder")]
-pub mod authorization_builder;
 
 #[cfg(feature = "jwt")]
 pub mod jwt;
@@ -38,12 +36,6 @@ impl TryFrom<&str> for NonEmptyString {
         Ok(Self(str.to_string()))
     }
 }
-/*
-impl ToString for NonEmptyString {
-    fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-}*/
 
 impl Display for NonEmptyString {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

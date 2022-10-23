@@ -1,11 +1,11 @@
 #[cfg(test)]
-#[cfg(not(feature = "resource_utils"))]
+#[cfg(not(feature = "custom_authorization"))]
 mod std {
     use crate::agent::Agent;
     use crate::authorization::{Permission, Policy};
     use crate::authorization_builder::AuthorizationBuilder;
-    use crate::NonEmptyString;
     use crate::resources::Resource;
+    use crate::NonEmptyString;
 
     pub struct User {
         pub id: NonEmptyString,
@@ -86,7 +86,6 @@ mod std {
         }
     }
 
-
     #[test]
     fn authorization_by_user() {
         let user = regular_user();
@@ -106,7 +105,7 @@ mod std {
             .build(&user)
             .expect("Error building Authorization");
 
-        let _= auth
+        let _ = auth
             .search_permission(Permission::Create)
             .expect("Error with authorization");
     }
@@ -129,7 +128,7 @@ mod std {
         let auth = AuthorizationBuilder::new(&message)
             .build(&reader_user)
             .expect("Error building Authorization");
-        let _= auth
+        let _ = auth
             .search_permission(Permission::Read)
             .expect("Error with permission");
     }
@@ -153,9 +152,7 @@ mod std {
         let _auth = builder
             .build(&invalid_user)
             .expect_err("Authorization should not be able to be created");
-        let auth = builder
-            .build(&admin_user())
-            .expect("Error building auth");
+        let auth = builder.build(&admin_user()).expect("Error building auth");
 
         let _ = auth
             .check(&message.id.to_string(), &invalid_user, Permission::Read)
@@ -211,50 +208,68 @@ mod std {
             &user,
             &vec![Permission::Read, Permission::Delete],
         )
-            .expect("Error with authorization check");
+        .expect("Error with authorization check");
 
         auth.multi_permissions_check(
             &message.id().to_string(),
             &user,
             &vec![Permission::Read, Permission::from("sign")],
         )
-            .expect_err("The authorization check must failed");
+        .expect_err("The authorization check must failed");
     }
 }
-/*
+
 #[cfg(feature = "jwt")]
+#[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod jwt_test {
-    use crate::authorization::{Authorization, Permission};
+    use crate::agent::Agent;
+    use crate::authorization::{Authorization, Permission, Policy};
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
-    use crate::resources::{OwnerType, ResourceType};
-    use crate::utils::formatted_datetime_now;
-    use chrono::{Duration, Utc};
+    use crate::prelude::Resource;
+    use crate::NonEmptyString;
+    use chrono::Utc;
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
+
+    struct Foo;
+
+    impl Resource for Foo {
+        fn id(&self) -> NonEmptyString {
+            NonEmptyString::from_str("resource-id").unwrap()
+        }
+
+        fn owner(&self) -> Option<NonEmptyString> {
+            NonEmptyString::from_str("user-id")
+        }
+
+        fn policies(&self) -> Vec<Policy> {
+            vec![Policy::new(1, true, None, Permission::crud())]
+        }
+
+        fn resource_type(&self) -> Option<NonEmptyString> {
+            NonEmptyString::from_str("foo")
+        }
+    }
 
     #[test]
     fn authorization_as_claims() -> Result<(), MinosError> {
-        let resource_type = ResourceType {
-            label: "resource".to_string(),
-            owner_type: OwnerType::None,
-            policies: vec![],
-        };
+        let resource = Foo;
 
         let auth = Authorization {
             permissions: Permission::crud(),
-            agent_id: "user-id".to_string(),
-            resource_id: "resource-id".to_string(),
-            resource_type: resource_type.label().to_string(),
-            expiration: formatted_datetime_now()?,
+            agent_id: resource.owner().unwrap(),
+            resource_id: resource.id(),
+            resource_type: resource.resource_type(),
+            expiration: Utc::now().timestamp() as u64,
         };
 
-        let generate_claims = AuthorizationClaims::from(&auth);
-        let generated_auth = &generate_claims
+        let generate_claims = AuthorizationClaims::from(auth.clone());
+        let generated_auth = generate_claims
             .as_authorization()
             .expect("Error creating authorization from claims");
 
-        assert_eq!(&&auth, &generated_auth);
+        assert_eq!(&auth, &generated_auth);
         assert_eq!(&generate_claims, &AuthorizationClaims::from(generated_auth));
 
         Ok(())
@@ -270,18 +285,12 @@ mod jwt_test {
             Algorithm::HS256,
         );
 
-        let user_id = "user-id";
-        let resource_id = "resource-id";
-        let resource_type = "example.resource";
         let auth_claims = AuthorizationClaims::new(
             vec![Permission::Read.to_string(), Permission::Update.to_string()],
-            user_id.to_string(),
-            resource_id.to_string(),
-            resource_type.to_string(),
-            Utc::now()
-                .naive_utc()
-                .checked_add_signed(Duration::seconds(30))
-                .unwrap(),
+            NonEmptyString::from_str("user-id").unwrap(),
+            NonEmptyString::from_str("resource-id").unwrap(),
+            "example.resource".to_string(),
+            (Utc::now().timestamp() + 30) as u64,
         );
 
         let token = token_server
@@ -296,34 +305,24 @@ mod jwt_test {
     }
 }
 
-
-
 #[cfg(feature = "toml_storage")]
+#[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod toml_test {
-    use crate::authorization::{Permission, Policy};
+    use crate::agent::Agent;
+    use crate::authorization::{Authorization, Permission, Policy};
     use crate::errors::MinosError;
-    use crate::group::GroupId;
-    use crate::resources::Owner::User;
-    use crate::resources::{OwnerType, ResourceType};
-    use crate::test::create_temp_file;
-    use crate::toml::TomlFile;
+    use crate::resources::AsResource;
+    use crate::resources::Resource;
+    use crate::toml::{StoredResource, TomlFile};
+    use crate::NonEmptyString;
+    use serde::{Deserialize, Serialize};
     use std::env;
-    use std::time::Instant;
-
-    fn create_temp_file(content: &str) -> Result<PathBuf, MinosError> {
-        let mut path = env::temp_dir();
-        path.push("example.resource.toml");
-        let mut file = File::create(&path)?;
-
-        let _ = file.write_all(&content.as_bytes())?;
-
-        Ok(path)
-    }
-
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::PathBuf;
     static FILE_CONTENT: &str = r#"
     label = "example resource"
-    owner_type = {user = true, group = false}
 
     [[policies]]
     duration = 120
@@ -336,50 +335,123 @@ mod toml_test {
     groups_ids = ["example-group-id-1", "example-group-id-2"]
     permissions = ["read"]"#;
 
+    fn create_temp_file(content: &str) -> Result<PathBuf, MinosError> {
+        let mut path = env::temp_dir();
+        path.push("example.resource");
+        let mut file = File::create(&path)?;
+
+        let _ = file.write_all(&content.as_bytes())?;
+
+        Ok(path)
+    }
+
+    #[derive(Debug, PartialEq)]
+    struct GenericResource {
+        pub id: NonEmptyString,
+        pub owner: Option<NonEmptyString>,
+        pub policies: Vec<Policy>,
+        pub resource_type: Option<NonEmptyString>,
+    }
+
+    impl Resource for GenericResource {
+        fn id(&self) -> NonEmptyString {
+            self.id.clone()
+        }
+
+        fn owner(&self) -> Option<NonEmptyString> {
+            self.owner.clone()
+        }
+
+        fn policies(&self) -> Vec<Policy> {
+            self.policies.clone()
+        }
+
+        fn resource_type(&self) -> Option<NonEmptyString> {
+            self.resource_type.clone()
+        }
+    }
+
+    struct ResourceBuilder {
+        pub stored_resource: StoredResource,
+        pub id: NonEmptyString,
+        pub owner: Option<NonEmptyString>,
+    }
+
+    impl AsResource<GenericResource> for ResourceBuilder {
+        type Error = MinosError;
+        fn as_resource(&self) -> Result<GenericResource, MinosError> {
+            Ok(GenericResource {
+                id: self.id.clone(),
+                owner: self.owner.clone(),
+                policies: self.stored_resource.policies(),
+                resource_type: self.stored_resource.resource_type(),
+            })
+        }
+    }
+
+    fn resource_from_toml_file(
+        file: TomlFile,
+        id: NonEmptyString,
+        owner: Option<NonEmptyString>,
+    ) -> Result<GenericResource, MinosError> {
+        let stored_resource = StoredResource::try_from(file)?;
+        let builder = ResourceBuilder {
+            stored_resource,
+            id,
+            owner,
+        };
+
+        builder.as_resource()
+    }
+
     #[test]
-    fn resource_type_by_file() -> Result<(), MinosError> {
-        let bench_instant = Instant::now();
+    fn resource_by_file() -> Result<(), MinosError> {
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(path)?;
-        let resource_type = ResourceType::try_from(toml_file)?;
+        let resource = resource_from_toml_file(
+            toml_file,
+            NonEmptyString::from_str("example-resource-id").unwrap(),
+            NonEmptyString::from_str("example-user-id"),
+        )?;
 
-        println!("{:#?}", resource_type);
-        println!(
-            "resource type by file benchmark: {:?}",
-            bench_instant.elapsed()
-        );
+        println!("{:#?}", resource);
 
         Ok(())
     }
 
     #[test]
-    fn file_by_resource_type() -> Result<(), MinosError> {
+    fn file_by_resource() -> Result<(), MinosError> {
         let mut path = env::temp_dir();
-        path.push("ref.resource_type.toml");
-        let resource_type = ResourceType::new(
-            "example resource".to_string(),
-            OwnerType::User,
-            vec![
+        path.push("ref.resource");
+        let resource = GenericResource {
+            id: NonEmptyString::from_str("example-resource-id").unwrap(),
+            owner: NonEmptyString::from_str("example-user-id"),
+            resource_type: NonEmptyString::from_str("example resource"),
+            policies: vec![
                 Policy::new(120, true, None, Permission::crud()),
                 Policy::new(
                     300,
                     false,
                     Some(vec![
-                        GroupId::from("example-group-id-1"),
-                        GroupId::from("example-group-id-2"),
+                        NonEmptyString::from_str("example-group-id-1").unwrap(),
+                        NonEmptyString::from_str("example-group-id-2").unwrap(),
                     ]),
                     vec![Permission::Read],
                 ),
             ],
-        );
-        let _ = TomlFile::create(&resource_type, &path)?;
+        };
+
+        let _ = TomlFile::create(&resource, &path)?;
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(path)?;
-        let saved_resource_type = ResourceType::try_from(toml_file)?;
+        let saved_resource = resource_from_toml_file(
+            toml_file,
+            NonEmptyString::from_str("example-resource-id").unwrap(),
+            NonEmptyString::from_str("example-user-id"),
+        )?;
 
-        assert_eq!(resource_type, saved_resource_type);
+        assert_eq!(resource, saved_resource);
 
         Ok(())
     }
 }
-*/

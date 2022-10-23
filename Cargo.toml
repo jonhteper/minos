@@ -19,9 +19,8 @@ serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
 
 [features]
-server = ["jwt", "authorization_builder", "toml_storage"]
-default = ["authorization_builder"]
-authorization_builder =[]
+server = ["jwt", "toml_storage", "custom_authorization"]
 jwt = ["jsonwebtoken", "serde", "resource_utils"]
-toml_storage = ["serde", "toml", "authorization_builder"]
+toml_storage = ["serde", "toml", "resource_utils"]
 resource_utils = []
+custom_authorization = []

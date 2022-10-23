@@ -14,23 +14,23 @@ pub struct AuthorizationClaims {
     pub(crate) agent_id: String,
     pub(crate) resource_id: String,
     pub(crate) resource_type: String,
-    pub(crate) expiration: u64,
+    pub(crate) exp: u64,
 }
 
 impl AuthorizationClaims {
     pub fn new(
         permissions: Vec<String>,
-        agent_id: String,
-        resource_id: String,
+        agent_id: NonEmptyString,
+        resource_id: NonEmptyString,
         resource_type: String,
-        expiration: u64,
+        exp: u64,
     ) -> Self {
         Self {
             permissions,
-            agent_id,
-            resource_id,
+            agent_id: agent_id.to_string(),
+            resource_id: resource_id.to_string(),
             resource_type,
-            expiration,
+            exp,
         }
     }
 
@@ -51,7 +51,7 @@ impl AuthorizationClaims {
     }
 
     pub fn expiration(&self) -> u64 {
-        self.expiration
+        self.exp
     }
 
     fn string_permissions_to_vec_permissions(&self) -> Vec<Permission> {
@@ -68,7 +68,7 @@ impl AuthorizationClaims {
             agent_id: NonEmptyString::try_from(self.agent_id.as_str())?,
             resource_id: NonEmptyString::try_from(self.resource_id.as_str())?,
             resource_type: NonEmptyString::from_str(&self.resource_type),
-            expiration: self.expiration,
+            expiration: self.exp,
         })
     }
 
@@ -88,7 +88,7 @@ impl From<Authorization> for AuthorizationClaims {
             agent_id: auth.agent_id.to_string(),
             resource_id: auth.resource_id.to_string(),
             resource_type: none_as_empty_string(auth.resource_type.clone()),
-            expiration: auth.expiration,
+            exp: auth.expiration,
         }
     }
 }

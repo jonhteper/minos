@@ -2,5 +2,5 @@
 
 # minos
 
-Authorization library
+Authorization library for minos protocol
 

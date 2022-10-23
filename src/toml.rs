@@ -30,14 +30,13 @@ impl TomlFile {
         let _ = file.write_all(content.as_bytes())?;
 
         Ok(Self { file })
-
     }
 }
-
 
 impl TryFrom<PathBuf> for TomlFile {
     type Error = MinosError;
 
+    /// Saves the file
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         let extension = path
             .extension()
@@ -59,6 +58,7 @@ impl TryFrom<PathBuf> for TomlFile {
         })
     }
 }
+
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
 struct StoredPolicy {
     duration: u64,
@@ -69,8 +69,7 @@ struct StoredPolicy {
 
 impl StoredPolicy {
     fn vec_string_as_vec_group_id(vec: Vec<String>) -> Vec<NonEmptyString> {
-        vec
-            .into_iter()
+        vec.into_iter()
             .filter_map(|g| NonEmptyString::try_from(g.as_str()).ok())
             .collect()
     }
@@ -96,7 +95,6 @@ impl StoredPolicy {
     }
 }
 
-
 impl From<Policy> for StoredPolicy {
     fn from(policy: Policy) -> Self {
         let groups_ids = match policy.groups_ids {
@@ -117,28 +115,29 @@ impl From<Policy> for StoredPolicy {
     }
 }
 
-
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
-struct StoredResource {
+pub struct StoredResource {
     label: String,
     policies: Vec<StoredPolicy>,
 }
 
 impl StoredResource {
     pub fn try_from_resource<R: Resource>(resource: &R) -> Result<Self, MinosError> {
-        let label =  resource.resource_type()
+        let label = resource
+            .resource_type()
             .ok_or(MinosError::new(
-                ErrorKind::Toml, "The resource needs an explicit resource type"
-            ))?.to_string();
+                ErrorKind::Toml,
+                "The resource needs an explicit resource type",
+            ))?
+            .to_string();
 
-        let policies = resource.policies().into_iter()
+        let policies = resource
+            .policies()
+            .into_iter()
             .map(|p| StoredPolicy::from(p))
             .collect();
 
-        Ok(Self {
-            label,
-            policies
-        })
+        Ok(Self { label, policies })
     }
 
     pub fn resource_type(&self) -> Option<NonEmptyString> {
@@ -146,11 +145,13 @@ impl StoredResource {
     }
 
     pub fn policies(&self) -> Vec<Policy> {
-        self.policies.clone().into_iter()
-            .flat_map(|p| p.as_policy().ok()).collect()
+        self.policies
+            .clone()
+            .into_iter()
+            .flat_map(|p| p.as_policy().ok())
+            .collect()
     }
 }
-
 
 impl TryFrom<TomlFile> for StoredResource {
     type Error = MinosError;
@@ -162,4 +163,3 @@ impl TryFrom<TomlFile> for StoredResource {
         Ok(decoded)
     }
 }
-

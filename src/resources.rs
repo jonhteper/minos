@@ -9,7 +9,7 @@ pub trait Resource {
     fn policies(&self) -> Vec<Policy>;
     fn resource_type(&self) -> Option<NonEmptyString>;
 
-    #[cfg(feature = "resource_utils")]
+    #[cfg(feature = "custom_authorization")]
     /// For custom-made rules implementation to generate an authorization (for more
     /// specific cases than those provided for by-group rules).
     fn authorize(&self, agent: &impl Agent) -> Result<Authorization, MinosError>;
