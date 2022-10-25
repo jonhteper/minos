@@ -314,15 +314,14 @@ mod toml_test {
     use crate::errors::MinosError;
     use crate::resources::AsResource;
     use crate::resources::Resource;
-    use crate::toml::{StoredResource, TomlFile};
+    use crate::toml::{StoredResourcePolicies, TomlFile};
     use crate::NonEmptyString;
-    use serde::{Deserialize, Serialize};
     use std::env;
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
     static FILE_CONTENT: &str = r#"
-    label = "example resource"
+    resource_type = "example resource"
 
     [[policies]]
     duration = 120
@@ -372,14 +371,14 @@ mod toml_test {
     }
 
     struct ResourceBuilder {
-        pub stored_resource: StoredResource,
+        pub stored_resource: StoredResourcePolicies,
         pub id: NonEmptyString,
         pub owner: Option<NonEmptyString>,
     }
 
     impl AsResource<GenericResource> for ResourceBuilder {
         type Error = MinosError;
-        fn as_resource(&self) -> Result<GenericResource, MinosError> {
+        fn as_resource(&mut self) -> Result<GenericResource, MinosError> {
             Ok(GenericResource {
                 id: self.id.clone(),
                 owner: self.owner.clone(),
@@ -394,8 +393,8 @@ mod toml_test {
         id: NonEmptyString,
         owner: Option<NonEmptyString>,
     ) -> Result<GenericResource, MinosError> {
-        let stored_resource = StoredResource::try_from(file)?;
-        let builder = ResourceBuilder {
+        let stored_resource = StoredResourcePolicies::try_from(file)?;
+        let mut builder = ResourceBuilder {
             stored_resource,
             id,
             owner,
@@ -407,7 +406,7 @@ mod toml_test {
     #[test]
     fn resource_by_file() -> Result<(), MinosError> {
         let path = create_temp_file(FILE_CONTENT)?;
-        let toml_file = TomlFile::try_from(path)?;
+        let toml_file = TomlFile::try_from(&path)?;
         let resource = resource_from_toml_file(
             toml_file,
             NonEmptyString::from_str("example-resource-id").unwrap(),
@@ -443,7 +442,7 @@ mod toml_test {
 
         let _ = TomlFile::create(&resource, &path)?;
         let path = create_temp_file(FILE_CONTENT)?;
-        let toml_file = TomlFile::try_from(path)?;
+        let toml_file = TomlFile::try_from(&path)?;
         let saved_resource = resource_from_toml_file(
             toml_file,
             NonEmptyString::from_str("example-resource-id").unwrap(),
