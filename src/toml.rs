@@ -1,7 +1,5 @@
 //! This module allows you save an read [`Resource`] policies in toml files
-use crate::agent::Agent;
-use crate::authorization::{Authorization, Permission, Policy};
-use crate::authorization_builder::AuthorizationBuilder;
+use crate::authorization::{Permission, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::resources::Resource;
 use crate::NonEmptyString;
@@ -24,7 +22,7 @@ impl TomlFile {
 
     /// Create the toml file in the path
     pub fn create<R: Resource>(resource: &R, path: &PathBuf) -> Result<Self, MinosError> {
-        let stored_rs = StoredResource::try_from_resource(resource)?;
+        let stored_rs = StoredResourcePolicies::try_from_resource(resource)?;
         let content = toml::to_string(&stored_rs)?;
         let mut file = File::create(path)?;
         let _ = file.write_all(content.as_bytes())?;
@@ -33,11 +31,11 @@ impl TomlFile {
     }
 }
 
-impl TryFrom<PathBuf> for TomlFile {
+impl TryFrom<&PathBuf> for TomlFile {
     type Error = MinosError;
 
     /// Saves the file
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let extension = path
             .extension()
             .ok_or(MinosError::new(
@@ -46,7 +44,7 @@ impl TryFrom<PathBuf> for TomlFile {
             ))?
             .to_str();
 
-        if extension != Some("toml") && extension != Some("resource") {
+        if extension != Some("toml") && extension != Some("resource") && extension != Some("policies") {
             return Err(MinosError::new(
                 ErrorKind::BadExtension,
                 "The file not have the correct extension",
@@ -116,14 +114,14 @@ impl From<Policy> for StoredPolicy {
 }
 
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
-pub struct StoredResource {
-    label: String,
+pub struct StoredResourcePolicies {
+    resource_type: String,
     policies: Vec<StoredPolicy>,
 }
 
-impl StoredResource {
+impl StoredResourcePolicies {
     pub fn try_from_resource<R: Resource>(resource: &R) -> Result<Self, MinosError> {
-        let label = resource
+        let resource_type = resource
             .resource_type()
             .ok_or(MinosError::new(
                 ErrorKind::Toml,
@@ -137,11 +135,11 @@ impl StoredResource {
             .map(|p| StoredPolicy::from(p))
             .collect();
 
-        Ok(Self { label, policies })
+        Ok(Self { resource_type, policies })
     }
 
     pub fn resource_type(&self) -> Option<NonEmptyString> {
-        NonEmptyString::from_str(&self.label)
+        NonEmptyString::from_str(&self.resource_type)
     }
 
     pub fn policies(&self) -> Vec<Policy> {
@@ -153,12 +151,12 @@ impl StoredResource {
     }
 }
 
-impl TryFrom<TomlFile> for StoredResource {
+impl TryFrom<TomlFile> for StoredResourcePolicies {
     type Error = MinosError;
 
     fn try_from(toml_file: TomlFile) -> Result<Self, Self::Error> {
         let mut file = toml_file;
-        let decoded: StoredResource = toml::from_str(&mut file.try_to_string()?)?;
+        let decoded: StoredResourcePolicies = toml::from_str(&mut file.try_to_string()?)?;
 
         Ok(decoded)
     }
