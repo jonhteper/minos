@@ -12,11 +12,11 @@ pub trait Resource {
     #[cfg(feature = "custom_authorization")]
     /// For custom-made rules implementation to generate an authorization (for more
     /// specific cases than those provided for by-group rules).
-    fn authorize(&self, agent: &impl Agent) -> Result<Authorization, MinosError>;
+    fn authorize<A: Agent>(&self, agent: &A) -> Result<Authorization, MinosError>;
 }
 
 #[cfg(feature = "resource_utils")]
 pub trait AsResource<R: Resource> {
     type Error;
-    fn as_resource(&self) -> Result<R, Self::Error>;
+    fn as_resource(&mut self) -> Result<R, Self::Error>;
 }
