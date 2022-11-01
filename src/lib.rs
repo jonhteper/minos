@@ -20,7 +20,7 @@ pub mod toml;
 #[cfg(test)]
 mod test;
 
-#[derive(PartialOrd, PartialEq, Clone, Debug)]
+#[derive(PartialOrd, PartialEq, Clone, Debug, Eq, Hash)]
 pub struct NonEmptyString(String);
 
 impl TryFrom<&str> for NonEmptyString {
