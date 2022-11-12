@@ -6,7 +6,7 @@ use crate::NonEmptyString;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg(feature = "jwt")]
 pub struct AuthorizationClaims {
@@ -121,8 +121,8 @@ impl TokenServer {
     }
 
     pub fn get_claims_by_token(&self, token: &str) -> Result<AuthorizationClaims, MinosError> {
-        let validation = Validation::new(self.algorithm.clone());
-        let token_data = decode::<AuthorizationClaims>(&token, &self.decoding_key, &validation)?;
+        let validation = Validation::new(self.algorithm);
+        let token_data = decode::<AuthorizationClaims>(token, &self.decoding_key, &validation)?;
         Ok(token_data.claims)
     }
 }

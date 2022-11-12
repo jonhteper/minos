@@ -6,7 +6,7 @@ use std::io;
 #[cfg(feature = "jwt")]
 use jsonwebtoken;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ErrorKind {
     Io(io::ErrorKind),
     Chrono,
@@ -28,15 +28,19 @@ pub enum ErrorKind {
     ///
     /// [`Resource::authorize`]: crate::resources::Resource::authorize
     Authorization,
+    ParsePolicyMode,
+
+    #[cfg(feature = "manifest")]
+    MissingResourceType,
 }
 
-impl ErrorKind {
-    pub fn to_string(&self) -> String {
-        format!("{:?}", self).to_lowercase()
+impl Display for ErrorKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", format!("{:?}", self).to_lowercase())
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MinosError {
     kind: ErrorKind,
     message: String,
@@ -57,12 +61,7 @@ impl MinosError {
 
 impl Display for MinosError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "kind: {} message: {}",
-            self.kind.to_string(),
-            self.message
-        )
+        write!(f, "kind: {} message: {}", self.kind, self.message)
     }
 }
 
