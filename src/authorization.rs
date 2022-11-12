@@ -183,6 +183,68 @@ impl Authorization {
     }
 }
 
+/// Defines the algorithm used in authorization process
+#[derive(PartialEq, Eq, Debug, Clone, PartialOrd, Copy)]
+pub enum AuthorizationMode {
+    /// The authorization is granted only if the [`Actor`] is
+    /// the owner of the [`Resource`]
+    ///
+    /// [`Resource`]: crate::resources::Resource
+    Owner,
+
+    /// The authorization is granted only if the [`Actor`] belongs
+    /// to one of the listed groups
+    SingleGroup,
+
+    /// The authorization is granted only if the [`Actor`] belongs
+    /// to all of the listed groups
+    MultiGroup,
+
+    /// The authorization is granted only if the [`Actor`] is
+    /// the owner of the [`Resource`] and belongs to one of the
+    /// listed groups
+    ///
+    /// [`Resource`]: crate::resources::Resource
+    OwnerSingleGroup,
+
+    /// The authorization is granted only if the [`Actor`] is
+    /// the owner of the [`Resource`] and belongs to all of the
+    /// listed groups.
+    ///
+    /// [`Resource`]: crate::resources::Resource
+    OwnerMultiGroup,
+}
+
+impl ToString for AuthorizationMode {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Owner => OWNER_POLICY_MODE_STR.to_string(),
+            Self::SingleGroup => SINGLE_GROUP_MODE_STR.to_string(),
+            Self::MultiGroup => MULTI_GROUP_MODE_STR.to_string(),
+            Self::OwnerSingleGroup => OWNER_SINGLE_GROUP_MODE_STR.to_string(),
+            Self::OwnerMultiGroup => OWNER_MULTI_GROUP_MODE_STR.to_string(),
+        }
+    }
+}
+
+impl TryFrom<&str> for AuthorizationMode {
+    type Error = MinosError;
+
+    fn try_from(str: &str) -> Result<Self, Self::Error> {
+        match str {
+            OWNER_POLICY_MODE_STR => Ok(Self::Owner),
+            SINGLE_GROUP_MODE_STR => Ok(Self::SingleGroup),
+            MULTI_GROUP_MODE_STR => Ok(Self::MultiGroup),
+            OWNER_SINGLE_GROUP_MODE_STR => Ok(Self::OwnerSingleGroup),
+            OWNER_MULTI_GROUP_MODE_STR => Ok(Self::OwnerMultiGroup),
+            _ => Err(MinosError::new(
+                ErrorKind::ParsePolicyMode,
+                "unprocessable string",
+            )),
+        }
+    }
+}
+
 /// Defines the access and modification rules for a resource. It has two types of
 /// authorization policies: by owner and by roles; the use of the first excludes
 /// the other and vice versa.
