@@ -22,7 +22,7 @@ pub enum ErrorKind {
 
     /// Authorization rules collision
     IncompatibleAuthPolicy,
-    EmptyId,
+    EmptyString,
     InvalidPermission,
     /// It is recommended to use this error when using a custom-made implementation of [`Resource::authorize`].
     ///
