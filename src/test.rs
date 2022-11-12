@@ -157,31 +157,6 @@ mod std {
             .expect_err("The user should not be able to read the resource");
     }
 
-    #[test]
-    fn single_group() {
-        let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
-            owner: admin_group().id,
-            policies: vec![Policy {
-                duration: NonZeroU64::new(30).unwrap(),
-                auth_mode: AuthorizationMode::SingleGroup,
-                groups_ids: Some(vec![
-                    NonEmptyString::from_str("other.group.id").unwrap(),
-                    NonEmptyString::from_str("2.group.id").unwrap(),
-                    NonEmptyString::from_str("3.group.id").unwrap(),
-                    admin_group().id,
-                ]),
-                permissions: Permission::crud(),
-            }],
-        };
-        let reader_user = admin_user();
-        AuthorizationBuilder::new(&message)
-            .build(&reader_user)
-            .expect("Error building auth")
-            .search_permission(Permission::Read)
-            .expect("Error with permission");
-    }
 
     #[test]
     fn multi_permissions() {
@@ -216,16 +191,81 @@ mod std {
         .expect_err("The authorization check must failed");
     }
 
+    #[test]
     fn multi_group() {
-        todo!()
+        let message = Message {
+            id: NonEmptyString::from_str("example-message-id").unwrap(),
+            resource_type: NonEmptyString::from_str("message").unwrap(),
+            owner: admin_group().id,
+            policies: vec![Policy {
+                duration: NonZeroU64::new(30).unwrap(),
+                auth_mode: AuthorizationMode::SingleGroup,
+                groups_ids: Some(vec![
+                    NonEmptyString::from_str("other.group.id").unwrap(),
+                    NonEmptyString::from_str("2.group.id").unwrap(),
+                    NonEmptyString::from_str("3.group.id").unwrap(),
+                    admin_group().id,
+                ]),
+                permissions: Permission::crud(),
+            }],
+        };
+        let mut reader_user = admin_user();
+        reader_user.groups.push(NonEmptyString::from_str("other.group.id").unwrap());
+        reader_user.groups.push(NonEmptyString::from_str("2.group.id").unwrap());
+        reader_user.groups.push(NonEmptyString::from_str("3.group.id").unwrap());
+
+        AuthorizationBuilder::new(&message)
+            .build(&reader_user)
+            .expect("Error building auth")
+            .search_permission(Permission::Read)
+            .expect("Error with permission");
     }
 
     fn owner_single_group() {
-        todo!()
+        let message = Message {
+            id: NonEmptyString::from_str("example-message-id").unwrap(),
+            resource_type: NonEmptyString::from_str("message").unwrap(),
+            owner: admin_group().id,
+            policies: vec![Policy {
+                duration: NonZeroU64::new(30).unwrap(),
+                auth_mode: AuthorizationMode::OwnerSingleGroup,
+                groups_ids: Some(vec![
+                    admin_group().id,
+                ]),
+                permissions: vec![Permission::Read],
+            }],
+        };
+        let reader_user = admin_user();
+         AuthorizationBuilder::new(&message)
+            .build(&reader_user)
+            .expect("Error building auth")
+            .search_permission(Permission::Read)
+            .expect("Error with permission");
     }
 
     fn owner_multi_group() {
-        todo!()
+        let message = Message {
+            id: NonEmptyString::from_str("example-message-id").unwrap(),
+            resource_type: NonEmptyString::from_str("message").unwrap(),
+            owner: admin_group().id,
+            policies: vec![Policy {
+                duration: NonZeroU64::new(30).unwrap(),
+                auth_mode: AuthorizationMode::OwnerMultiGroup,
+                groups_ids: Some(vec![
+                    NonEmptyString::from_str("other.group.id").unwrap(),
+                    admin_group().id,
+                ]),
+                permissions: vec![Permission::Read],
+            }],
+        };
+        let mut reader_user = admin_user();
+        reader_user.groups.push(NonEmptyString::from_str("other.group.id").unwrap());
+
+        AuthorizationBuilder::new(&message)
+            .build(&reader_user)
+            .expect("Error building auth")
+            .search_permission(Permission::Read)
+            .expect("Error with permission");
     }
 
 }
