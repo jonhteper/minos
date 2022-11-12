@@ -1,8 +1,9 @@
 #[cfg(test)]
 #[cfg(not(feature = "custom_authorization"))]
 mod std {
-    use crate::agent::Agent;
-    use crate::authorization::{Permission, Policy};
+    use std::num::NonZeroU64;
+    use crate::actor::Actor;
+    use crate::authorization::{AuthorizationMode, Permission, Policy};
     use crate::authorization_builder::AuthorizationBuilder;
     use crate::resources::Resource;
     use crate::NonEmptyString;
@@ -14,7 +15,7 @@ mod std {
         pub groups: Vec<NonEmptyString>,
     }
 
-    impl Agent for User {
+    impl Actor for User {
         fn id(&self) -> NonEmptyString {
             self.id.clone()
         }
@@ -94,8 +95,8 @@ mod std {
             resource_type: NonEmptyString::from_str("message").unwrap(),
             owner: user.id(),
             policies: vec![Policy {
-                duration: 60,
-                by_owner: true,
+                duration: NonZeroU64::new(60).unwrap(),
+                auth_mode: AuthorizationMode::Owner,
                 groups_ids: None,
                 permissions: Permission::crud(),
             }],
@@ -105,8 +106,7 @@ mod std {
             .build(&user)
             .expect("Error building Authorization");
 
-        let _ = auth
-            .search_permission(Permission::Create)
+        auth.search_permission(Permission::Create)
             .expect("Error with authorization");
     }
 
@@ -117,8 +117,8 @@ mod std {
             resource_type: NonEmptyString::from_str("message").unwrap(),
             owner: regular_user().id(),
             policies: vec![Policy {
-                duration: 200,
-                by_owner: false,
+                duration: NonZeroU64::new(200).unwrap(),
+                auth_mode: AuthorizationMode::SingleGroup,
                 groups_ids: Some(vec![admin_group().id]),
                 permissions: vec![Permission::Read],
             }],
@@ -128,8 +128,7 @@ mod std {
         let auth = AuthorizationBuilder::new(&message)
             .build(&reader_user)
             .expect("Error building Authorization");
-        let _ = auth
-            .search_permission(Permission::Read)
+        auth.search_permission(Permission::Read)
             .expect("Error with permission");
     }
 
@@ -140,8 +139,8 @@ mod std {
             resource_type: NonEmptyString::from_str("message").unwrap(),
             owner: admin_group().id,
             policies: vec![Policy {
-                duration: 30,
-                by_owner: false,
+                duration: NonZeroU64::new(30).unwrap(),
+                auth_mode: AuthorizationMode::SingleGroup,
                 groups_ids: Some(vec![admin_group().id]),
                 permissions: Permission::crud(),
             }],
@@ -154,20 +153,19 @@ mod std {
             .expect_err("Authorization should not be able to be created");
         let auth = builder.build(&admin_user()).expect("Error building auth");
 
-        let _ = auth
-            .check(&message.id.to_string(), &invalid_user, Permission::Read)
+        auth.check(&message.id.to_string(), &invalid_user, Permission::Read)
             .expect_err("The user should not be able to read the resource");
     }
 
     #[test]
-    fn multi_groups() {
+    fn single_group() {
         let message = Message {
             id: NonEmptyString::from_str("example-message-id").unwrap(),
             resource_type: NonEmptyString::from_str("message").unwrap(),
             owner: admin_group().id,
             policies: vec![Policy {
-                duration: 30,
-                by_owner: false,
+                duration: NonZeroU64::new(30).unwrap(),
+                auth_mode: AuthorizationMode::SingleGroup,
                 groups_ids: Some(vec![
                     NonEmptyString::from_str("other.group.id").unwrap(),
                     NonEmptyString::from_str("2.group.id").unwrap(),
@@ -178,7 +176,7 @@ mod std {
             }],
         };
         let reader_user = admin_user();
-        let _ = AuthorizationBuilder::new(&message)
+        AuthorizationBuilder::new(&message)
             .build(&reader_user)
             .expect("Error building auth")
             .search_permission(Permission::Read)
@@ -193,8 +191,8 @@ mod std {
             resource_type: NonEmptyString::from_str("message").unwrap(),
             owner: user.id(),
             policies: vec![Policy {
-                duration: 6,
-                by_owner: true,
+                duration: NonZeroU64::new(6).unwrap(),
+                auth_mode: AuthorizationMode::Owner,
                 groups_ids: None,
                 permissions: Permission::crud(),
             }],
@@ -217,20 +215,34 @@ mod std {
         )
         .expect_err("The authorization check must failed");
     }
+
+    fn multi_group() {
+        todo!()
+    }
+
+    fn owner_single_group() {
+        todo!()
+    }
+
+    fn owner_multi_group() {
+        todo!()
+    }
+
 }
 
 #[cfg(feature = "jwt")]
 #[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod jwt_test {
-    use crate::agent::Agent;
-    use crate::authorization::{Authorization, Permission, Policy};
+    use crate::actor::Actor;
+    use crate::authorization::{Authorization, AuthorizationMode, Permission, Policy};
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
     use crate::prelude::Resource;
     use crate::NonEmptyString;
     use chrono::Utc;
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
+    use std::num::NonZeroU64;
 
     struct Foo;
 
@@ -244,7 +256,7 @@ mod jwt_test {
         }
 
         fn policies(&self) -> Vec<Policy> {
-            vec![Policy::new(1, true, None, Permission::crud())]
+            vec![Policy::new(NonZeroU64::new(1).unwrap(), AuthorizationMode::Owner, None, Permission::crud())]
         }
 
         fn resource_type(&self) -> Option<NonEmptyString> {
@@ -309,28 +321,31 @@ mod jwt_test {
 #[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod toml_test {
-    use crate::agent::Agent;
-    use crate::authorization::{Authorization, Permission, Policy};
+    use crate::actor::Actor;
+    use crate::authorization::{Authorization, AuthorizationMode, Permission, Policy};
     use crate::errors::MinosError;
     use crate::resources::AsResource;
     use crate::resources::Resource;
-    use crate::toml::{StoredResourcePolicies, TomlFile};
+    use crate::toml::{StoredManifest, TomlFile};
     use crate::NonEmptyString;
     use std::env;
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
+    use std::num::NonZeroU64;
+
     static FILE_CONTENT: &str = r#"
     resource_type = "example resource"
+    owner = true
 
     [[policies]]
     duration = 120
-    by_owner = true
+    auth_mode = "owner"
     permissions = ["create", "read", "update", "delete"]
 
     [[policies]]
     duration = 300
-    by_owner = false
+    auth_mode = "single group"
     groups_ids = ["example-group-id-1", "example-group-id-2"]
     permissions = ["read"]"#;
 
@@ -339,7 +354,7 @@ mod toml_test {
         path.push("example.resource");
         let mut file = File::create(&path)?;
 
-        let _ = file.write_all(&content.as_bytes())?;
+        file.write_all(&content.as_bytes())?;
 
         Ok(path)
     }
@@ -371,7 +386,7 @@ mod toml_test {
     }
 
     struct ResourceBuilder {
-        pub stored_resource: StoredResourcePolicies,
+        pub stored_resource: StoredManifest,
         pub id: NonEmptyString,
         pub owner: Option<NonEmptyString>,
     }
@@ -393,7 +408,7 @@ mod toml_test {
         id: NonEmptyString,
         owner: Option<NonEmptyString>,
     ) -> Result<GenericResource, MinosError> {
-        let stored_resource = StoredResourcePolicies::try_from(file)?;
+        let stored_resource = StoredManifest::try_from(file)?;
         let mut builder = ResourceBuilder {
             stored_resource,
             id,
@@ -427,10 +442,10 @@ mod toml_test {
             owner: NonEmptyString::from_str("example-user-id"),
             resource_type: NonEmptyString::from_str("example resource"),
             policies: vec![
-                Policy::new(120, true, None, Permission::crud()),
+                Policy::new(NonZeroU64::new(120).unwrap(), AuthorizationMode::Owner, None, Permission::crud()),
                 Policy::new(
-                    300,
-                    false,
+                    NonZeroU64::new(300).unwrap(),
+                    AuthorizationMode::SingleGroup,
                     Some(vec![
                         NonEmptyString::from_str("example-group-id-1").unwrap(),
                         NonEmptyString::from_str("example-group-id-2").unwrap(),
@@ -440,7 +455,7 @@ mod toml_test {
             ],
         };
 
-        let _ = TomlFile::create(&resource, &path)?;
+        TomlFile::create(&resource, &path)?;
         let path = create_temp_file(FILE_CONTENT)?;
         let toml_file = TomlFile::try_from(&path)?;
         let saved_resource = resource_from_toml_file(
