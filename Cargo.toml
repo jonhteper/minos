@@ -1,6 +1,6 @@
 [package]
 name = "minos"
-version = "0.7.0-dev.2"
+version = "0.7.0-dev.3"
 edition = "2021"
 authors = ["johnteper <git@johnteper.me>"]
 description = "Authorization library"
@@ -19,8 +19,9 @@ serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
 
 [features]
-server = ["jwt", "toml_storage", "custom_authorization"]
+server = ["jwt", "toml_storage"]
 jwt = ["jsonwebtoken", "serde", "resource_utils"]
-toml_storage = ["serde", "toml", "resource_utils"]
+toml_storage = ["serde", "toml", "resource_utils", "manifest"]
 resource_utils = []
 custom_authorization = []
+manifest = []
