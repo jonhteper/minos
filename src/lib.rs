@@ -31,7 +31,7 @@ impl TryFrom<&str> for NonEmptyString {
     fn try_from(str: &str) -> Result<Self, Self::Error> {
         if str.trim().is_empty() {
             return Err(MinosError::new(
-                ErrorKind::EmptyId,
+                ErrorKind::EmptyString,
                 "The identifier can't be an empty string",
             ));
         }
