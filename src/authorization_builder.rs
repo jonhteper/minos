@@ -1,5 +1,5 @@
-use crate::agent::Agent;
-use crate::authorization::{Authorization, Policy};
+use crate::actor::Actor;
+use crate::authorization::{Authorization, AuthorizationMode, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::resources::Resource;
 use chrono::Utc;
@@ -70,14 +70,14 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// This function will return an error in two cases:
     /// * [`IncompatibleAuthPolicy`]: The [`Policy`] not corresponds to [`Resource`] or the attribute
     ///   `by_owner` is true, but the [`Resource`] not have an owner.
-    /// * [`Authorization`]: The [`Agent`] not have any permissions available.
+    /// * [`Authorization`]: The [`Actor`] not have any permissions available.
     ///
-    /// [`Agent`]: Agent
+    /// [`Actor`]: Actor
     /// [`Policy`]: Policy
     /// [`Resource`]: Resource
     /// [`IncompatibleAuthPolicy`]: ErrorKind::IncompatibleAuthPolicy
     /// [`Authorization`]: ErrorKind::Authorization
-    pub fn build_by_policy<A: Agent>(
+    pub fn build_by_policy<A: Actor>(
         &self,
         policy: &Policy,
         agent: &A,
@@ -98,16 +98,16 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         })
     }
 
-    /// Create an [`Authorization`] based in a [`Resource`] and an [`Agent`]. Check all policies and assign all
-    ///  permissions available to the [`Agent`], but assign the shortest duration found.
+    /// Create an [`Authorization`] based in a [`Resource`] and an [`Actor`]. Check all policies and assign all
+    ///  permissions available to the [`Actor`], but assign the shortest duration found.
     ///
     /// # Errors
     /// This function will return an error in two cases:
     /// * [`IncompatibleAuthPolicy`]: Some [`Policy`] not corresponds to [`Resource`] or the attribute
     ///   `by_owner` is true, but the [`Resource`] not have an owner.
-    /// * [`Authorization`]: The [`Agent`] not have any permissions available.
+    /// * [`Authorization`]: The [`Actor`] not have any permissions available.
     ///
-    /// [`Agent`]: Agent
+    /// [`Actor`]: Actor
     /// [`Policy`]: Policy
     /// [`Resource`]: Resource
     /// [`IncompatibleAuthPolicy`]: ErrorKind::IncompatibleAuthPolicy
@@ -137,7 +137,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
         Ok(Authorization {
             permissions,
-            agent_id: agent.id(),
+            agent_id: actor.id(),
             resource_id: self.resource.id(),
             resource_type: self.resource.resource_type(),
             expiration: Self::define_expiration(seconds),

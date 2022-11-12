@@ -1,4 +1,4 @@
-use crate::agent::Agent;
+use crate::actor::Actor;
 use crate::errors::{ErrorKind, MinosError};
 use crate::NonEmptyString;
 use chrono::Utc;
@@ -6,16 +6,16 @@ use chrono::Utc;
 #[derive(Debug, PartialEq, Clone, PartialOrd)]
 /// Agents permissions, defines what a user is allowed to do.
 pub enum Permission {
-    /// The agent can create the source
+    /// The actor can create the source
     Create,
-    /// The agent can read the source
+    /// The actor can read the source
     Read,
-    /// The agent can edit the source, but can't delete the source
+    /// The actor can edit the source, but can't delete the source
     Update,
-    /// The agent can delete the source
+    /// The actor can delete the source
     Delete,
 
-    /// The agent can perform a specific action
+    /// The actor can perform a specific action
     Custom(String),
 }
 
@@ -116,8 +116,8 @@ impl Authorization {
         self.expiration
     }
 
-    fn basic_check<A: Agent>(&self, resource_id: &str, agent: &A) -> Result<(), MinosError> {
-        if &self.resource_id.to_string() != resource_id {
+    fn basic_check<A: Actor>(&self, resource_id: &str, actor: &A) -> Result<(), MinosError> {
+        if self.resource_id.to_string() != resource_id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
                 "Authorization created for another resource",
@@ -131,10 +131,10 @@ impl Authorization {
             ));
         }
 
-        if &agent.id() != &self.agent_id {
+        if actor.id() != self.agent_id {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
-                &format!("This Authorization is not for the user {}", agent.id()),
+                &format!("This Authorization is not for the user {}", actor.id()),
             ));
         }
 
@@ -152,23 +152,23 @@ impl Authorization {
         Ok(())
     }
 
-    pub fn check<A: Agent>(
+    pub fn check<A: Actor>(
         &self,
         resource_id: &str,
-        agent: &A,
+        actor: &A,
         required_permission: Permission,
     ) -> Result<(), MinosError> {
-        let _ = self.basic_check(resource_id, agent)?;
+        self.basic_check(resource_id, actor)?;
         self.search_permission(required_permission)
     }
 
-    pub fn multi_permissions_check<A: Agent>(
+    pub fn multi_permissions_check<A: Actor>(
         &self,
         resource_id: &str,
-        agent: &A,
+        actor: &A,
         required_permissions: &Vec<Permission>,
     ) -> Result<(), MinosError> {
-        let _ = self.basic_check(resource_id, agent)?;
+        self.basic_check(resource_id, actor)?;
 
         for permission in required_permissions {
             if !&self.permissions.contains(permission) {
