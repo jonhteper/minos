@@ -2,9 +2,16 @@ use crate::actor::Actor;
 use crate::errors::{ErrorKind, MinosError};
 use crate::NonEmptyString;
 use chrono::Utc;
+use std::num::NonZeroU64;
 
-#[derive(Debug, PartialEq, Clone, PartialOrd)]
-/// Agents permissions, defines what a user is allowed to do.
+const OWNER_POLICY_MODE_STR: &str = "owner";
+const SINGLE_GROUP_MODE_STR: &str = "single group";
+const MULTI_GROUP_MODE_STR: &str = "multi group";
+const OWNER_SINGLE_GROUP_MODE_STR: &str = "owner and single group";
+const OWNER_MULTI_GROUP_MODE_STR: &str = "owner and multi group";
+
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
+/// Defines what an actor is allowed to do.
 pub enum Permission {
     /// The actor can create the source
     Create,
@@ -87,7 +94,7 @@ impl Permission {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
 pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
     pub(crate) agent_id: NonEmptyString,
@@ -252,16 +259,15 @@ impl TryFrom<&str> for AuthorizationMode {
 /// Care must be taken to use the authorization policies correctly, because when building the
 /// Authorization with the AuthorizationBuilder, it will return an error.
 ///
-#[derive(PartialEq, Debug, Clone, PartialOrd, Default)]
+#[derive(PartialEq, Eq, Debug, Clone, PartialOrd)]
 pub struct Policy {
     /// authorization duration, in seconds
-    pub(crate) duration: u64,
+    pub(crate) duration: NonZeroU64,
 
-    /// Use only for objects with real owner. If you want set only Permission::Create,
-    /// use other authorization policy.
-    pub(crate) by_owner: bool,
+    /// defines the algorithm used in authorization process
+    pub(crate) auth_mode: AuthorizationMode,
 
-    /// Restricts the authorization to only agents in specific groups
+    /// listed groups
     pub(crate) groups_ids: Option<Vec<NonEmptyString>>,
 
     /// permissions granted
@@ -270,23 +276,23 @@ pub struct Policy {
 
 impl Policy {
     pub fn new(
-        duration: u64,
-        by_owner: bool,
+        duration: NonZeroU64,
+        auth_mode: AuthorizationMode,
         groups_ids: Option<Vec<NonEmptyString>>,
         permissions: Vec<Permission>,
     ) -> Self {
         Self {
             duration,
-            by_owner,
+            auth_mode,
             groups_ids,
             permissions,
         }
     }
-    pub fn duration(&self) -> u64 {
+    pub fn duration(&self) -> NonZeroU64 {
         self.duration
     }
-    pub fn by_owner(&self) -> bool {
-        self.by_owner
+    pub fn mode(&self) -> AuthorizationMode {
+        self.auth_mode
     }
     pub fn groups_ids(&self) -> &Option<Vec<NonEmptyString>> {
         &self.groups_ids
