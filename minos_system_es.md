@@ -8,9 +8,9 @@ Este es un protocolo de autorización. Está diseñado pensando en la programaci
 El protocolo está basado en cuatro conceptos fundamentales.
 
 * **Recurso**: toda entidad manipulable en un sistema.
-* **Agente**: aquel que manipula las entidades.
+* **Actor**: aquel que manipula las entidades.
 * **Grupo**: agrupaciones de `agentes`, los agentes pueden pertenecer a más de un `grupo` o no pertenecer a ninguno.
-* **Autorización**: certificado expedido a un `agente` que indica cómo puede manipular un determinado `recurso`.
+* **Autorización**: certificado expedido a un `actor` que indica cómo puede manipular un determinado `recurso`.
 
 ### Recurso
 
@@ -21,11 +21,11 @@ Aquí entran las entidades de la lógica de negocio que necesiten pasar por un p
 * **Políticas/reglas de autorización**: cada `recurso` define cómo los `agentes` pueden manipularlo;
 * **Tipo de recurso** (opcional): indica de qué tipo de entidad se trata, propuesto como una forma adicional de identificar los recursos, así como facilitar la carga de reglas de autorización para las entidades del mismo tipo.
 
-### Agente
+### Actor
 
-Entidad que es capaz de manipular los `recursos`. En un sistema típico suele ser un usuario el que manipula los recursos, sin embargo esta definición permite que cualquier entidad sea un `agente`, inclusive otro `recurso`.
+Entidad que es capaz de manipular los `recursos`. En un sistema típico suele ser un usuario el que manipula los recursos, sin embargo esta definición permite que cualquier entidad sea un `actor`, inclusive otro `recurso`.
 
-Cada `agente` debe contar con los siguientes atributos:
+Cada `actor` debe contar con los siguientes atributos:
 
 * **Identificador único**;
 * **Lista de grupos** a los que pertenece.
@@ -38,12 +38,12 @@ El protocolo no especifica el comportamiento de los grupos, solo se espera que c
 
 ### Autorización
 
-Las autorizaciones en el protocolo están pensadas tanto para ser transmitidas como almacenadas y precisan estar ligadas a un único `recurso` y a un único `agente`. 
+Las autorizaciones en el protocolo están pensadas tanto para ser transmitidas como almacenadas y precisan estar ligadas a un único `recurso` y a un único `actor`. 
 
 Las `autorizaciones` necesitan los siguientes atributos:
 
-* **Permisos**: indican las acciones que el `agente` puede realizar con el `recurso`, no están limitados al conjunto CRUD, sino que pueden representar cualquier acción.
-* **identificador del `agente`**.
+* **Permisos**: indican las acciones que el `actor` puede realizar con el `recurso`, no están limitados al conjunto CRUD, sino que pueden representar cualquier acción.
+* **identificador del `actor`**.
 * **identificador del `recurso`**.
 * **Tipo de recurso** (opcional).
 * **Expiración**: para facilitar la transmisión las autorizaciones entre distintos sistemas informáticos y para facilitar la administración y revocación de la autorización, se obliga a establecer una fecha límite en la que aquella es válida.
@@ -54,15 +54,15 @@ Acciones que pueden realizar los `agentes` sobre los `recursos`.
 
 ## Políticas de autorización
 
-Minos propone tres tipos de autorización, por medio del propietario del `recurso`, por medio de la pertenencia a un `grupo` en específico y a la medida. Los `recursos` pueden tener un número ilimitado de políticas de autorización, por lo cual se recomienda ser específico con los permisos que se le otorga al `agente` y la duración de los mismos.
+Minos propone tres tipos de autorización, por medio del propietario del `recurso`, por medio de la pertenencia a un `grupo` en específico y a la medida. Los `recursos` pueden tener un número ilimitado de políticas de autorización, por lo cual se recomienda ser específico con los permisos que se le otorga al `actor` y la duración de los mismos.
 
 ### Por propietario
 
-Pensada para todos aquellos `recursos` que efectivamente tengan un propietario, se busca comprobar que el `agente` es propietario del `recurso`.
+Pensada para todos aquellos `recursos` que efectivamente tengan un propietario, se busca comprobar que el `actor` es propietario del `recurso`.
 
 ### Por grupo
 
-Una lista blanca con los identificadores de los grupos a los que el agente puede pertenecer para obtener la autorización. 
+Una lista blanca con los identificadores de los grupos a los que el actor puede pertenecer para obtener la autorización. 
 
 ### A medida
 

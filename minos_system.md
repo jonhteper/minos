@@ -11,9 +11,9 @@ This is an authorization protocol. It is designed with object-oriented programmi
 The protocol is based on four fundamental concepts.
 
 * **Resource**: any manipulable entity in a system.
-* **Agent**: the one that manipulates the entities.
+* **Actor**: the one that manipulates the entities.
 * **Group**: groupings of `agents`, agents can belong to more than one `group` or not belong to any of them.
-* **Authorization**: certificate issued to an `agent` indicating how it can manipulate a given `resource`.
+* **Authorization**: certificate issued to an `actor` indicating how it can manipulate a given `resource`.
 
 ### Resource
 
@@ -24,11 +24,11 @@ Here enter the business logic entities that need to go through an authorization 
 * **Authorization policies/rules**: each `resource` defines how `agents` may manipulate it;
 * **Resource type** (optional): indicates what type of entity it is, proposed as an additional way to identify resources, as well as to facilitate the loading of authorization rules for entities of the same type.
 
-### Agent
+### Actor
 
-Entity that is able to manipulate the `resources`. In a typical system it is usually a user that manipulates resources, however this definition allows any entity to be an `agent`, including another `resource`.
+Entity that is able to manipulate the `resources`. In a typical system it is usually an user that manipulates resources, however this definition allows any entity to be an `actor`, including another `resource`.
 
-Each `agent` must have the following attributes:
+Each `actor` must have the following attributes:
 
 * **Unique identifier**;
 * **List of groups** to which it belongs.
@@ -41,12 +41,12 @@ The protocol does not specify the behavior of groups, they are only expected to 
 
 ### Authorization
 
-Authorizations in the protocol are intended to be both transmitted and stored and need to be bound to a single `resource` and a single `agent`.
+Authorizations in the protocol are intended to be both transmitted and stored and need to be bound to a single `resource` and a single `actor`.
 
 Authorizations require the following attributes:
 
-* **permissions**: they indicate the actions that the `agent` can perform with the `resource`, they are not limited to the CRUD set, but can represent any action.
-* **identifier of the `agent`**.
+* **permissions**: they indicate the actions that the `actor` can perform with the `resource`, they are not limited to the CRUD set, but can represent any action.
+* **identifier of the `actor`**.
 * **resource identifier**.
 * **resource type** (optional).
 * **Expiration**: to facilitate the transmission of authorizations between different computer systems and to facilitate the administration and revocation of the authorization, it is obligatory to establish a deadline on which the authorization is valid.
@@ -57,15 +57,15 @@ Actions that `agents` can perform on `resources`.
 
 ## Authorization policies
 
-Minos proposes three types of authorization, by means of the `resource` owner, by means of membership of a specific `group` and on demand. Resources can have an unlimited number of authorization policies, so it is recommended to be specific with the permissions granted to the `agent` and the duration of those permissions.
+Minos proposes three types of authorization, by means of the `resource` owner, by means of membership of a specific `group` and on demand. Resources can have an unlimited number of authorization policies, so it is recommended to be specific with the permissions granted to the `actor` and the duration of those permissions.
 
 ### By owner
 
-Intended for all those `resources` that effectively have an owner, it is intended to verify that the `agent` is the owner of the `resource`.
+Intended for all those `resources` that effectively have an owner, it is intended to verify that the `actor` is the owner of the `resource`.
 
 ### By group
 
-A white list with the identifiers of the groups to which the agent can belong to obtain the authorization.
+A white list with the identifiers of the groups to which the actor can belong to obtain the authorization.
 
 ### Custom
 
