@@ -13,40 +13,83 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         Self { resource }
     }
 
-    fn check_groups<A: Agent>(&self, agent: &A, policy: &Policy) -> Result<(), MinosError> {
-        if let Some(possible_ids) = &policy.groups_ids {
-            for id in possible_ids {
-                if agent.groups().contains(&id) {
-                    return Ok(());
-                }
+    fn single_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+        if policy.groups_ids.is_none() {
+            return Err(MinosError::new(
+                ErrorKind::IncompatibleAuthPolicy,
+                "The policy haven't groups defined",
+            ));
+        }
+        let possible_groups = policy.groups_ids.as_ref().unwrap();
+        for group in possible_groups {
+            if actor.groups().contains(group) {
+                return Ok(());
             }
+        }
 
+        Err(MinosError::new(
+            ErrorKind::Authorization,
+            "The actor is not in the correct group",
+        ))
+    }
+
+    fn multi_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+        let error = MinosError::new(
+            ErrorKind::IncompatibleAuthPolicy,
+            "The policy haven't groups defined",
+        );
+        if policy.groups_ids.is_none() {
+            return Err(error);
+        }
+        let required_groups = policy.groups_ids.as_ref().unwrap();
+        if required_groups.is_empty() {
+            return Err(error);
+        }
+        for group in required_groups {
+            if !&actor.groups().contains(group) {
+                return Err(MinosError::new(
+                    ErrorKind::Authorization,
+                    "The actor is not in all required groups",
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn by_owner_check<A: Actor>(&self, actor: &A) -> Result<(), MinosError> {
+        let owner = &self.resource.owner().ok_or_else(|| {
+            MinosError::new(
+                ErrorKind::IncompatibleAuthPolicy,
+                "The resource haven't an owner",
+            )
+        })?;
+        if owner != &actor.id() {
             return Err(MinosError::new(
                 ErrorKind::Authorization,
-                "The user is not in the correct group",
+                "The actor is not the owner",
             ));
         }
 
         Ok(())
     }
 
-    fn by_owner_check<A: Agent>(&self, agent: &A) -> Result<(), MinosError> {
-        if self.resource.owner().is_none() {
-            return Err(MinosError::new(
-                ErrorKind::IncompatibleAuthPolicy,
-                "The resource haven't an owner",
-            ));
-        }
+    fn owner_single_group_check<A: Actor>(
+        &self,
+        actor: &A,
+        policy: &Policy,
+    ) -> Result<(), MinosError> {
+        self.by_owner_check(actor)?;
+        self.single_group_check(actor, policy)
+    }
 
-        let owner = &self.resource.owner().unwrap();
-        if owner != &agent.id() {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The agent is not the owner",
-            ));
-        }
-
-        Ok(())
+    fn owner_multi_group_check<A: Actor>(
+        &self,
+        actor: &A,
+        policy: &Policy,
+    ) -> Result<(), MinosError> {
+        self.by_owner_check(actor)?;
+        self.multi_group_check(actor, policy)
     }
 
     fn define_expiration(seconds: u64) -> u64 {
@@ -54,7 +97,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     }
 
     fn policy_check(&self, policy: &Policy) -> Result<(), MinosError> {
-        if !&self.resource.policies().contains(&policy) {
+        if !&self.resource.policies().contains(policy) {
             return Err(MinosError::new(
                 ErrorKind::IncompatibleAuthPolicy,
                 "The policy not corresponds to resource type",
@@ -63,7 +106,17 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         Ok(())
     }
 
-    /// Create an [`Authorization`] based in a [`Resource`], a [`Policy`], and [`Agent`]. This function
+    fn mode_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+        match policy.auth_mode {
+            AuthorizationMode::Owner => self.by_owner_check(actor),
+            AuthorizationMode::SingleGroup => self.single_group_check(actor, policy),
+            AuthorizationMode::MultiGroup => self.multi_group_check(actor, policy),
+            AuthorizationMode::OwnerSingleGroup => self.owner_single_group_check(actor, policy),
+            AuthorizationMode::OwnerMultiGroup => self.owner_multi_group_check(actor, policy),
+        }
+    }
+
+    /// Create an [`Authorization`] based in a [`Resource`], a [`Policy`], and [`Actor`]. This function
     /// checks if the policy is malformed.
     ///
     /// # Errors
@@ -80,21 +133,17 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     pub fn build_by_policy<A: Actor>(
         &self,
         policy: &Policy,
-        agent: &A,
+        actor: &A,
     ) -> Result<Authorization, MinosError> {
-        let _ = self.policy_check(&policy)?;
-        if policy.by_owner {
-            let _ = self.by_owner_check(agent)?;
-        } else {
-            let _ = self.check_groups(agent, &policy)?;
-        }
+        self.policy_check(policy)?;
+        self.mode_check(actor, policy)?;
 
         Ok(Authorization {
             permissions: policy.permissions.clone(),
-            agent_id: agent.id(),
+            agent_id: actor.id(),
             resource_id: self.resource.id(),
             resource_type: self.resource.resource_type(),
-            expiration: Self::define_expiration(policy.duration.clone()),
+            expiration: Self::define_expiration(policy.duration.get()),
         })
     }
 
@@ -112,11 +161,11 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// [`Resource`]: Resource
     /// [`IncompatibleAuthPolicy`]: ErrorKind::IncompatibleAuthPolicy
     /// [`Authorization`]: ErrorKind::Authorization
-    pub fn build<A: Agent>(&self, agent: &A) -> Result<Authorization, MinosError> {
+    pub fn build<A: Actor>(&self, actor: &A) -> Result<Authorization, MinosError> {
         let mut permissions = vec![];
         let mut durations = vec![];
         for policy in &self.resource.policies() {
-            match self.build_by_policy(&policy, agent) {
+            match self.build_by_policy(policy, actor) {
                 Ok(mut auth) => {
                     permissions.append(&mut auth.permissions);
                     durations.push(policy.duration);
@@ -132,15 +181,15 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
         durations.sort();
         let seconds = *durations
-            .get(0)
-            .ok_or(MinosError::new(ErrorKind::Authorization, "Not authorized"))?;
+            .first()
+            .ok_or_else(|| MinosError::new(ErrorKind::Authorization, "Not authorized"))?;
 
         Ok(Authorization {
             permissions,
             agent_id: actor.id(),
             resource_id: self.resource.id(),
             resource_type: self.resource.resource_type(),
-            expiration: Self::define_expiration(seconds),
+            expiration: Self::define_expiration(seconds.get()),
         })
     }
 }
