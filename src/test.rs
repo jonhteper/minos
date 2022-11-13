@@ -221,11 +221,12 @@ mod std {
             .expect("Error with permission");
     }
 
+    #[test]
     fn owner_single_group() {
         let message = Message {
             id: NonEmptyString::from_str("example-message-id").unwrap(),
             resource_type: NonEmptyString::from_str("message").unwrap(),
-            owner: admin_group().id,
+            owner: admin_user().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
                 auth_mode: AuthorizationMode::OwnerSingleGroup,
@@ -243,11 +244,12 @@ mod std {
             .expect("Error with permission");
     }
 
+    #[test]
     fn owner_multi_group() {
         let message = Message {
             id: NonEmptyString::from_str("example-message-id").unwrap(),
             resource_type: NonEmptyString::from_str("message").unwrap(),
-            owner: admin_group().id,
+            owner: admin_user().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
                 auth_mode: AuthorizationMode::OwnerMultiGroup,
@@ -386,7 +388,7 @@ mod toml_test {
     [[policies]]
     duration = 300
     auth_mode = "single group"
-    groups_ids = ["example-group-id-1", "example-group-id-2"]
+    groups = ["example-group-id-1", "example-group-id-2"]
     permissions = ["read"]"#;
 
     fn create_temp_file(content: &str) -> Result<PathBuf, MinosError> {
