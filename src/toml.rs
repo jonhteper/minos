@@ -62,7 +62,7 @@ impl TryFrom<&PathBuf> for TomlFile {
 struct StoredPolicy {
     duration: u64,
     auth_mode: String,
-    groups_ids: Option<Vec<String>>,
+    groups: Option<Vec<String>>,
     permissions: Vec<String>,
 }
 
@@ -81,7 +81,7 @@ impl StoredPolicy {
 
     fn as_policy(&self) -> Result<Policy, MinosError> {
         let mut groups = None;
-        if let Some(groups_ids) = &self.groups_ids {
+        if let Some(groups_ids) = &self.groups {
             groups = Some(StoredPolicy::vec_string_as_vec_group_id(groups_ids.clone()));
         }
         let duration = NonZeroU64::new(self.duration)
@@ -110,7 +110,7 @@ impl From<Policy> for StoredPolicy {
         Self {
             duration: policy.duration.get(),
             auth_mode: policy.auth_mode.to_string(),
-            groups_ids,
+            groups: groups_ids,
             permissions,
         }
     }
