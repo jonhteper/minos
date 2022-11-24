@@ -72,12 +72,8 @@ impl AuthorizationClaims {
         })
     }
 
-    fn permissions_as_vec_string(permissions: &Vec<Permission>) -> Vec<String> {
-        permissions
-            .clone()
-            .into_iter()
-            .map(|p| p.to_string())
-            .collect()
+    fn permissions_as_vec_string(permissions: &[Permission]) -> Vec<String> {
+        permissions.iter().map(|p| p.to_string()).collect()
     }
 }
 
