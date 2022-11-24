@@ -2,8 +2,8 @@
 use crate::authorization::{Authorization, Permission};
 use crate::errors::MinosError;
 use crate::utils::none_as_empty_string;
-use crate::NonEmptyString;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use non_empty_string::NonEmptyString;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -67,7 +67,7 @@ impl AuthorizationClaims {
             permissions: self.string_permissions_to_vec_permissions(),
             agent_id: NonEmptyString::try_from(self.agent_id.as_str())?,
             resource_id: NonEmptyString::try_from(self.resource_id.as_str())?,
-            resource_type: NonEmptyString::from_str(&self.resource_type),
+            resource_type: NonEmptyString::try_from(self.resource_type.as_str()).ok(),
             expiration: self.exp,
         })
     }

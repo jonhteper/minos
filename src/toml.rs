@@ -3,7 +3,7 @@ use crate::authorization::{AuthorizationMode, Permission, Policy};
 use crate::errors::{ErrorKind, MinosError};
 use crate::resource_manifest::ResourceManifest;
 use crate::resources::Resource;
-use crate::NonEmptyString;
+use non_empty_string::NonEmptyString;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -43,7 +43,12 @@ impl TryFrom<&PathBuf> for TomlFile {
             .ok_or_else(|| MinosError::new(ErrorKind::BadExtension, "The file not have extension"))?
             .to_str();
 
-        let valid_extensions = [Some("toml"), Some("resource"),Some("manifest"),Some("minos")];
+        let valid_extensions = [
+            Some("toml"),
+            Some("resource"),
+            Some("manifest"),
+            Some("minos"),
+        ];
 
         if !valid_extensions.contains(&extension) {
             return Err(MinosError::new(
@@ -141,7 +146,7 @@ impl From<&ResourceManifest> for StoredManifest {
 
 impl StoredManifest {
     pub fn resource_type(&self) -> Option<NonEmptyString> {
-        NonEmptyString::from_str(&self.resource_type)
+        NonEmptyString::try_from(self.resource_type.as_str()).ok()
     }
 
     pub fn owner(&self) -> bool {

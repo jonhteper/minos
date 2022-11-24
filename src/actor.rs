@@ -1,4 +1,4 @@
-use crate::NonEmptyString;
+use non_empty_string::NonEmptyString;
 
 pub trait Actor {
     fn id(&self) -> NonEmptyString;

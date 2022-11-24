@@ -1,12 +1,12 @@
 #[cfg(test)]
 #[cfg(not(feature = "custom_authorization"))]
 mod std {
-    use std::num::NonZeroU64;
     use crate::actor::Actor;
     use crate::authorization::{AuthorizationMode, Permission, Policy};
     use crate::authorization_builder::AuthorizationBuilder;
     use crate::resources::Resource;
-    use crate::NonEmptyString;
+    use non_empty_string::NonEmptyString;
+    use std::num::NonZeroU64;
 
     pub struct User {
         pub id: NonEmptyString,
@@ -32,21 +32,21 @@ mod std {
 
     fn users_group() -> Group {
         Group {
-            id: NonEmptyString::from_str("Users-Group-Id").unwrap(),
+            id: NonEmptyString::try_from("Users-Group-Id").unwrap(),
             alias: "Users".to_string(),
         }
     }
 
     fn admin_group() -> Group {
         Group {
-            id: NonEmptyString::from_str("Admins-Group-Id").unwrap(),
+            id: NonEmptyString::try_from("Admins-Group-Id").unwrap(),
             alias: "Admins".to_string(),
         }
     }
 
     fn regular_user() -> User {
         User {
-            id: NonEmptyString::from_str("regular-user-id").unwrap(),
+            id: NonEmptyString::try_from("regular-user-id").unwrap(),
             alias: "Regular User".to_string(),
             status: 1,
             groups: vec![users_group().id],
@@ -55,7 +55,7 @@ mod std {
 
     fn admin_user() -> User {
         User {
-            id: NonEmptyString::from_str("admin-user-id").unwrap(),
+            id: NonEmptyString::try_from("admin-user-id").unwrap(),
             alias: "Admin User".to_string(),
             status: 1,
             groups: vec![admin_group().id],
@@ -91,8 +91,8 @@ mod std {
     fn authorization_by_user() {
         let user = regular_user();
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: user.id(),
             policies: vec![Policy {
                 duration: NonZeroU64::new(60).unwrap(),
@@ -113,8 +113,8 @@ mod std {
     #[test]
     fn authorization_by_group() {
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: regular_user().id(),
             policies: vec![Policy {
                 duration: NonZeroU64::new(200).unwrap(),
@@ -135,8 +135,8 @@ mod std {
     #[test]
     fn unauthorized() {
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: admin_group().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
@@ -157,13 +157,12 @@ mod std {
             .expect_err("The user should not be able to read the resource");
     }
 
-
     #[test]
     fn multi_permissions() {
         let user = regular_user();
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: user.id(),
             policies: vec![Policy {
                 duration: NonZeroU64::new(6).unwrap(),
@@ -194,25 +193,31 @@ mod std {
     #[test]
     fn multi_group() {
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: admin_group().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
                 auth_mode: AuthorizationMode::SingleGroup,
                 groups_ids: Some(vec![
-                    NonEmptyString::from_str("other.group.id").unwrap(),
-                    NonEmptyString::from_str("2.group.id").unwrap(),
-                    NonEmptyString::from_str("3.group.id").unwrap(),
+                    NonEmptyString::try_from("other.group.id").unwrap(),
+                    NonEmptyString::try_from("2.group.id").unwrap(),
+                    NonEmptyString::try_from("3.group.id").unwrap(),
                     admin_group().id,
                 ]),
                 permissions: Permission::crud(),
             }],
         };
         let mut reader_user = admin_user();
-        reader_user.groups.push(NonEmptyString::from_str("other.group.id").unwrap());
-        reader_user.groups.push(NonEmptyString::from_str("2.group.id").unwrap());
-        reader_user.groups.push(NonEmptyString::from_str("3.group.id").unwrap());
+        reader_user
+            .groups
+            .push(NonEmptyString::try_from("other.group.id").unwrap());
+        reader_user
+            .groups
+            .push(NonEmptyString::try_from("2.group.id").unwrap());
+        reader_user
+            .groups
+            .push(NonEmptyString::try_from("3.group.id").unwrap());
 
         AuthorizationBuilder::new(&message)
             .build(&reader_user)
@@ -224,20 +229,18 @@ mod std {
     #[test]
     fn owner_single_group() {
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: admin_user().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
                 auth_mode: AuthorizationMode::OwnerSingleGroup,
-                groups_ids: Some(vec![
-                    admin_group().id,
-                ]),
+                groups_ids: Some(vec![admin_group().id]),
                 permissions: vec![Permission::Read],
             }],
         };
         let reader_user = admin_user();
-         AuthorizationBuilder::new(&message)
+        AuthorizationBuilder::new(&message)
             .build(&reader_user)
             .expect("Error building auth")
             .search_permission(Permission::Read)
@@ -247,21 +250,23 @@ mod std {
     #[test]
     fn owner_multi_group() {
         let message = Message {
-            id: NonEmptyString::from_str("example-message-id").unwrap(),
-            resource_type: NonEmptyString::from_str("message").unwrap(),
+            id: NonEmptyString::try_from("example-message-id").unwrap(),
+            resource_type: NonEmptyString::try_from("message").unwrap(),
             owner: admin_user().id,
             policies: vec![Policy {
                 duration: NonZeroU64::new(30).unwrap(),
                 auth_mode: AuthorizationMode::OwnerMultiGroup,
                 groups_ids: Some(vec![
-                    NonEmptyString::from_str("other.group.id").unwrap(),
+                    NonEmptyString::try_from("other.group.id").unwrap(),
                     admin_group().id,
                 ]),
                 permissions: vec![Permission::Read],
             }],
         };
         let mut reader_user = admin_user();
-        reader_user.groups.push(NonEmptyString::from_str("other.group.id").unwrap());
+        reader_user
+            .groups
+            .push(NonEmptyString::try_from("other.group.id").unwrap());
 
         AuthorizationBuilder::new(&message)
             .build(&reader_user)
@@ -269,7 +274,6 @@ mod std {
             .search_permission(Permission::Read)
             .expect("Error with permission");
     }
-
 }
 
 #[cfg(feature = "jwt")]
@@ -281,28 +285,33 @@ mod jwt_test {
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
     use crate::prelude::Resource;
-    use crate::NonEmptyString;
     use chrono::Utc;
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
+    use non_empty_string::NonEmptyString;
     use std::num::NonZeroU64;
 
     struct Foo;
 
     impl Resource for Foo {
         fn id(&self) -> NonEmptyString {
-            NonEmptyString::from_str("resource-id").unwrap()
+            NonEmptyString::try_from("resource-id").unwrap()
         }
 
         fn owner(&self) -> Option<NonEmptyString> {
-            NonEmptyString::from_str("user-id")
+            NonEmptyString::try_from("user-id").ok()
         }
 
         fn policies(&self) -> Vec<Policy> {
-            vec![Policy::new(NonZeroU64::new(1).unwrap(), AuthorizationMode::Owner, None, Permission::crud())]
+            vec![Policy::new(
+                NonZeroU64::new(1).unwrap(),
+                AuthorizationMode::Owner,
+                None,
+                Permission::crud(),
+            )]
         }
 
         fn resource_type(&self) -> Option<NonEmptyString> {
-            NonEmptyString::from_str("foo")
+            NonEmptyString::try_from("foo").ok()
         }
     }
 
@@ -341,8 +350,8 @@ mod jwt_test {
 
         let auth_claims = AuthorizationClaims::new(
             vec![Permission::Read.to_string(), Permission::Update.to_string()],
-            NonEmptyString::from_str("user-id").unwrap(),
-            NonEmptyString::from_str("resource-id").unwrap(),
+            NonEmptyString::try_from("user-id").unwrap(),
+            NonEmptyString::try_from("resource-id").unwrap(),
             "example.resource".to_string(),
             (Utc::now().timestamp() + 30) as u64,
         );
@@ -369,12 +378,12 @@ mod toml_test {
     use crate::resources::AsResource;
     use crate::resources::Resource;
     use crate::toml::{StoredManifest, TomlFile};
-    use crate::NonEmptyString;
+    use non_empty_string::NonEmptyString;
     use std::env;
     use std::fs::File;
     use std::io::Write;
-    use std::path::PathBuf;
     use std::num::NonZeroU64;
+    use std::path::PathBuf;
 
     static FILE_CONTENT: &str = r#"
     resource_type = "example resource"
@@ -466,8 +475,8 @@ mod toml_test {
         let toml_file = TomlFile::try_from(&path)?;
         let resource = resource_from_toml_file(
             toml_file,
-            NonEmptyString::from_str("example-resource-id").unwrap(),
-            NonEmptyString::from_str("example-user-id"),
+            NonEmptyString::try_from("example-resource-id").unwrap(),
+            NonEmptyString::try_from("example-user-id").ok(),
         )?;
 
         println!("{:#?}", resource);
@@ -480,17 +489,22 @@ mod toml_test {
         let mut path = env::temp_dir();
         path.push("ref.resource");
         let resource = GenericResource {
-            id: NonEmptyString::from_str("example-resource-id").unwrap(),
-            owner: NonEmptyString::from_str("example-user-id"),
-            resource_type: NonEmptyString::from_str("example resource"),
+            id: NonEmptyString::try_from("example-resource-id").unwrap(),
+            owner: NonEmptyString::try_from("example-user-id").ok(),
+            resource_type: NonEmptyString::try_from("example resource").ok(),
             policies: vec![
-                Policy::new(NonZeroU64::new(120).unwrap(), AuthorizationMode::Owner, None, Permission::crud()),
+                Policy::new(
+                    NonZeroU64::new(120).unwrap(),
+                    AuthorizationMode::Owner,
+                    None,
+                    Permission::crud(),
+                ),
                 Policy::new(
                     NonZeroU64::new(300).unwrap(),
                     AuthorizationMode::SingleGroup,
                     Some(vec![
-                        NonEmptyString::from_str("example-group-id-1").unwrap(),
-                        NonEmptyString::from_str("example-group-id-2").unwrap(),
+                        NonEmptyString::try_from("example-group-id-1").unwrap(),
+                        NonEmptyString::try_from("example-group-id-2").unwrap(),
                     ]),
                     vec![Permission::Read],
                 ),
@@ -502,8 +516,8 @@ mod toml_test {
         let toml_file = TomlFile::try_from(&path)?;
         let saved_resource = resource_from_toml_file(
             toml_file,
-            NonEmptyString::from_str("example-resource-id").unwrap(),
-            NonEmptyString::from_str("example-user-id"),
+            NonEmptyString::try_from("example-resource-id").unwrap(),
+            NonEmptyString::try_from("example-user-id").ok(),
         )?;
 
         assert_eq!(resource, saved_resource);

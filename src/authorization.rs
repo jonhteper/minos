@@ -1,7 +1,7 @@
 use crate::actor::Actor;
 use crate::errors::{ErrorKind, MinosError};
-use crate::NonEmptyString;
 use chrono::Utc;
+use non_empty_string::NonEmptyString;
 use std::num::NonZeroU64;
 
 const OWNER_POLICY_MODE_STR: &str = "owner";

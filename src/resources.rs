@@ -1,7 +1,7 @@
 use crate::actor::Actor;
 use crate::authorization::{Authorization, Policy};
 use crate::errors::MinosError;
-use crate::NonEmptyString;
+use non_empty_string::NonEmptyString;
 
 pub trait Resource {
     fn id(&self) -> NonEmptyString;

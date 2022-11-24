@@ -1,7 +1,5 @@
 //! Authorization library
 //!
-use crate::errors::{ErrorKind, MinosError};
-use std::fmt::{Display, Formatter};
 
 pub mod actor;
 pub mod authorization;
@@ -22,35 +20,3 @@ pub mod resource_manifest;
 
 #[cfg(test)]
 mod test;
-
-#[derive(PartialOrd, PartialEq, Clone, Debug, Eq, Hash)]
-pub struct NonEmptyString(String);
-
-impl TryFrom<&str> for NonEmptyString {
-    type Error = MinosError;
-    fn try_from(str: &str) -> Result<Self, Self::Error> {
-        if str.trim().is_empty() {
-            return Err(MinosError::new(
-                ErrorKind::EmptyString,
-                "The identifier can't be an empty string",
-            ));
-        }
-
-        Ok(Self(str.to_string()))
-    }
-}
-
-impl Display for NonEmptyString {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl NonEmptyString {
-    pub fn from_str(str: &str) -> Option<Self> {
-        match str.trim().is_empty() {
-            true => None,
-            false => Some(Self(str.to_string())),
-        }
-    }
-}

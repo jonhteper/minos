@@ -1,7 +1,7 @@
 use crate::authorization::Policy;
 use crate::errors::{ErrorKind, MinosError};
 use crate::resources::Resource;
-use crate::NonEmptyString;
+use non_empty_string::NonEmptyString;
 
 /// Contains auxiliar information for Resource buildind.
 ///
