@@ -78,15 +78,7 @@ impl From<&MinosError> for MinosError {
 
 implement_error_with_kind!(MinosError, std::io::Error, ErrorKind::Io);
 implement_error!(MinosError, ParseError, ErrorKind::Chrono);
-
-impl From<ErrorEmptyString> for MinosError {
-    fn from(error: ErrorEmptyString) -> Self {
-        return MinosError {
-            kind: EmptyString,
-            message: error.to_string(),
-        };
-    }
-}
+implement_error!(MinosError, non_empty_string::ErrorEmptyString, ErrorKind::EmptyString);
 
 #[cfg(feature = "jwt")]
 mod jwt_feature {
