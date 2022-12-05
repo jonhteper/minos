@@ -79,35 +79,12 @@ impl From<&MinosError> for MinosError {
 implement_error_with_kind!(MinosError, std::io::Error, ErrorKind::Io);
 implement_error!(MinosError, ParseError, ErrorKind::Chrono);
 
-impl From<String> for MinosError {
-    fn from(error: String) -> Self {
-        if error.is_empty() {
-            return MinosError {
-                kind: EmptyString,
-                message: error,
-            };
-        }
-
-        MinosError {
-            kind: Other,
-            message: error,
-        }
-    }
-}
-
-impl From<&str> for MinosError {
-    fn from(error: &str) -> Self {
-        if error.is_empty() {
-            return MinosError {
-                kind: EmptyString,
-                message: error.to_string(),
-            };
-        }
-
-        MinosError {
-            kind: Other,
+impl From<ErrorEmptyString> for MinosError {
+    fn from(error: ErrorEmptyString) -> Self {
+        return MinosError {
+            kind: EmptyString,
             message: error.to_string(),
-        }
+        };
     }
 }
 
