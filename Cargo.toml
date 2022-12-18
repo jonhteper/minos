@@ -17,7 +17,7 @@ chrono = "0.4.19"
 jsonwebtoken = { version = "8.1.1", optional = true}
 serde = { version="1.0.137", features = ["derive"], optional = true }
 toml = {version = "0.5.9", optional = true }
-non-empty-string = {git = "https://github.com/jonhteper/non-empty-string", branch = "master"}
+non-empty-string = {git = "https://github.com/jonhteper/non-empty-string", branch = "deref_feature", features =["deref", "use_error"]}
 
 [features]
 server = ["jwt", "toml_storage"]

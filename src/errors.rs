@@ -3,7 +3,6 @@ use heimdall_errors::{implement_error, implement_error_with_kind};
 use std::fmt::{Display, Formatter, Result};
 use std::io;
 
-use crate::errors::ErrorKind::{EmptyString, Other};
 #[cfg(feature = "jwt")]
 use jsonwebtoken;
 
