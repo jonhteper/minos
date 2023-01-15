@@ -26,9 +26,12 @@ pub enum Permission {
     Custom(String),
 }
 
-impl ToString for Permission {
-    fn to_string(&self) -> String {
-        format!("{:?}", self).to_lowercase()
+impl Display for Permission {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Custom(permission) => Display::fmt(&permission, f),
+            _ => write!(f, "{self:?}")
+        }
     }
 }
 
