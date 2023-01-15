@@ -1,7 +1,8 @@
-use crate::actor::Actor;
-use crate::authorization::{Authorization, AuthorizationMode, Policy};
+use std::num::NonZeroU64;
+use crate::core::actor::Actor;
+use crate::core::authorization::{Authorization, AuthorizationMode, Policy, Permission};
 use crate::errors::{ErrorKind, MinosError};
-use crate::resources::Resource;
+use crate::core::resources::Resource;
 use chrono::Utc;
 
 pub struct AuthorizationBuilder<'b, R: Resource> {

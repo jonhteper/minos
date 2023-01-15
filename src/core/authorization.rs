@@ -1,5 +1,5 @@
-use crate::actor::Actor;
-use crate::errors::{ErrorKind, MinosError};
+use crate::core::actor::Actor;
+use crate::errors::MinosError;
 use chrono::Utc;
 use non_empty_string::NonEmptyString;
 use std::num::NonZeroU64;
@@ -49,8 +49,8 @@ impl Permission {
     ///
     ///# Examples
     ///```
-    ///     use minos::errors::{ErrorKind, MinosError};
-    ///     use minos::authorization::Permission;
+    ///     use minos::errors::MinosError;
+    ///     use minos::prelude::Permission;
     ///
     ///     fn check_permission(permission: Permission) -> Result<(), MinosError> {
     ///         if permission != Permission::Update {
@@ -64,7 +64,7 @@ impl Permission {
     ///     }
     /// ```
     ///```
-    ///     use minos::authorization::Permission;
+    ///     use minos::prelude::Permission;
     ///     assert_eq!(Permission::Update.required_msg(), "Update permission is required.");
     /// ```
     pub fn required_msg(&self) -> String {
@@ -74,8 +74,8 @@ impl Permission {
     /// Returns a vector with Create, Read, Update, and Delete permissions
     /// # Example
     /// ```
-    ///     use minos::authorization::Permission;
-    ///     use minos::authorization::Permission::{Create, Read, Update, Delete};
+    ///     use minos::prelude::Permission;
+    ///     use minos::prelude::Permission::{Create, Read, Update, Delete};
     ///
     ///     assert_eq!(vec![Create, Read, Update, Delete], Permission::crud())
     /// ```

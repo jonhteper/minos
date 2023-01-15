@@ -1,13 +1,10 @@
 //! Authorization library
 //!
 
-pub mod actor;
-pub mod authorization;
-pub mod authorization_builder;
+mod core;
+
 pub mod errors;
 pub mod prelude;
-pub mod resources;
-pub mod utils;
 
 #[cfg(feature = "jwt")]
 pub mod jwt;

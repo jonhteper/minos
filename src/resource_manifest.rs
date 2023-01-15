@@ -1,9 +1,9 @@
-use crate::authorization::Policy;
-use crate::errors::{ErrorKind, MinosError};
-use crate::resources::Resource;
+use crate::core::authorization::Policy;
+use crate::errors::MinosError;
+use crate::core::resources::Resource;
 use non_empty_string::NonEmptyString;
 
-/// Contains auxiliar information for Resource buildind.
+/// Contains auxiliar information for Resource building.
 ///
 /// It's possible save this information in a file or in a database.
 #[derive(PartialEq, Eq, Debug, Clone, PartialOrd)]

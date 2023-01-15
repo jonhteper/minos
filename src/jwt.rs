@@ -1,5 +1,5 @@
 //! This module allows you to convert authorizations to jwt and validate them.
-use crate::authorization::{Authorization, Permission};
+use crate::core::authorization::{Authorization, Permission};
 use crate::errors::MinosError;
 use crate::utils::none_as_empty_string;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};

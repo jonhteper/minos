@@ -1,10 +1,7 @@
 #[cfg(test)]
 #[cfg(not(feature = "custom_authorization"))]
 mod std {
-    use crate::actor::Actor;
-    use crate::authorization::{AuthorizationMode, Permission, Policy};
-    use crate::authorization_builder::AuthorizationBuilder;
-    use crate::resources::Resource;
+    use crate::prelude::*;
     use non_empty_string::NonEmptyString;
     use std::num::NonZeroU64;
 
@@ -280,11 +277,9 @@ mod std {
 #[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod jwt_test {
-    use crate::actor::Actor;
-    use crate::authorization::{Authorization, AuthorizationMode, Permission, Policy};
     use crate::errors::MinosError;
     use crate::jwt::{AuthorizationClaims, TokenServer};
-    use crate::prelude::Resource;
+    use crate::prelude::*;
     use chrono::Utc;
     use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
     use non_empty_string::NonEmptyString;
@@ -372,11 +367,8 @@ mod jwt_test {
 #[cfg(not(feature = "custom_authorization"))]
 #[cfg(test)]
 mod toml_test {
-    use crate::actor::Actor;
-    use crate::authorization::{Authorization, AuthorizationMode, Permission, Policy};
+    use crate::prelude::*;
     use crate::errors::MinosError;
-    use crate::resources::AsResource;
-    use crate::resources::Resource;
     use crate::toml::{StoredManifest, TomlFile};
     use non_empty_string::NonEmptyString;
     use std::env;
