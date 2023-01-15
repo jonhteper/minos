@@ -66,7 +66,8 @@ impl Permission {
     /// ```
     ///```
     ///     use minos::prelude::Permission;
-    ///     assert_eq!(Permission::Update.required_msg(), "Update permission is required.");
+    ///     assert_eq!(Permission::Update.required_msg(), "update permission is required.");
+    ///     assert_eq!(Permission::Custom("Purge".to_string()).required_msg(), "purgue permission is required");
     /// ```
     pub fn required_msg(&self) -> String {
         format!("{self} permission is required.")
