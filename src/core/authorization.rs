@@ -71,7 +71,7 @@ impl Permission {
     ///     assert_eq!(Permission::Update.required_msg(), "Update permission is required.");
     /// ```
     pub fn required_msg(&self) -> String {
-        format!("{:?} permission is required.", self)
+        format!("{self} permission is required.")
     }
 
     /// Returns a vector with Create, Read, Update, and Delete permissions
