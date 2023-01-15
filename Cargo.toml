@@ -21,8 +21,7 @@ non-empty-string = {git = "https://github.com/jonhteper/non-empty-string", branc
 
 [features]
 server = ["jwt", "toml_storage"]
-jwt = ["jsonwebtoken", "serde", "resource_utils"]
-toml_storage = ["serde", "toml", "resource_utils", "manifest"]
-resource_utils = []
+jwt = ["jsonwebtoken", "serde"]
+toml_storage = ["serde", "toml", "manifest"]
 custom_authorization = []
 manifest = []
