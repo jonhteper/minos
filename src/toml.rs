@@ -40,7 +40,7 @@ impl TryFrom<&PathBuf> for TomlFile {
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let extension = path
             .extension()
-            .ok_or_else(|| MinosError::new(ErrorKind::BadExtension, "The file not have extension"))?
+            .ok_or(MinosError::NoExtension)?
             .to_str();
 
         let valid_extensions = [
@@ -51,10 +51,7 @@ impl TryFrom<&PathBuf> for TomlFile {
         ];
 
         if !valid_extensions.contains(&extension) {
-            return Err(MinosError::new(
-                ErrorKind::BadExtension,
-                "The file not have the correct extension",
-            ));
+            return Err(MinosError::BadExtension);
         }
 
         Ok(Self {
@@ -90,7 +87,7 @@ impl StoredPolicy {
             groups = Some(StoredPolicy::vec_string_as_vec_group_id(groups_ids.clone()));
         }
         let duration = NonZeroU64::new(self.duration)
-            .ok_or_else(|| MinosError::new(ErrorKind::Toml, "Duration can't be equals to zero"))?;
+            .ok_or(MinosError::ZeroValueDuration)?;
 
         Ok(Policy {
             duration,
@@ -118,6 +115,14 @@ impl From<Policy> for StoredPolicy {
             groups: groups_ids,
             permissions,
         }
+    }
+}
+
+impl TryInto<Policy> for StoredPolicy {
+    type Error = ();
+
+    fn try_into(self) -> Result<Policy, Self::Error> {
+        todo!()
     }
 }
 

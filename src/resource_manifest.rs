@@ -19,12 +19,8 @@ pub struct ResourceManifest {
 
 impl ResourceManifest {
     pub fn try_from_resource<R: Resource>(resource: &R) -> Result<Self, MinosError> {
-        let resource_type = resource.resource_type().ok_or_else(|| {
-            MinosError::new(
-                ErrorKind::MissingResourceType,
-                "The resource needs an explicit resource type",
-            )
-        })?;
+        let resource_type = resource.resource_type()
+            .ok_or(MinosError::MissingResourceType)?;
         let owner = resource.owner().is_some();
 
         Ok(Self {

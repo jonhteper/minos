@@ -1,7 +1,6 @@
 //! This module allows you to convert authorizations to jwt and validate them.
 use crate::core::authorization::{Authorization, Permission};
 use crate::errors::MinosError;
-use crate::utils::none_as_empty_string;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use non_empty_string::NonEmptyString;
 use serde::{Deserialize, Serialize};
@@ -83,7 +82,7 @@ impl From<Authorization> for AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
             agent_id: auth.agent_id.to_string(),
             resource_id: auth.resource_id.to_string(),
-            resource_type: none_as_empty_string(auth.resource_type.clone()),
+            resource_type: auth.resource_type.as_deref().unwrap_or(&"".to_string()).to_owned(),
             exp: auth.expiration,
         }
     }

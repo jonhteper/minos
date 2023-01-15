@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use crate::core::actor::Actor;
 use crate::errors::MinosError;
 use chrono::Utc;
@@ -57,10 +58,7 @@ impl Permission {
     ///
     ///     fn check_permission(permission: Permission) -> Result<(), MinosError> {
     ///         if permission != Permission::Update {
-    ///             return Err(MinosError::new(
-    ///                     ErrorKind::Authorization,
-    ///                     &Permission::Update.required_msg(),
-    ///             ));
+    ///             return Err(MinosError::MissingPermission(Permission::Update));
     ///         }
     ///
     ///         Ok(())
@@ -128,24 +126,15 @@ impl Authorization {
 
     fn basic_check<A: Actor>(&self, resource_id: &str, actor: &A) -> Result<(), MinosError> {
         if self.resource_id.to_string() != resource_id {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "Authorization created for another resource",
-            ));
+            return Err(MinosError::InvalidResource);
         }
 
         if self.expiration <= Utc::now().timestamp() as u64 {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                "The Authorization is expired",
-            ));
+            return Err(MinosError::ExpiredAuthorization);
         }
 
         if actor.id() != self.agent_id {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                &format!("This Authorization is not for the user {}", actor.id()),
-            ));
+            return Err(MinosError::InvalidActor);
         }
 
         Ok(())
@@ -153,10 +142,7 @@ impl Authorization {
 
     pub fn search_permission(&self, permission: Permission) -> Result<(), MinosError> {
         if !&self.permissions.contains(&permission) {
-            return Err(MinosError::new(
-                ErrorKind::Authorization,
-                &permission.required_msg(),
-            ));
+            return Err(MinosError::MissingPermission(permission));
         }
 
         Ok(())
@@ -182,10 +168,7 @@ impl Authorization {
 
         for permission in required_permissions {
             if !&self.permissions.contains(permission) {
-                return Err(MinosError::new(
-                    ErrorKind::Authorization,
-                    &permission.required_msg(),
-                ));
+                return Err(MinosError::MissingPermission(permission.clone()));
             }
         }
 
@@ -247,10 +230,7 @@ impl TryFrom<&str> for AuthorizationMode {
             MULTI_GROUP_MODE_STR => Ok(Self::MultiGroup),
             OWNER_SINGLE_GROUP_MODE_STR => Ok(Self::OwnerSingleGroup),
             OWNER_MULTI_GROUP_MODE_STR => Ok(Self::OwnerMultiGroup),
-            _ => Err(MinosError::new(
-                ErrorKind::ParsePolicyMode,
-                "unprocessable string",
-            )),
+            _ => Err(MinosError::InvalidPolicyMode),
         }
     }
 }

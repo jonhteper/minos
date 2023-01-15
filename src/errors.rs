@@ -1,100 +1,181 @@
 use chrono::format::ParseError;
-use heimdall_errors::{implement_error, implement_error_with_kind};
 use std::fmt::{Display, Formatter, Result};
 use std::io;
-
+use std::io::Error;
+use thiserror::Error;
+use non_empty_string::ErrorEmptyString;
+use crate::core::authorization::Permission;
 #[cfg(feature = "jwt")]
 use jsonwebtoken;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum ErrorKind {
-    Io(io::ErrorKind),
-    Chrono,
+#[derive(Error,Clone, Debug, Eq, PartialEq)]
+pub struct IoErrorRep {
+    kind: io::ErrorKind,
+}
 
-    #[cfg(feature = "jwt")]
-    JWT(jsonwebtoken::errors::ErrorKind),
+impl Display for IoErrorRep {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        Display::fmt(&self.kind, f)
+    }
+}
+
+impl From<io::Error> for IoErrorRep {
+    fn from(error : Error) -> Self {
+        Self {
+            kind: error.kind()
+        }
+    }
+}
+
+/// High level list of common errors, use for easy and non
+/// exhaustive errors match
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ErrorKind {
+    /// The [Actor] don't have authorization.
+    Unauthorized,
+
+    /// The [Resource]'s [Policy] is not format correctly.
+    PolicyFormatError,
+
+    /// The [Manifest] is bad configured.
+    ///
+    /// [Manifest]: crate::resource_manifest::ResourceManifest
+    #[cfg(feature = "manifest")]
+    ManifestFormatError,
+
+    /// No Minos error, may be an std library error or
+    /// 3rd party library error.
+    UnknownError,
+}
+
+
+#[non_exhaustive]
+#[derive(Clone, Debug, Error, Eq, PartialEq)]
+pub enum MinosError {
+    // Unauthorized errors
+
+    /// Indicates that the [Actor] does not have any [Permission]
+    /// to manipulate the resource.
+    ///
+    /// [Actor]: crate::core::actor::Actor
+    #[error("no permissions available")]
+    MissingPermissions,
+
+    /// Indicates that the [Actor] does not have specific [Permission]
+    /// to manipulate the resource.
+    ///
+    /// [Actor]: crate::core::actor::Actor
+    #[error("{}", .0.required_msg())]
+    MissingPermission(Permission),
+
+    /// Indicates that the [Authorization] is out of date.
+    ///
+    /// [Authorization]:crate::core::authorization::Authorization
+    #[error("expired authorization")]
+    ExpiredAuthorization,
+
+    #[error("authorization created for another actor")]
+    InvalidActor,
+
+    #[error("authorization created for another resource")]
+    InvalidResource,
+
+    #[error("the actor is not the owner")]
+    InvalidOwner,
+
+    #[error("the actor is not in all required groups")]
+    MissingGroup,
+
+
+
+    // Policy format errors
+
+    #[error("the resource haven't an owner")]
+    ResourceWithoutOwner,
+
+    #[error("the policy haven't groups defined")]
+    EmptyGroupsPolicy,
+
+    #[error("the policy not corresponds to resource type")]
+    InvalidResourceTypePolicy,
+
+    #[error("the policy mode is invalid")]
+    InvalidPolicyMode,
+
+    #[error("duration can't be equals to zero")]
+    ZeroValueDuration,
+
+
+    // Manifest format Errors
+
+    #[cfg(feature = "manifest")]
+    #[error("the resource requires an explicit resource type for use in the manifest")]
+    MissingResourceType,
 
     #[cfg(feature = "toml_storage")]
+    #[error("the file not have a correct extension")]
     BadExtension,
 
     #[cfg(feature = "toml_storage")]
-    Toml,
+    #[error("the file not have an extension")]
+    NoExtension,
 
-    /// Authorization rules collision
-    IncompatibleAuthPolicy,
-    EmptyString,
-    InvalidPermission,
-    /// It is recommended to use this error when using a custom-made implementation of [`Resource::authorize`].
-    ///
-    /// [`Resource::authorize`]: crate::resources::Resource::authorize
-    Authorization,
-    ParsePolicyMode,
 
-    #[cfg(feature = "manifest")]
-    MissingResourceType,
-    Other,
+    // 3rd party errors
+
+    #[error(transparent)]
+    Io(IoErrorRep),
+
+    #[error(transparent)]
+    EmptyString(#[from] ErrorEmptyString),
+
+    #[error(transparent)]
+    ChronoParse(#[from] ParseError),
+
+    #[cfg(feature = "jwt")]
+    #[error(transparent)]
+    JWT(#[from] jsonwebtoken::errors::Error),
+
+    #[cfg(feature = "toml_storage")]
+    #[error(transparent)]
+    TomlSerialize(#[from] toml::ser::Error),
+
+    #[cfg(feature = "toml_storage")]
+    #[error(transparent)]
+    TomlDeserialize(#[from] toml::de::Error),
 }
 
-impl Display for ErrorKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
+impl From<io::Error> for MinosError {
+    fn from(error : Error) -> Self {
+        Self::Io(IoErrorRep::from(error))
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct MinosError {
-    kind: ErrorKind,
-    message: String,
 }
 
 impl MinosError {
-    pub fn new(kind: ErrorKind, message: &str) -> Self {
-        MinosError {
-            kind,
-            message: message.to_string(),
-        }
-    }
-
     pub fn kind(&self) -> ErrorKind {
-        self.kind.clone()
-    }
-}
+        match self {
+            MinosError::MissingPermissions => ErrorKind::Unauthorized,
+            MinosError::MissingPermission(_) => ErrorKind::Unauthorized,
+            MinosError::ExpiredAuthorization => ErrorKind::Unauthorized,
+            MinosError::InvalidActor => ErrorKind::Unauthorized,
+            MinosError::InvalidResource => ErrorKind::Unauthorized,
+            MinosError::InvalidOwner => ErrorKind::Unauthorized,
+            MinosError::MissingGroup => ErrorKind::Unauthorized,
 
-impl Display for MinosError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "kind: {} message: {}", self.kind, self.message)
-    }
-}
+            MinosError::ResourceWithoutOwner => ErrorKind::PolicyFormatError,
+            MinosError::EmptyGroupsPolicy => ErrorKind::PolicyFormatError,
+            MinosError::InvalidResourceTypePolicy => ErrorKind::PolicyFormatError,
+            MinosError::InvalidPolicyMode => ErrorKind::PolicyFormatError,
+            MinosError::ZeroValueDuration => ErrorKind::PolicyFormatError,
 
-impl From<&MinosError> for MinosError {
-    fn from(error: &MinosError) -> Self {
-        MinosError {
-            kind: error.kind.clone(),
-            message: error.to_string(),
+            #[cfg(feature = "manifest")]
+            MinosError::MissingResourceType => ErrorKind::ManifestFormatError,
+            #[cfg(feature = "toml_storage")]
+            MinosError::BadExtension => ErrorKind::ManifestFormatError,
+            #[cfg(feature = "toml_storage")]
+            MinosError::NoExtension => ErrorKind::ManifestFormatError,
+
+            _  => ErrorKind::UnknownError,
         }
     }
-}
-
-implement_error_with_kind!(MinosError, std::io::Error, ErrorKind::Io);
-implement_error!(MinosError, ParseError, ErrorKind::Chrono);
-implement_error!(MinosError, non_empty_string::ErrorEmptyString, ErrorKind::EmptyString);
-
-#[cfg(feature = "jwt")]
-mod jwt_feature {
-    use super::{ErrorKind, MinosError};
-    use heimdall_errors::implement_error_with_kind;
-    use jsonwebtoken;
-
-    implement_error_with_kind!(MinosError, jsonwebtoken::errors::Error, ErrorKind::JWT);
-}
-
-#[cfg(feature = "toml_storage")]
-mod toml_feature {
-    use super::{ErrorKind, MinosError};
-    use heimdall_errors::implement_error;
-    use toml;
-    use toml::de::Error;
-
-    implement_error!(MinosError, Error, ErrorKind::Toml);
-    implement_error!(MinosError, toml::ser::Error, ErrorKind::Toml);
 }
