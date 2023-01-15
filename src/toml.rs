@@ -62,6 +62,7 @@ impl TryFrom<&PathBuf> for TomlFile {
 
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
 struct StoredPolicy {
+    id: Option<String>,
     duration: u64,
     auth_mode: String,
     groups: Option<Vec<String>>,
@@ -88,8 +89,10 @@ impl StoredPolicy {
         }
         let duration = NonZeroU64::new(self.duration)
             .ok_or(MinosError::ZeroValueDuration)?;
+        let id = self.id.clone().and_then(|str| NonEmptyString::try_from(str).ok());
 
         Ok(Policy {
+            id,
             duration,
             auth_mode: AuthorizationMode::try_from(self.auth_mode.as_str())?,
             groups_ids: groups,
@@ -109,7 +112,10 @@ impl From<Policy> for StoredPolicy {
             .into_iter()
             .map(|p| p.to_string())
             .collect();
+        let id = policy.id.as_ref().map(|id| id.to_string());
+
         Self {
+            id,
             duration: policy.duration.get(),
             auth_mode: policy.auth_mode.to_string(),
             groups: groups_ids,

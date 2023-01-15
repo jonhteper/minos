@@ -245,6 +245,9 @@ impl TryFrom<&str> for AuthorizationMode {
 ///
 #[derive(PartialEq, Eq, Debug, Clone, PartialOrd)]
 pub struct Policy {
+    /// Unique identifier, to prevent collisions.
+    pub(crate) id: Option<NonEmptyString>,
+
     /// authorization duration, in seconds
     pub(crate) duration: NonZeroU64,
 
@@ -260,28 +263,38 @@ pub struct Policy {
 
 impl Policy {
     pub fn new(
+        id: Option<NonEmptyString>,
         duration: NonZeroU64,
         auth_mode: AuthorizationMode,
         groups_ids: Option<Vec<NonEmptyString>>,
         permissions: Vec<Permission>,
     ) -> Self {
         Self {
+            id,
             duration,
             auth_mode,
             groups_ids,
             permissions,
         }
     }
+
+    pub fn id(&self) -> Option<&NonEmptyString> {
+        self.id.as_ref()
+    }
+
     pub fn duration(&self) -> NonZeroU64 {
         self.duration
     }
+
     pub fn mode(&self) -> AuthorizationMode {
         self.auth_mode
     }
-    pub fn groups_ids(&self) -> &Option<Vec<NonEmptyString>> {
-        &self.groups_ids
+
+    pub fn groups_ids(&self) -> Option<&[NonEmptyString]> {
+        self.groups_ids.as_deref()
     }
-    pub fn permissions(&self) -> &Vec<Permission> {
+
+    pub fn permissions(&self) -> &[Permission] {
         &self.permissions
     }
 }
