@@ -60,6 +60,7 @@ impl TryFrom<&PathBuf> for TomlFile {
 #[derive(PartialEq, Debug, Clone, PartialOrd, Serialize, Deserialize)]
 struct StoredPolicy {
     id: Option<String>,
+    resource_type: Option<String>,
     duration: u64,
     auth_mode: String,
     groups: Option<Vec<String>>,
@@ -87,11 +88,16 @@ impl StoredPolicy {
         let duration = NonZeroU64::new(self.duration).ok_or(MinosError::ZeroValueDuration)?;
         let id = self
             .id
-            .clone()
-            .and_then(|str| NonEmptyString::try_from(str).ok());
+            .as_ref()
+            .and_then(|str| NonEmptyString::try_from(str.as_str()).ok());
+        let resource_type = self
+            .resource_type
+            .as_ref()
+            .and_then(|str| NonEmptyString::try_from(str.as_str()).ok());
 
         Ok(Policy {
             id,
+            resource_type,
             duration,
             auth_mode: AuthorizationMode::try_from(self.auth_mode.as_str())?,
             groups_ids: groups,
@@ -112,22 +118,16 @@ impl From<Policy> for StoredPolicy {
             .map(|p| p.to_string())
             .collect();
         let id = policy.id.as_ref().map(|id| id.to_string());
+        let resource_type = policy.resource_type.map(|str| str.to_string());
 
         Self {
             id,
+            resource_type,
             duration: policy.duration.get(),
             auth_mode: policy.auth_mode.to_string(),
             groups: groups_ids,
             permissions,
         }
-    }
-}
-
-impl TryInto<Policy> for StoredPolicy {
-    type Error = ();
-
-    fn try_into(self) -> Result<Policy, Self::Error> {
-        todo!()
     }
 }
 

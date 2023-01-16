@@ -248,6 +248,8 @@ pub struct Policy {
     /// Unique identifier, to prevent collisions.
     pub(crate) id: Option<NonEmptyString>,
 
+    pub(crate) resource_type: Option<NonEmptyString>,
+
     /// authorization duration, in seconds
     pub(crate) duration: NonZeroU64,
 
@@ -264,6 +266,7 @@ pub struct Policy {
 impl Policy {
     pub fn new(
         id: Option<NonEmptyString>,
+        resource_type: Option<NonEmptyString>,
         duration: NonZeroU64,
         auth_mode: AuthorizationMode,
         groups_ids: Option<Vec<NonEmptyString>>,
@@ -271,6 +274,7 @@ impl Policy {
     ) -> Self {
         Self {
             id,
+            resource_type,
             duration,
             auth_mode,
             groups_ids,

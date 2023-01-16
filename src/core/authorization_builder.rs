@@ -107,9 +107,9 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
     /// Check if [Policy] corresponds to `resource type` of [Resource]
     /// # Errors
-    /// * [MinosError::InvalidResourceTypePolicy]: if the policy not corresponds to resource type
+    /// * [MinosError::InvalidResourceTypePolicy]: if the [Policy] not corresponds to resource type.
     fn policy_check(&self, policy: &Policy) -> Result<(), MinosError> {
-        if !&self.resource.policies().contains(policy) {
+        if self.resource.resource_type() != policy.resource_type {
             return Err(MinosError::InvalidResourceTypePolicy);
         }
         Ok(())

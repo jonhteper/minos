@@ -88,6 +88,8 @@ pub enum MinosError {
     #[error("the policy haven't groups defined")]
     EmptyGroupsPolicy,
 
+    /// Indicate that the attribute Policy::resource_type not match
+    /// with the return value of function Resource::resource_type
     #[error("the policy not corresponds to resource type")]
     InvalidResourceTypePolicy,
 
