@@ -1,13 +1,13 @@
+use crate::core::authorization::Permission;
 use chrono::format::ParseError;
+#[cfg(feature = "jwt")]
+use jsonwebtoken;
 use std::fmt::{Display, Formatter, Result};
 use std::io;
 use std::io::Error;
 use thiserror::Error;
-use crate::core::authorization::Permission;
-#[cfg(feature = "jwt")]
-use jsonwebtoken;
 
-#[derive(Error,Clone, Debug, Eq, PartialEq)]
+#[derive(Error, Clone, Debug, Eq, PartialEq)]
 pub struct IoErrorRep {
     kind: io::ErrorKind,
 }
@@ -19,10 +19,8 @@ impl Display for IoErrorRep {
 }
 
 impl From<io::Error> for IoErrorRep {
-    fn from(error : Error) -> Self {
-        Self {
-            kind: error.kind()
-        }
+    fn from(error: Error) -> Self {
+        Self { kind: error.kind() }
     }
 }
 
@@ -47,12 +45,10 @@ pub enum ErrorKind {
     UnknownError,
 }
 
-
 #[non_exhaustive]
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
 pub enum MinosError {
     // Unauthorized errors
-
     /// Indicates that the [Actor] does not have any [Permission]
     /// to manipulate the resource.
     ///
@@ -85,10 +81,7 @@ pub enum MinosError {
     #[error("the actor is not in all required groups")]
     MissingGroup,
 
-
-
     // Policy format errors
-
     #[error("the resource haven't an owner")]
     ResourceWithoutOwner,
 
@@ -104,9 +97,7 @@ pub enum MinosError {
     #[error("duration can't be equals to zero")]
     ZeroValueDuration,
 
-
     // Manifest format Errors
-
     #[cfg(feature = "manifest")]
     #[error("the resource requires an explicit resource type for use in the manifest")]
     MissingResourceType,
@@ -118,7 +109,6 @@ pub enum MinosError {
     #[cfg(feature = "toml_storage")]
     #[error("the file not have an extension")]
     NoExtension,
-
 
     // 3rd party errors
     #[error("input error: empty string")]
@@ -144,7 +134,7 @@ pub enum MinosError {
 }
 
 impl From<io::Error> for MinosError {
-    fn from(error : Error) -> Self {
+    fn from(error: Error) -> Self {
         Self::Io(IoErrorRep::from(error))
     }
 }
@@ -173,7 +163,7 @@ impl MinosError {
             #[cfg(feature = "toml_storage")]
             MinosError::NoExtension => ErrorKind::ManifestFormatError,
 
-            _  => ErrorKind::UnknownError,
+            _ => ErrorKind::UnknownError,
         }
     }
 }

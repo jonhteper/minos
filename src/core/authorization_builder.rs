@@ -1,9 +1,9 @@
-use std::num::NonZeroU64;
 use crate::core::actor::Actor;
-use crate::core::authorization::{Authorization, AuthorizationMode, Policy, Permission};
-use crate::errors::{ErrorKind, MinosError};
+use crate::core::authorization::{Authorization, AuthorizationMode, Permission, Policy};
 use crate::core::resources::Resource;
+use crate::errors::{ErrorKind, MinosError};
 use chrono::Utc;
+use std::num::NonZeroU64;
 
 pub struct AuthorizationBuilder<'b, R: Resource> {
     resource: &'b R,
@@ -58,7 +58,9 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::ResourceWithoutOwner] if the [Resource] not have an owner.
     /// * [MinosError::InvalidOwner] if the [Actor] is not the owner.
     fn by_owner_check<A: Actor>(&self, actor: &A) -> Result<(), MinosError> {
-        let owner = &self.resource.owner()
+        let owner = &self
+            .resource
+            .owner()
             .ok_or(MinosError::ResourceWithoutOwner)?;
         if owner != &actor.id() {
             return Err(MinosError::InvalidOwner);
@@ -194,8 +196,10 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         })
     }
 
-
-    fn extract_permissions_and_durations<A: Actor>(&self, actor: &A) -> Result<(Vec<Permission>, Vec<NonZeroU64>), MinosError> {
+    fn extract_permissions_and_durations<A: Actor>(
+        &self,
+        actor: &A,
+    ) -> Result<(Vec<Permission>, Vec<NonZeroU64>), MinosError> {
         let mut permissions = vec![];
         let mut durations = vec![];
         for policy in &self.resource.policies() {
@@ -205,7 +209,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
                     durations.push(policy.duration);
                 }
                 Err(err) => {
-                    if err.kind() !=  ErrorKind::Unauthorized {
+                    if err.kind() != ErrorKind::Unauthorized {
                         return Err(err);
                     }
                     continue;
@@ -216,8 +220,6 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
         Ok((permissions, durations))
     }
-
-
 
     /// Create an [`Authorization`] based in a [`Resource`] and an [`Actor`]. Check all policies
     /// and assign all permissions available to the [`Actor`], but assign the shortest duration
@@ -235,9 +237,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// [MissingPermissions]: MinosError::MissingPermissions
     pub fn build<A: Actor>(&self, actor: &A) -> Result<Authorization, MinosError> {
         let (permissions, durations) = self.extract_permissions_and_durations(actor)?;
-        let seconds = *durations
-            .first()
-            .ok_or(MinosError::MissingPermissions)?;
+        let seconds = *durations.first().ok_or(MinosError::MissingPermissions)?;
 
         Ok(Authorization {
             permissions,

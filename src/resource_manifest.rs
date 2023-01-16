@@ -1,6 +1,6 @@
 use crate::core::authorization::Policy;
-use crate::errors::MinosError;
 use crate::core::resources::Resource;
+use crate::errors::MinosError;
 use non_empty_string::NonEmptyString;
 
 /// Contains auxiliar information for Resource building.
@@ -19,7 +19,8 @@ pub struct ResourceManifest {
 
 impl ResourceManifest {
     pub fn try_from_resource<R: Resource>(resource: &R) -> Result<Self, MinosError> {
-        let resource_type = resource.resource_type()
+        let resource_type = resource
+            .resource_type()
             .ok_or(MinosError::MissingResourceType)?;
         let owner = resource.owner().is_some();
 

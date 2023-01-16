@@ -1,8 +1,8 @@
 //! This module allows you save an read [`Resource`] policies in toml files
 use crate::core::authorization::{AuthorizationMode, Permission, Policy};
+use crate::core::resources::Resource;
 use crate::errors::MinosError;
 use crate::resource_manifest::ResourceManifest;
-use crate::core::resources::Resource;
 use non_empty_string::NonEmptyString;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -38,10 +38,7 @@ impl TryFrom<&PathBuf> for TomlFile {
 
     /// Saves the file
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let extension = path
-            .extension()
-            .ok_or(MinosError::NoExtension)?
-            .to_str();
+        let extension = path.extension().ok_or(MinosError::NoExtension)?.to_str();
 
         let valid_extensions = [
             Some("toml"),
@@ -87,9 +84,11 @@ impl StoredPolicy {
         if let Some(groups_ids) = &self.groups {
             groups = Some(StoredPolicy::vec_string_as_vec_group_id(groups_ids.clone()));
         }
-        let duration = NonZeroU64::new(self.duration)
-            .ok_or(MinosError::ZeroValueDuration)?;
-        let id = self.id.clone().and_then(|str| NonEmptyString::try_from(str).ok());
+        let duration = NonZeroU64::new(self.duration).ok_or(MinosError::ZeroValueDuration)?;
+        let id = self
+            .id
+            .clone()
+            .and_then(|str| NonEmptyString::try_from(str).ok());
 
         Ok(Policy {
             id,

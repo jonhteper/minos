@@ -34,8 +34,6 @@ mod test;
 #[macro_export]
 macro_rules! non_empty_string {
     ($str: expr) => {
-        non_empty_string::NonEmptyString::try_from($str)
-        .map_err(|_| MinosError::EmptyString)
-    }
+        non_empty_string::NonEmptyString::try_from($str).map_err(|_| MinosError::EmptyString)
+    };
 }
-

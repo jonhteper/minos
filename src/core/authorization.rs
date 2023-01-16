@@ -1,8 +1,8 @@
-use std::fmt::{Display, Formatter};
 use crate::core::actor::Actor;
 use crate::errors::MinosError;
 use chrono::Utc;
 use non_empty_string::NonEmptyString;
+use std::fmt::{Display, Formatter};
 use std::num::NonZeroU64;
 
 const OWNER_POLICY_MODE_STR: &str = "owner";
@@ -31,7 +31,7 @@ impl Display for Permission {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Custom(permission) => Display::fmt(&permission, f),
-            _ => write!(f, "{self:?}")
+            _ => write!(f, "{self:?}"),
         }
     }
 }
