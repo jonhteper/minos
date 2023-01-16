@@ -3,7 +3,6 @@ use std::fmt::{Display, Formatter, Result};
 use std::io;
 use std::io::Error;
 use thiserror::Error;
-use non_empty_string::ErrorEmptyString;
 use crate::core::authorization::Permission;
 #[cfg(feature = "jwt")]
 use jsonwebtoken;
@@ -28,7 +27,7 @@ impl From<io::Error> for IoErrorRep {
 }
 
 /// High level list of common errors, use for easy and non
-/// exhaustive errors match
+/// exhaustive errors match.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
     /// The [Actor] don't have authorization.
@@ -122,12 +121,11 @@ pub enum MinosError {
 
 
     // 3rd party errors
+    #[error("input error: empty string")]
+    EmptyString,
 
     #[error(transparent)]
     Io(IoErrorRep),
-
-    #[error(transparent)]
-    EmptyString(#[from] ErrorEmptyString),
 
     #[error(transparent)]
     ChronoParse(#[from] ParseError),

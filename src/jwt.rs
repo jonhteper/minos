@@ -4,6 +4,7 @@ use crate::errors::MinosError;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use non_empty_string::NonEmptyString;
 use serde::{Deserialize, Serialize};
+use crate::non_empty_string;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,9 +65,9 @@ impl AuthorizationClaims {
     pub fn as_authorization(&self) -> Result<Authorization, MinosError> {
         Ok(Authorization {
             permissions: self.string_permissions_to_vec_permissions(),
-            agent_id: NonEmptyString::try_from(self.agent_id.as_str())?,
-            resource_id: NonEmptyString::try_from(self.resource_id.as_str())?,
-            resource_type: NonEmptyString::try_from(self.resource_type.as_str()).ok(),
+            agent_id: non_empty_string!(self.agent_id.as_str())?,
+            resource_id: non_empty_string!(self.resource_id.as_str())?,
+            resource_type: non_empty_string!(self.resource_type.as_str()).ok(),
             expiration: self.exp,
         })
     }
@@ -78,11 +79,12 @@ impl AuthorizationClaims {
 
 impl From<Authorization> for AuthorizationClaims {
     fn from(auth: Authorization) -> Self {
+        let resource_type = auth.resource_type.as_ref().map(|str| str.to_string()).unwrap_or_default();
         AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
             agent_id: auth.agent_id.to_string(),
             resource_id: auth.resource_id.to_string(),
-            resource_type: auth.resource_type.as_deref().unwrap_or(&"".to_string()).to_owned(),
+            resource_type,
             exp: auth.expiration,
         }
     }
