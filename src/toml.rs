@@ -100,7 +100,7 @@ impl StoredPolicy {
             resource_type,
             duration,
             auth_mode: AuthorizationMode::try_from(self.auth_mode.as_str())?,
-            groups_ids: groups,
+            groups,
             permissions: StoredPolicy::vec_string_as_vec_permissions(self.permissions.clone()),
         })
     }
@@ -109,7 +109,7 @@ impl StoredPolicy {
 impl From<Policy> for StoredPolicy {
     fn from(policy: Policy) -> Self {
         let groups_ids = policy
-            .groups_ids
+            .groups
             .map(|ids| ids.into_iter().map(|id| id.to_string()).collect());
 
         let permissions = policy

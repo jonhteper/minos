@@ -19,10 +19,10 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member for any authorized group.
     fn single_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
-        if policy.groups_ids.is_none() {
+        if policy.groups.is_none() {
             return Err(MinosError::EmptyGroupsPolicy);
         }
-        let possible_groups = policy.groups_ids.as_ref().unwrap();
+        let possible_groups = policy.groups.as_ref().unwrap();
         for group in possible_groups {
             if actor.groups().contains(group) {
                 return Ok(());
@@ -37,10 +37,10 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member of all groups in [Policy].
     fn multi_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
-        if policy.groups_ids.is_none() {
+        if policy.groups.is_none() {
             return Err(MinosError::EmptyGroupsPolicy);
         }
-        let required_groups = policy.groups_ids.as_ref().unwrap();
+        let required_groups = policy.groups.as_ref().unwrap();
         if required_groups.is_empty() {
             return Err(MinosError::EmptyGroupsPolicy);
         }

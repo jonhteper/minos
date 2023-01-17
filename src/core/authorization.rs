@@ -4,7 +4,7 @@ use chrono::Utc;
 use non_empty_string::NonEmptyString;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroU64;
-use crate::prelude::ActorId;
+use crate::prelude::{ActorId, Group};
 
 const OWNER_POLICY_MODE_STR: &str = "owner";
 const SINGLE_GROUP_MODE_STR: &str = "single group";
@@ -258,7 +258,7 @@ pub struct Policy {
     pub(crate) auth_mode: AuthorizationMode,
 
     /// listed groups
-    pub(crate) groups_ids: Option<Vec<NonEmptyString>>,
+    pub(crate) groups: Option<Vec<Group>>,
 
     /// permissions granted
     pub(crate) permissions: Vec<Permission>,
@@ -270,7 +270,7 @@ impl Policy {
         resource_type: Option<NonEmptyString>,
         duration: NonZeroU64,
         auth_mode: AuthorizationMode,
-        groups_ids: Option<Vec<NonEmptyString>>,
+        groups: Option<Vec<Group>>,
         permissions: Vec<Permission>,
     ) -> Self {
         Self {
@@ -278,7 +278,7 @@ impl Policy {
             resource_type,
             duration,
             auth_mode,
-            groups_ids,
+            groups,
             permissions,
         }
     }
@@ -295,8 +295,8 @@ impl Policy {
         self.auth_mode
     }
 
-    pub fn groups_ids(&self) -> Option<&[NonEmptyString]> {
-        self.groups_ids.as_deref()
+    pub fn groups(&self) -> Option<&[Group]> {
+        self.groups.as_deref()
     }
 
     pub fn permissions(&self) -> &[Permission] {
