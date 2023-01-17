@@ -4,6 +4,7 @@ use chrono::Utc;
 use non_empty_string::NonEmptyString;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroU64;
+use crate::prelude::ActorId;
 
 const OWNER_POLICY_MODE_STR: &str = "owner";
 const SINGLE_GROUP_MODE_STR: &str = "single group";
@@ -99,7 +100,7 @@ impl Permission {
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
 pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
-    pub(crate) agent_id: NonEmptyString,
+    pub(crate) actor_id: ActorId,
     pub(crate) resource_id: NonEmptyString,
     pub(crate) resource_type: Option<NonEmptyString>,
     pub(crate) expiration: u64,
@@ -110,8 +111,8 @@ impl Authorization {
         self.permissions.clone()
     }
 
-    pub fn agent_id(&self) -> String {
-        self.agent_id.to_string()
+    pub fn actor_id(&self) -> &ActorId {
+        &self.actor_id
     }
 
     pub fn resource_id(&self) -> String {
@@ -134,7 +135,7 @@ impl Authorization {
             return Err(MinosError::ExpiredAuthorization);
         }
 
-        if actor.id() != self.agent_id {
+        if actor.id() != self.actor_id {
             return Err(MinosError::InvalidActor);
         }
 

@@ -2,10 +2,11 @@ use crate::core::actor::Actor;
 use crate::core::authorization::{Authorization, Policy};
 use crate::errors::MinosError;
 use non_empty_string::NonEmptyString;
+use crate::prelude::ActorId;
 
 pub trait Resource {
     fn id(&self) -> NonEmptyString;
-    fn owner(&self) -> Option<NonEmptyString>;
+    fn owner(&self) -> Option<ActorId>;
     fn policies(&self) -> Vec<Policy>;
     fn resource_type(&self) -> Option<NonEmptyString>;
 

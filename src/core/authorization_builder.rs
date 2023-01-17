@@ -189,7 +189,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
         Ok(Authorization {
             permissions: policy.permissions.clone(),
-            agent_id: actor.id(),
+            actor_id: actor.id(),
             resource_id: self.resource.id(),
             resource_type: self.resource.resource_type(),
             expiration: Self::define_expiration(policy.duration.get()),
@@ -241,7 +241,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
 
         Ok(Authorization {
             permissions,
-            agent_id: actor.id(),
+            actor_id: actor.id(),
             resource_id: self.resource.id(),
             resource_type: self.resource.resource_type(),
             expiration: Self::define_expiration(seconds.get()),

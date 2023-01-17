@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "jwt")]
 pub struct AuthorizationClaims {
     pub(crate) permissions: Vec<String>,
-    pub(crate) agent_id: String,
+    pub(crate) actor_id: String,
     pub(crate) resource_id: String,
     pub(crate) resource_type: String,
     pub(crate) exp: u64,
@@ -20,14 +20,14 @@ pub struct AuthorizationClaims {
 impl AuthorizationClaims {
     pub fn new(
         permissions: Vec<String>,
-        agent_id: NonEmptyString,
+        actor_id: NonEmptyString,
         resource_id: NonEmptyString,
         resource_type: String,
         exp: u64,
     ) -> Self {
         Self {
             permissions,
-            agent_id: agent_id.to_string(),
+            actor_id: actor_id.to_string(),
             resource_id: resource_id.to_string(),
             resource_type,
             exp,
@@ -38,8 +38,8 @@ impl AuthorizationClaims {
         &self.permissions
     }
 
-    pub fn user_id(&self) -> &str {
-        &self.agent_id
+    pub fn actor_id(&self) -> &str {
+        &self.actor_id
     }
 
     pub fn resource_id(&self) -> &str {
@@ -65,7 +65,7 @@ impl AuthorizationClaims {
     pub fn as_authorization(&self) -> Result<Authorization, MinosError> {
         Ok(Authorization {
             permissions: self.string_permissions_to_vec_permissions(),
-            agent_id: non_empty_string!(self.agent_id.as_str())?,
+            actor_id: non_empty_string!(self.actor_id.as_str())?,
             resource_id: non_empty_string!(self.resource_id.as_str())?,
             resource_type: non_empty_string!(self.resource_type.as_str()).ok(),
             expiration: self.exp,
@@ -86,7 +86,7 @@ impl From<Authorization> for AuthorizationClaims {
             .unwrap_or_default();
         AuthorizationClaims {
             permissions: AuthorizationClaims::permissions_as_vec_string(&auth.permissions),
-            agent_id: auth.agent_id.to_string(),
+            actor_id: auth.actor_id.to_string(),
             resource_id: auth.resource_id.to_string(),
             resource_type,
             exp: auth.expiration,
