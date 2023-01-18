@@ -4,11 +4,17 @@ use crate::errors::MinosError;
 use non_empty_string::NonEmptyString;
 use crate::prelude::ActorId;
 
+pub type ResourceId = NonEmptyString;
+
+/// The use of ResourceType is a way to type the [Resource], who is an interface.
+/// This identifier can differentiate each resource and simplify the storage and reuse of access policies.
+pub type ResourceType = NonEmptyString;
+
 pub trait Resource {
-    fn id(&self) -> NonEmptyString;
+    fn id(&self) -> ResourceId;
     fn owner(&self) -> Option<ActorId>;
     fn policies(&self) -> Vec<Policy>;
-    fn resource_type(&self) -> Option<NonEmptyString>;
+    fn resource_type(&self) -> Option<ResourceType>;
 
     #[cfg(feature = "custom_authorization")]
     /// For custom-made rules implementation to generate an authorization (for more

@@ -4,7 +4,7 @@ use chrono::Utc;
 use non_empty_string::NonEmptyString;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroU64;
-use crate::prelude::{ActorId, Group};
+use crate::prelude::{ActorId, Group, ResourceId, ResourceType};
 
 const OWNER_POLICY_MODE_STR: &str = "owner";
 const SINGLE_GROUP_MODE_STR: &str = "single group";
@@ -101,8 +101,8 @@ impl Permission {
 pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
     pub(crate) actor_id: ActorId,
-    pub(crate) resource_id: NonEmptyString,
-    pub(crate) resource_type: Option<NonEmptyString>,
+    pub(crate) resource_id: ResourceId,
+    pub(crate) resource_type: Option<ResourceType>,
     pub(crate) expiration: u64,
 }
 
@@ -115,12 +115,12 @@ impl Authorization {
         &self.actor_id
     }
 
-    pub fn resource_id(&self) -> String {
-        self.resource_id.to_string()
+    pub fn resource_id(&self) -> &ResourceId {
+        &self.resource_id
     }
 
-    pub fn resource_type(&self) -> Option<NonEmptyString> {
-        self.resource_type.clone()
+    pub fn resource_type(&self) -> Option<&ResourceType> {
+        self.resource_type.as_ref()
     }
     pub fn expiration(&self) -> u64 {
         self.expiration
@@ -237,6 +237,8 @@ impl TryFrom<&str> for AuthorizationMode {
     }
 }
 
+pub type PolicyId = NonEmptyString;
+
 /// Defines the access and modification rules for a resource. It has two types of
 /// authorization policies: by owner and by roles; the use of the first excludes
 /// the other and vice versa.
@@ -247,9 +249,9 @@ impl TryFrom<&str> for AuthorizationMode {
 #[derive(PartialEq, Eq, Debug, Clone, PartialOrd)]
 pub struct Policy {
     /// Unique identifier, to prevent collisions.
-    pub(crate) id: Option<NonEmptyString>,
+    pub(crate) id: Option<PolicyId>,
 
-    pub(crate) resource_type: Option<NonEmptyString>,
+    pub(crate) resource_type: Option<ResourceType>,
 
     /// authorization duration, in seconds
     pub(crate) duration: NonZeroU64,
@@ -266,8 +268,8 @@ pub struct Policy {
 
 impl Policy {
     pub fn new(
-        id: Option<NonEmptyString>,
-        resource_type: Option<NonEmptyString>,
+        id: Option<PolicyId>,
+        resource_type: Option<ResourceType>,
         duration: NonZeroU64,
         auth_mode: AuthorizationMode,
         groups: Option<Vec<Group>>,
