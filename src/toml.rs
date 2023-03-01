@@ -1,4 +1,4 @@
-//! This module allows you save an read [`Resource`] policies in toml files
+/*//! This module allows you save an read [`Resource`] policies in toml files
 use crate::core::authorization::{AuthorizationMode, Permission, Policy};
 use crate::core::resources::Resource;
 use crate::errors::MinosError;
@@ -182,3 +182,4 @@ impl TryFrom<TomlFile> for StoredManifest {
         Ok(decoded)
     }
 }
+*/

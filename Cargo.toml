@@ -16,8 +16,10 @@ thiserror = "1.0.38"
 chrono = "0.4.19"
 jsonwebtoken = { version = "8.1.1", optional = true}
 serde = { version="1.0.137", features = ["derive"], optional = true }
-toml = {version = "0.5.9", optional = true }
+serde_json = "1.0.93"
+toml = {version = "0.7.2", optional = true }
 non-empty-string = "0.2.3"
+tsu = "1.0.1"
 
 [features]
 server = ["jwt", "toml_storage"]

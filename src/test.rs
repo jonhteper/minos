@@ -1,519 +1,56 @@
-#[cfg(test)]
-#[cfg(not(feature = "custom_authorization"))]
-mod std {
-    use crate::prelude::*;
-    use non_empty_string::NonEmptyString;
-    use std::num::NonZeroU64;
-
-    pub struct User {
-        pub id: NonEmptyString,
-        pub alias: String,
-        pub status: u8,
-        pub groups: Vec<NonEmptyString>,
-    }
-
-    impl Actor for User {
-        fn id(&self) -> NonEmptyString {
-            self.id.clone()
+const INPUT: &str = r#"{
+        "actor": {
+            "id": "actor.id",
+            "groups": ["writers", "admins"],
+            "status": "active"
+        },
+        "resource": {
+            "id": "resource.id",
+            "owner": "actor.id",
+            "status": "writed",
+            "is_revised": false,
+            "resource_type": "blog_post"
+        },
+        "environment": {
+            "in_maintainning_mode": false,
         }
+    }"#;
 
-        fn groups(&self) -> Vec<NonEmptyString> {
-            self.groups.clone()
-        }
-    }
+const POLICIES:&str = r#"
+        sintaxis = "0.6"
 
-    pub struct Group {
-        pub id: NonEmptyString,
-        pub alias: String,
-    }
+        [[policies]]
+        resource_type = "blog_post"
 
-    fn users_group() -> Group {
-        Group {
-            id: NonEmptyString::try_from("Users-Group-Id").unwrap(),
-            alias: "Users".to_string(),
-        }
-    }
+        [[policies.rules]]
+        permissions = [["read", "30 min"]]
+        resource.status = "published"
 
-    fn admin_group() -> Group {
-        Group {
-            id: NonEmptyString::try_from("Admins-Group-Id").unwrap(),
-            alias: "Admins".to_string(),
-        }
-    }
 
-    fn regular_user() -> User {
-        User {
-            id: NonEmptyString::try_from("regular-user-id").unwrap(),
-            alias: "Regular User".to_string(),
-            status: 1,
-            groups: vec![users_group().id],
-        }
-    }
+        [[policies.rules]]
+        permissions = [
+            ["read", "60min"],
+            ["write", "1500ms"]
+        ]
+        actor.groups = ["writers"]
+        by_owner = true
 
-    fn admin_user() -> User {
-        User {
-            id: NonEmptyString::try_from("admin-user-id").unwrap(),
-            alias: "Admin User".to_string(),
-            status: 1,
-            groups: vec![admin_group().id],
-        }
-    }
 
-    struct Message {
-        id: NonEmptyString,
-        resource_type: NonEmptyString,
-        owner: NonEmptyString,
-        policies: Vec<Policy>,
-    }
+        [[policies.rules]]
+        permissions = [["revise", "1200 ms"]]
+        actor.groups = ["admins"]
 
-    impl Resource for Message {
-        fn id(&self) -> NonEmptyString {
-            self.id.clone()
-        }
 
-        fn owner(&self) -> Option<NonEmptyString> {
-            Some(self.owner.clone())
-        }
+        [[policies.rules]]
+        permissions = [["publish", "1s"]]
+        actor.groups = ["admins"]
+        actor.status = "active"
+        resource.status = "writed"
+        resource.is_revised = true
+        environment.in_maintainning_mode = false
+    "#;
 
-        fn policies(&self) -> Vec<Policy> {
-            self.policies.clone()
-        }
-
-        fn resource_type(&self) -> Option<NonEmptyString> {
-            Some(self.resource_type.clone())
-        }
-    }
-
-    #[test]
-    fn authorization_by_user() {
-        let user = regular_user();
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: user.id(),
-            policies: vec![Policy {
-                duration: NonZeroU64::new(60).unwrap(),
-                auth_mode: AuthorizationMode::Owner,
-                groups_ids: None,
-                permissions: Permission::crud(),
-            }],
-        };
-
-        let auth = AuthorizationBuilder::new(&message)
-            .build(&user)
-            .expect("Error building Authorization");
-
-        auth.search_permission(Permission::Create)
-            .expect("Error with authorization");
-    }
-
-    #[test]
-    fn authorization_by_group() {
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: regular_user().id(),
-            policies: vec![Policy {
-                duration: NonZeroU64::new(200).unwrap(),
-                auth_mode: AuthorizationMode::SingleGroup,
-                groups_ids: Some(vec![admin_group().id]),
-                permissions: vec![Permission::Read],
-            }],
-        };
-
-        let reader_user = admin_user();
-        let auth = AuthorizationBuilder::new(&message)
-            .build(&reader_user)
-            .expect("Error building Authorization");
-        auth.search_permission(Permission::Read)
-            .expect("Error with permission");
-    }
-
-    #[test]
-    fn unauthorized() {
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: admin_group().id,
-            policies: vec![Policy {
-                duration: NonZeroU64::new(30).unwrap(),
-                auth_mode: AuthorizationMode::SingleGroup,
-                groups_ids: Some(vec![admin_group().id]),
-                permissions: Permission::crud(),
-            }],
-        };
-
-        let invalid_user = regular_user();
-        let builder = AuthorizationBuilder::new(&message);
-        let _auth = builder
-            .build(&invalid_user)
-            .expect_err("Authorization should not be able to be created");
-        let auth = builder.build(&admin_user()).expect("Error building auth");
-
-        auth.check(&message.id.to_string(), &invalid_user, Permission::Read)
-            .expect_err("The user should not be able to read the resource");
-    }
-
-    #[test]
-    fn multi_permissions() {
-        let user = regular_user();
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: user.id(),
-            policies: vec![Policy {
-                duration: NonZeroU64::new(6).unwrap(),
-                auth_mode: AuthorizationMode::Owner,
-                groups_ids: None,
-                permissions: Permission::crud(),
-            }],
-        };
-        let auth = AuthorizationBuilder::new(&message)
-            .build(&user)
-            .expect("Error building Authorization");
-
-        auth.multi_permissions_check(
-            &message.id().to_string(),
-            &user,
-            &vec![Permission::Read, Permission::Delete],
-        )
-        .expect("Error with authorization check");
-
-        auth.multi_permissions_check(
-            &message.id().to_string(),
-            &user,
-            &vec![Permission::Read, Permission::from("sign")],
-        )
-        .expect_err("The authorization check must failed");
-    }
-
-    #[test]
-    fn multi_group() {
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: admin_group().id,
-            policies: vec![Policy {
-                duration: NonZeroU64::new(30).unwrap(),
-                auth_mode: AuthorizationMode::SingleGroup,
-                groups_ids: Some(vec![
-                    NonEmptyString::try_from("other.group.id").unwrap(),
-                    NonEmptyString::try_from("2.group.id").unwrap(),
-                    NonEmptyString::try_from("3.group.id").unwrap(),
-                    admin_group().id,
-                ]),
-                permissions: Permission::crud(),
-            }],
-        };
-        let mut reader_user = admin_user();
-        reader_user
-            .groups
-            .push(NonEmptyString::try_from("other.group.id").unwrap());
-        reader_user
-            .groups
-            .push(NonEmptyString::try_from("2.group.id").unwrap());
-        reader_user
-            .groups
-            .push(NonEmptyString::try_from("3.group.id").unwrap());
-
-        AuthorizationBuilder::new(&message)
-            .build(&reader_user)
-            .expect("Error building auth")
-            .search_permission(Permission::Read)
-            .expect("Error with permission");
-    }
-
-    #[test]
-    fn owner_single_group() {
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: admin_user().id,
-            policies: vec![Policy {
-                duration: NonZeroU64::new(30).unwrap(),
-                auth_mode: AuthorizationMode::OwnerSingleGroup,
-                groups_ids: Some(vec![admin_group().id]),
-                permissions: vec![Permission::Read],
-            }],
-        };
-        let reader_user = admin_user();
-        AuthorizationBuilder::new(&message)
-            .build(&reader_user)
-            .expect("Error building auth")
-            .search_permission(Permission::Read)
-            .expect("Error with permission");
-    }
-
-    #[test]
-    fn owner_multi_group() {
-        let message = Message {
-            id: NonEmptyString::try_from("example-message-id").unwrap(),
-            resource_type: NonEmptyString::try_from("message").unwrap(),
-            owner: admin_user().id,
-            policies: vec![Policy {
-                duration: NonZeroU64::new(30).unwrap(),
-                auth_mode: AuthorizationMode::OwnerMultiGroup,
-                groups_ids: Some(vec![
-                    NonEmptyString::try_from("other.group.id").unwrap(),
-                    admin_group().id,
-                ]),
-                permissions: vec![Permission::Read],
-            }],
-        };
-        let mut reader_user = admin_user();
-        reader_user
-            .groups
-            .push(NonEmptyString::try_from("other.group.id").unwrap());
-
-        AuthorizationBuilder::new(&message)
-            .build(&reader_user)
-            .expect("Error building auth")
-            .search_permission(Permission::Read)
-            .expect("Error with permission");
-    }
-}
-
-#[cfg(feature = "jwt")]
-#[cfg(not(feature = "custom_authorization"))]
-#[cfg(test)]
-mod jwt_test {
-    use crate::errors::MinosError;
-    use crate::jwt::{AuthorizationClaims, TokenServer};
-    use crate::prelude::*;
-    use chrono::Utc;
-    use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
-    use non_empty_string::NonEmptyString;
-    use std::num::NonZeroU64;
-
-    struct Foo;
-
-    impl Resource for Foo {
-        fn id(&self) -> NonEmptyString {
-            NonEmptyString::try_from("resource-id").unwrap()
-        }
-
-        fn owner(&self) -> Option<NonEmptyString> {
-            NonEmptyString::try_from("user-id").ok()
-        }
-
-        fn policies(&self) -> Vec<Policy> {
-            vec![Policy::new(
-                NonZeroU64::new(1).unwrap(),
-                AuthorizationMode::Owner,
-                None,
-                Permission::crud(),
-            )]
-        }
-
-        fn resource_type(&self) -> Option<NonEmptyString> {
-            NonEmptyString::try_from("foo").ok()
-        }
-    }
-
-    #[test]
-    fn authorization_as_claims() -> Result<(), MinosError> {
-        let resource = Foo;
-
-        let auth = Authorization {
-            permissions: Permission::crud(),
-            agent_id: resource.owner().unwrap(),
-            resource_id: resource.id(),
-            resource_type: resource.resource_type(),
-            expiration: Utc::now().timestamp() as u64,
-        };
-
-        let generate_claims = AuthorizationClaims::from(auth.clone());
-        let generated_auth = generate_claims
-            .as_authorization()
-            .expect("Error creating authorization from claims");
-
-        assert_eq!(&auth, &generated_auth);
-        assert_eq!(&generate_claims, &AuthorizationClaims::from(generated_auth));
-
-        Ok(())
-    }
-
-    #[test]
-    fn token_test() {
-        let key = b"secret";
-        let token_server = TokenServer::new(
-            Header::default(),
-            EncodingKey::from_secret(key.as_slice()),
-            DecodingKey::from_secret(key.as_slice()),
-            Algorithm::HS256,
-        );
-
-        let auth_claims = AuthorizationClaims::new(
-            vec![Permission::Read.to_string(), Permission::Update.to_string()],
-            NonEmptyString::try_from("user-id").unwrap(),
-            NonEmptyString::try_from("resource-id").unwrap(),
-            "example.resource".to_string(),
-            (Utc::now().timestamp() + 30) as u64,
-        );
-
-        let token = token_server
-            .generate_token(&auth_claims)
-            .expect("Error generating token");
-
-        let decoded_claims = token_server
-            .get_claims_by_token(&token.as_str())
-            .expect("Error obtaining claims ");
-
-        assert_eq!(&auth_claims, &decoded_claims)
-    }
-}
-
-#[cfg(feature = "toml_storage")]
-#[cfg(not(feature = "custom_authorization"))]
-#[cfg(test)]
-mod toml_test {
-    use crate::prelude::*;
-    use crate::errors::MinosError;
-    use crate::toml::{StoredManifest, TomlFile};
-    use non_empty_string::NonEmptyString;
-    use std::env;
-    use std::fs::File;
-    use std::io::Write;
-    use std::num::NonZeroU64;
-    use std::path::PathBuf;
-
-    static FILE_CONTENT: &str = r#"
-    resource_type = "example resource"
-    owner = true
-
-    [[policies]]
-    duration = 120
-    auth_mode = "owner"
-    permissions = ["create", "read", "update", "delete"]
-
-    [[policies]]
-    duration = 300
-    auth_mode = "single group"
-    groups = ["example-group-id-1", "example-group-id-2"]
-    permissions = ["read"]"#;
-
-    fn create_temp_file(content: &str) -> Result<PathBuf, MinosError> {
-        let mut path = env::temp_dir();
-        path.push("example.resource");
-        let mut file = File::create(&path)?;
-
-        file.write_all(&content.as_bytes())?;
-
-        Ok(path)
-    }
-
-    #[derive(Debug, PartialEq)]
-    struct GenericResource {
-        pub id: NonEmptyString,
-        pub owner: Option<NonEmptyString>,
-        pub policies: Vec<Policy>,
-        pub resource_type: Option<NonEmptyString>,
-    }
-
-    impl Resource for GenericResource {
-        fn id(&self) -> NonEmptyString {
-            self.id.clone()
-        }
-
-        fn owner(&self) -> Option<NonEmptyString> {
-            self.owner.clone()
-        }
-
-        fn policies(&self) -> Vec<Policy> {
-            self.policies.clone()
-        }
-
-        fn resource_type(&self) -> Option<NonEmptyString> {
-            self.resource_type.clone()
-        }
-    }
-
-    struct ResourceBuilder {
-        pub stored_resource: StoredManifest,
-        pub id: NonEmptyString,
-        pub owner: Option<NonEmptyString>,
-    }
-
-    impl AsResource<GenericResource> for ResourceBuilder {
-        type Error = MinosError;
-        fn as_resource(&mut self) -> Result<GenericResource, MinosError> {
-            Ok(GenericResource {
-                id: self.id.clone(),
-                owner: self.owner.clone(),
-                policies: self.stored_resource.policies(),
-                resource_type: self.stored_resource.resource_type(),
-            })
-        }
-    }
-
-    fn resource_from_toml_file(
-        file: TomlFile,
-        id: NonEmptyString,
-        owner: Option<NonEmptyString>,
-    ) -> Result<GenericResource, MinosError> {
-        let stored_resource = StoredManifest::try_from(file)?;
-        let mut builder = ResourceBuilder {
-            stored_resource,
-            id,
-            owner,
-        };
-
-        builder.as_resource()
-    }
-
-    #[test]
-    fn resource_by_file() -> Result<(), MinosError> {
-        let path = create_temp_file(FILE_CONTENT)?;
-        let toml_file = TomlFile::try_from(&path)?;
-        let resource = resource_from_toml_file(
-            toml_file,
-            NonEmptyString::try_from("example-resource-id").unwrap(),
-            NonEmptyString::try_from("example-user-id").ok(),
-        )?;
-
-        println!("{:#?}", resource);
-
-        Ok(())
-    }
-
-    #[test]
-    fn file_by_resource() -> Result<(), MinosError> {
-        let mut path = env::temp_dir();
-        path.push("ref.resource");
-        let resource = GenericResource {
-            id: NonEmptyString::try_from("example-resource-id").unwrap(),
-            owner: NonEmptyString::try_from("example-user-id").ok(),
-            resource_type: NonEmptyString::try_from("example resource").ok(),
-            policies: vec![
-                Policy::new(
-                    NonZeroU64::new(120).unwrap(),
-                    AuthorizationMode::Owner,
-                    None,
-                    Permission::crud(),
-                ),
-                Policy::new(
-                    NonZeroU64::new(300).unwrap(),
-                    AuthorizationMode::SingleGroup,
-                    Some(vec![
-                        NonEmptyString::try_from("example-group-id-1").unwrap(),
-                        NonEmptyString::try_from("example-group-id-2").unwrap(),
-                    ]),
-                    vec![Permission::Read],
-                ),
-            ],
-        };
-
-        TomlFile::create(&resource, &path)?;
-        let path = create_temp_file(FILE_CONTENT)?;
-        let toml_file = TomlFile::try_from(&path)?;
-        let saved_resource = resource_from_toml_file(
-            toml_file,
-            NonEmptyString::try_from("example-resource-id").unwrap(),
-            NonEmptyString::try_from("example-user-id").ok(),
-        )?;
-
-        assert_eq!(resource, saved_resource);
-
-        Ok(())
-    }
+#[test]
+fn authorization_works() {
+    todo!()
 }

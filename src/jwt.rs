@@ -1,4 +1,4 @@
-//! This module allows you to convert authorizations to jwt and validate them.
+/*//! This module allows you to convert authorizations to jwt and validate them.
 use crate::core::authorization::{Authorization, Permission};
 use crate::errors::MinosError;
 use crate::non_empty_string;
@@ -127,3 +127,4 @@ impl TokenServer {
         Ok(token_data.claims)
     }
 }
+*/

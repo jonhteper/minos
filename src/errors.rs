@@ -1,4 +1,4 @@
-use crate::core::authorization::Permission;
+use crate::core::permission::Permission;
 use chrono::format::ParseError;
 #[cfg(feature = "jwt")]
 use jsonwebtoken;

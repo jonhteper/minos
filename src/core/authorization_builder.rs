@@ -1,24 +1,29 @@
-use crate::core::actor::Actor;
+/*use crate::core::actor::Actor;
 use crate::core::authorization::{Authorization, AuthorizationMode, Permission, Policy};
 use crate::core::resources::Resource;
 use crate::errors::{ErrorKind, MinosError};
 use chrono::Utc;
 use std::num::NonZeroU64;
 
-pub struct AuthorizationBuilder<'b, R: Resource> {
+#[derive(Clone)]
+pub struct AuthorizationBuilder<'b, R: Resource, A: Actor> {
     resource: &'b R,
+    actor: &'b A,
 }
 
-impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
-    pub fn new(resource: &'b R) -> Self {
-        Self { resource }
+impl<'b, R: Resource, A: Actor> AuthorizationBuilder<'b, R, A> {
+    pub fn new(actor: &'b A, resource: &'b R) -> Self {
+        Self {
+            actor,
+            resource,
+        }
     }
 
     /// Check if the [Actor] is member at least one of the authorized groups in [Policy].
     /// # Errors
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member for any authorized group.
-    fn single_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+    fn single_group_check(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
         if policy.groups.is_none() {
             return Err(MinosError::EmptyGroupsPolicy);
         }
@@ -36,7 +41,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// # Errors
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member of all groups in [Policy].
-    fn multi_group_check<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+    fn multi_group_check(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
         if policy.groups.is_none() {
             return Err(MinosError::EmptyGroupsPolicy);
         }
@@ -57,7 +62,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// # Errors
     /// * [MinosError::ResourceWithoutOwner] if the [Resource] not have an owner.
     /// * [MinosError::InvalidOwner] if the [Actor] is not the owner.
-    fn by_owner_check<A: Actor>(&self, actor: &A) -> Result<(), MinosError> {
+    fn by_owner_check(&self, actor: &A) -> Result<(), MinosError> {
         let owner = &self
             .resource
             .owner()
@@ -76,7 +81,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::InvalidOwner] if the [Actor] is not the owner.
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member for any authorized group.
-    fn owner_single_group_check<A: Actor>(
+    fn owner_single_group_check(
         &self,
         actor: &A,
         policy: &Policy,
@@ -92,7 +97,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::InvalidOwner] if the [Actor] is not the owner.
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member of all groups in [Policy].
-    fn owner_multi_group_check<A: Actor>(
+    fn owner_multi_group_check(
         &self,
         actor: &A,
         policy: &Policy,
@@ -109,7 +114,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// # Errors
     /// * [MinosError::InvalidResourceTypePolicy]: if the [Policy] not corresponds to resource type.
     fn policy_check(&self, policy: &Policy) -> Result<(), MinosError> {
-        if self.resource.resource_type() != policy.resource_type {
+        if &self.resource.resource_type() != policy.resource_type.as_ref().unwrap() {
             return Err(MinosError::InvalidResourceTypePolicy);
         }
         Ok(())
@@ -154,7 +159,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// * [MinosError::InvalidOwner] if the [Actor] is not the owner.
     /// * [MinosError::EmptyGroupsPolicy] if the [Policy] don't have any group.
     /// * [MinosError::MissingGroup] if the [Actor] is not member of all groups in [Policy].
-    fn check_by_policy<A: Actor>(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
+    fn check_by_policy(&self, actor: &A, policy: &Policy) -> Result<(), MinosError> {
         match policy.auth_mode {
             AuthorizationMode::Owner => self.by_owner_check(actor),
             AuthorizationMode::SingleGroup => self.single_group_check(actor, policy),
@@ -179,7 +184,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// [InvalidOwner]: MinosError::InvalidOwner
     /// [EmptyGroupsPolicy]: MinosError::EmptyGroupsPolicy
     /// [MissingGroup]: MinosError::MissingGroup
-    pub fn build_by_policy<A: Actor>(
+    pub fn build_by_policy(
         &self,
         policy: &Policy,
         actor: &A,
@@ -196,7 +201,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         })
     }
 
-    fn extract_permissions_and_durations<A: Actor>(
+    fn extract_permissions_and_durations(
         &self,
         actor: &A,
     ) -> Result<(Vec<Permission>, Vec<NonZeroU64>), MinosError> {
@@ -235,7 +240,7 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
     /// [ResourceWithoutOwner]: MinosError::ResourceWithoutOwner
     /// [EmptyGroupsPolicy]: MinosError::EmptyGroupsPolicy
     /// [MissingPermissions]: MinosError::MissingPermissions
-    pub fn build<A: Actor>(&self, actor: &A) -> Result<Authorization, MinosError> {
+    pub fn build(&self, actor: &A) -> Result<Authorization, MinosError> {
         let (permissions, durations) = self.extract_permissions_and_durations(actor)?;
         let seconds = *durations.first().ok_or(MinosError::MissingPermissions)?;
 
@@ -248,3 +253,4 @@ impl<'b, R: Resource> AuthorizationBuilder<'b, R> {
         })
     }
 }
+*/

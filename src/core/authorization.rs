@@ -1,10 +1,10 @@
-use crate::core::actor::Actor;
+/*use crate::core::actor::Actor;
 use crate::errors::MinosError;
+use crate::prelude::{ActorId, Group, ResourceId, ResourceType};
 use chrono::Utc;
 use non_empty_string::NonEmptyString;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroU64;
-use crate::prelude::{ActorId, Group, ResourceId, ResourceType};
 
 const OWNER_POLICY_MODE_STR: &str = "owner";
 const SINGLE_GROUP_MODE_STR: &str = "single group";
@@ -14,38 +14,17 @@ const OWNER_MULTI_GROUP_MODE_STR: &str = "owner and multi group";
 
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
 /// Defines what an actor is allowed to do.
-pub enum Permission {
-    /// The actor can create the source
-    Create,
-    /// The actor can read the source
-    Read,
-    /// The actor can edit the source, but can't delete the source
-    Update,
-    /// The actor can delete the source
-    Delete,
-
-    /// The actor can perform a specific action
-    Custom(String),
-}
+pub struct Permission(String);
 
 impl Display for Permission {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Custom(permission) => Display::fmt(&permission, f),
-            _ => write!(f, "{self:?}"),
-        }
+        Display::fmt(&self.0, f)
     }
 }
 
 impl From<&str> for Permission {
     fn from(str: &str) -> Self {
-        match str {
-            "create" => Self::Create,
-            "read" => Self::Read,
-            "update" => Self::Update,
-            "delete" => Self::Delete,
-            _ => Self::Custom(str.to_string()),
-        }
+        Self(str.to_owned())
     }
 }
 
@@ -67,34 +46,14 @@ impl Permission {
     /// ```
     ///```
     ///     use minos::prelude::Permission;
-    ///     assert_eq!(Permission::Update.required_msg(), "update permission is required.");
-    ///     assert_eq!(Permission::Custom("Purge".to_string()).required_msg(), "purgue permission is required");
+    ///     assert_eq!(Permission("update".to_string()).required_msg(), "update permission is required.");
+    ///     assert_eq!(Permission("purge".to_string()).required_msg(), "purgue permission is required");
     /// ```
     pub fn required_msg(&self) -> String {
         format!("{self} permission is required.")
     }
 
-    /// Returns a vector with Create, Read, Update, and Delete permissions
-    /// # Example
-    /// ```
-    ///     use minos::prelude::Permission;
-    ///     use minos::prelude::Permission::{Create, Read, Update, Delete};
-    ///
-    ///     assert_eq!(vec![Create, Read, Update, Delete], Permission::crud())
-    /// ```
-    pub fn crud() -> Vec<Permission> {
-        vec![
-            Permission::Create,
-            Permission::Read,
-            Permission::Update,
-            Permission::Delete,
-        ]
-    }
 
-    /// Like crud, but within Create
-    pub fn rud() -> Vec<Permission> {
-        vec![Permission::Read, Permission::Update, Permission::Delete]
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
@@ -102,7 +61,7 @@ pub struct Authorization {
     pub(crate) permissions: Vec<Permission>,
     pub(crate) actor_id: ActorId,
     pub(crate) resource_id: ResourceId,
-    pub(crate) resource_type: Option<ResourceType>,
+    pub(crate) resource_type: ResourceType,
     pub(crate) expiration: u64,
 }
 
@@ -119,8 +78,8 @@ impl Authorization {
         &self.resource_id
     }
 
-    pub fn resource_type(&self) -> Option<&ResourceType> {
-        self.resource_type.as_ref()
+    pub fn resource_type(&self) -> &ResourceType {
+        &self.resource_type
     }
     pub fn expiration(&self) -> u64 {
         self.expiration
@@ -305,3 +264,4 @@ impl Policy {
         &self.permissions
     }
 }
+*/
