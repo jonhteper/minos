@@ -2,10 +2,10 @@ use std::fs::Permissions;
 use serde_json::Value;
 use crate::errors::MinosError;
 
-pub trait ToPermissions {
-    fn to_permissions(&self, vec: &Vec<Value>) -> Result<Vec<Permission>, MinosError>;
+pub trait ParsePermissions {
+    fn to_permissions(&self, vec: &[Value]) -> Result<Vec<Permission>, MinosError>;
 
-    fn permissions_to_string(&self, permissions: &Vec<Permission>) -> String;
+    fn permissions_to_string(&self, permissions: &[Permission]) -> String;
 }
 
 

@@ -3,7 +3,7 @@ use toml::{Value, from_str};
 use serde_json::Value as JsValue;
 use serde_json::Map as JsMap;
 use crate::model::parser::Parser;
-use crate::model::permission::ToPermissions;
+use crate::model::permission::ParsePermissions;
 
 const INPUT: &str = r#"{
         "actor": {
