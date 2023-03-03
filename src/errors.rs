@@ -1,4 +1,4 @@
-use crate::core::permission::Permission;
+use crate::model::permission::Permission;
 use chrono::format::ParseError;
 #[cfg(feature = "jwt")]
 use jsonwebtoken;
@@ -52,20 +52,20 @@ pub enum MinosError {
     /// Indicates that the [Actor] does not have any [Permission]
     /// to manipulate the resource.
     ///
-    /// [Actor]: crate::core::actor::Actor
+    /// [Actor]: crate::model::actor::Actor
     #[error("no permissions available")]
     MissingPermissions,
 
     /// Indicates that the [Actor] does not have specific [Permission]
     /// to manipulate the resource.
     ///
-    /// [Actor]: crate::core::actor::Actor
+    /// [Actor]: crate::model::actor::Actor
     #[error("{}", .0.required_msg())]
     MissingPermission(Permission),
 
     /// Indicates that the [Authorization] is out of date.
     ///
-    /// [Authorization]:crate::core::authorization::Authorization
+    /// [Authorization]:crate::model::authorization::Authorization
     #[error("expired authorization")]
     ExpiredAuthorization,
 
@@ -82,6 +82,18 @@ pub enum MinosError {
     MissingGroup,
 
     // Policy format errors
+    #[error("the rule don't have any permission")]
+    EmptyPermissions,
+
+    #[error("the permissions don't have the correct format: {}", .0)]
+    PermissionsFormat(String),
+
+    #[error("the name of permission is not a string: {}", .0)]
+    PermissionNameFormat(String),
+
+    #[error("the duration of permission is not a valid time: {}", .0)]
+    PermissionDurationFormat(String),
+
     #[error("the resource haven't an owner")]
     ResourceWithoutOwner,
 

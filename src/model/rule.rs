@@ -1,8 +1,12 @@
 use serde_json::map::Map;
-use serde_json::value::Value;
-use crate::core::permission::Permission;
-use crate::core::assertion::Assertion;
+use serde_json::value::Value as Value;
+use crate::model::permission::Permission;
+use crate::model::assertion::Assertion;
 use crate::errors::MinosError;
+
+pub trait ToRule {
+    fn to_rule(&self, object: &Map<String, Value>) -> Result<Rule, MinosError>;
+}
 
 pub struct Rule {
     permissions: Vec<Permission>,
@@ -12,9 +16,6 @@ pub struct Rule {
     assertions: Vec<Assertion>,
 }
 
-impl TryFrom<String> for Rule {
-    type Error = MinosError;
-    fn try_from(str: String) -> Result<Self, Self::Error> {
-        todo!()
-    }
+impl Rule {
+
 }

@@ -1,4 +1,4 @@
-/*use crate::core::actor::Actor;
+/*use crate::model::actor::Actor;
 use crate::errors::MinosError;
 use crate::prelude::{ActorId, Group, ResourceId, ResourceType};
 use chrono::Utc;

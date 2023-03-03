@@ -6,3 +6,4 @@ pub mod resources;
 pub mod rule;
 pub mod assertion;
 pub mod permission;
+pub mod parser;

@@ -1,6 +1,6 @@
-/*use crate::core::actor::Actor;
-use crate::core::authorization::{Authorization, AuthorizationMode, Permission, Policy};
-use crate::core::resources::Resource;
+/*use crate::model::actor::Actor;
+use crate::model::authorization::{Authorization, AuthorizationMode, Permission, Policy};
+use crate::model::resources::Resource;
 use crate::errors::{ErrorKind, MinosError};
 use chrono::Utc;
 use std::num::NonZeroU64;

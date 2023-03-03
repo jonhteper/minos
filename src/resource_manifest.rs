@@ -1,5 +1,5 @@
-/*use crate::core::authorization::Policy;
-use crate::core::resources::Resource;
+/*use crate::model::authorization::Policy;
+use crate::model::resources::Resource;
 use crate::errors::MinosError;
 use non_empty_string::NonEmptyString;
 

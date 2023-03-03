@@ -1,5 +1,5 @@
-/*use crate::core::actor::Actor;
-use crate::core::authorization::{Authorization, Policy};
+/*use crate::model::actor::Actor;
+use crate::model::authorization::{Authorization, Policy};
 use crate::errors::MinosError;
 use crate::prelude::ActorId;
 use non_empty_string::NonEmptyString;

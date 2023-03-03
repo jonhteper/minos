@@ -1,6 +1,6 @@
 /*//! This module allows you save an read [`Resource`] policies in toml files
-use crate::core::authorization::{AuthorizationMode, Permission, Policy};
-use crate::core::resources::Resource;
+use crate::model::authorization::{AuthorizationMode, Permission, Policy};
+use crate::model::resources::Resource;
 use crate::errors::MinosError;
 use crate::resource_manifest::ResourceManifest;
 use non_empty_string::NonEmptyString;

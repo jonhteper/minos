@@ -15,15 +15,17 @@ all-features = true
 thiserror = "1.0.38"
 chrono = "0.4.19"
 jsonwebtoken = { version = "8.1.1", optional = true}
-serde = { version="1.0.137", features = ["derive"], optional = true }
+serde = { version="1.0.137", features = ["derive"] }
 serde_json = "1.0.93"
-toml = {version = "0.7.2", optional = true }
+toml = {version = "0.7.2" }
 non-empty-string = "0.2.3"
 tsu = "1.0.1"
+versions = "4.1.0"
+fundu = "0.4.1"
 
 [features]
-server = ["jwt", "toml_storage"]
-jwt = ["jsonwebtoken", "serde"]
-toml_storage = ["serde", "toml", "manifest"]
-custom_authorization = []
-manifest = []
+#server = ["jwt", "toml_storage"]
+#jwt = ["jsonwebtoken", "serde"]
+#toml_storage = ["serde", "toml", "manifest"]
+#custom_authorization = []
+#manifest = []

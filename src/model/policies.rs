@@ -1,4 +1,4 @@
-use crate::core::rule::Rule;
+use crate::model::rule::Rule;
 
 struct Policies {
     resource_type: Option<String>,
