@@ -46,7 +46,7 @@ pub enum ErrorKind {
 }
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum MinosError {
     // Unauthorized errors
     /// Indicates that the [Actor] does not have any [Permission]
@@ -94,6 +94,15 @@ pub enum MinosError {
     #[error("the duration of permission is not a valid time: {}", .0)]
     PermissionDurationFormat(String),
 
+    #[error("invalid char in assertion: {}", .0)]
+    InvalidAssertionChar(String),
+
+    #[error("invalid assertion syntax: {}", .0)]
+    InvalidAssertionSyntax(String),
+
+    #[error("invalid key syntax: {}", .0)]
+    InvalidKeySyntax(String),
+
     #[error("the resource haven't an owner")]
     ResourceWithoutOwner,
 
@@ -133,6 +142,9 @@ pub enum MinosError {
 
     #[error(transparent)]
     ChronoParse(#[from] ParseError),
+
+    #[error(transparent)]
+    Regex(#[from] regex::Error),
 
     #[cfg(feature = "jwt")]
     #[error(transparent)]
