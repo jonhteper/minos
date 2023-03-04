@@ -1,12 +1,12 @@
-use std::str::FromStr;
-use toml::map::Map;
-use toml::{Value, from_str};
-use serde_json::Value as JsValue;
-use serde_json::Map as JsMap;
 use crate::model::assertion::Assertion;
 use crate::model::attribute_path::AttributePath;
 use crate::model::parser::JsonParser;
 use crate::model::permission::ToPermissions;
+use serde_json::Map as JsMap;
+use serde_json::Value as JsValue;
+use std::str::FromStr;
+use toml::map::Map;
+use toml::{from_str, Value};
 
 const INPUT: &str = r#"{
         "actor": {
@@ -26,7 +26,7 @@ const INPUT: &str = r#"{
         }
     }"#;
 
-const POLICIES:&str = r#"
+const POLICIES: &str = r#"
         syntax_version = "0.6"
 
         [[policies]]
@@ -73,8 +73,7 @@ fn authorization_works() {
 fn attribute_path_from_str_works() {
     const TEXT: &str = "parent.child1.child_two.another";
 
-    let attribute_path = AttributePath::from_str(TEXT)
-        .expect("Error with attribute path parsing");
+    let attribute_path = AttributePath::from_str(TEXT).expect("Error with attribute path parsing");
 
     assert_eq!(&attribute_path.to_string(), TEXT);
     println!("{attribute_path:?}");
@@ -83,15 +82,14 @@ fn attribute_path_from_str_works() {
 #[test]
 fn assertion_from_str_works() {
     const TEXT: &str = "actor.failed_attempts >= environment.max_failed_attempts";
-
-    let a = Assertion::from_str(TEXT)
-        .expect_err("Error with assertion");
+    let assertion = Assertion::from_str(TEXT)
+        .expect("Error with assertion");
+    assert_eq!(&assertion.to_string(), TEXT)
 }
 
 #[test]
 fn parse_toml_file1() {
-    let file: Map<String, Value> = from_str(POLICIES)
-        .expect("Error decoding policies");
+    let file: Map<String, Value> = from_str(POLICIES).expect("Error decoding policies");
 
     //println!("{:?}", file);
 
@@ -108,25 +106,21 @@ fn parse_toml_file1() {
             let permissions = rule.get("permissions").unwrap().as_array().unwrap();
             println!("permissions: {permissions:?}");
             for (key, value) in rule {
-                if key == "permissions"{
-                    continue
+                if key == "permissions" {
+                    continue;
                 }
                 println!("{key}: {value}")
             }
             println!();
         }
     }
-
 }
 
 #[test]
 fn parse_toml_file2() {
-    let file_str = tsu::convert_toml_to_json(POLICIES)
-        .expect("Error in file conversion");
+    let file_str = tsu::convert_toml_to_json(POLICIES).expect("Error in file conversion");
 
-    let file: JsMap<String, JsValue> = serde_json::from_str(&file_str)
-        .expect("Error parsing file");
-
+    let file: JsMap<String, JsValue> = serde_json::from_str(&file_str).expect("Error parsing file");
 
     let syntax_version = file.get("syntax_version").unwrap().to_string();
     println!("syntax_version: {syntax_version}");
@@ -143,8 +137,8 @@ fn parse_toml_file2() {
                 .expect("Error parsing permissions");
             println!("permissions: {parsed_permissions:?}");*/
             for (key, value) in rule {
-                if key == "permissions"{
-                    continue
+                if key == "permissions" {
+                    continue;
                 }
                 println!("{key}: {value}")
             }
