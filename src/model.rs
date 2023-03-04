@@ -7,3 +7,4 @@ pub mod rule;
 pub mod assertion;
 pub mod permission;
 pub mod parser;
+pub mod attribute_path;
