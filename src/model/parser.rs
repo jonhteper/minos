@@ -1,5 +1,5 @@
 use crate::errors::MinosError;
-use crate::model::actor::{Actor, ParseActor};
+use crate::model::actor::{Actor, ToActor};
 use crate::model::assertion::{Assertion, ToAssertions};
 use crate::model::permission::{Permission, ToPermissions};
 use crate::model::rule::{Rule, RuleBuilder, ToRule};
