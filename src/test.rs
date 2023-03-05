@@ -1,5 +1,5 @@
 use crate::model::assertion::Assertion;
-use crate::model::attribute_path::AttributePath;
+use crate::model::attribute::AttributePath;
 use crate::model::parser::JsonParser;
 use crate::model::permission::ToPermissions;
 use serde_json::Map as JsMap;
@@ -82,8 +82,7 @@ fn attribute_path_from_str_works() {
 #[test]
 fn assertion_from_str_works() {
     const TEXT: &str = "actor.failed_attempts >= environment.max_failed_attempts";
-    let assertion = Assertion::from_str(TEXT)
-        .expect("Error with assertion");
+    let assertion = Assertion::from_str(TEXT).expect("Error with assertion");
     assert_eq!(&assertion.to_string(), TEXT)
 }
 

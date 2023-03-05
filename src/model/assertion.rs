@@ -1,5 +1,5 @@
 use crate::errors::MinosError;
-use crate::model::attribute_path::AttributePath;
+use crate::model::attribute::AttributePath;
 use regex::Regex;
 use serde_json::{Map, Value};
 use std::fmt::{Debug, Display, Formatter};
@@ -67,11 +67,11 @@ impl FromStr for Assertion {
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         let error_fn = MinosError::InvalidAssertionSyntax(str.to_string());
         let regex = Regex::from_str(ASSERTION_REGEX_VALUE)?;
-        let captures = regex.captures(str).ok_or(error_fn.clone())?;
+        let captures = regex.captures(str).ok_or_else(||error_fn.clone())?;
 
-        let left = AttributePath::from_str(captures.get(1).ok_or(error_fn.clone())?.as_str())?;
+        let left = AttributePath::from_str(captures.get(1).ok_or_else(||error_fn.clone())?.as_str())?;
 
-        let operator = Operator::from_str(captures.get(4).ok_or(error_fn.clone())?.as_str())?;
+        let operator = Operator::from_str(captures.get(4).ok_or_else(||error_fn.clone())?.as_str())?;
 
         let right = AttributePath::from_str(captures.get(5).ok_or(error_fn)?.as_str())?;
 
