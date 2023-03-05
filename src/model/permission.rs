@@ -1,13 +1,8 @@
-use std::fs::Permissions;
-use serde_json::Value;
 use crate::errors::MinosError;
 
-pub trait ParsePermissions {
-    fn to_permissions(&self, vec: &[Value]) -> Result<Vec<Permission>, MinosError>;
-
-    fn permissions_to_string(&self, permissions: &[Permission]) -> String;
+pub trait ToPermissions {
+    fn to_permissions(&self) -> Result<Vec<Permission>, MinosError>;
 }
-
 
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
 pub struct Permission {
@@ -19,9 +14,11 @@ pub struct Permission {
 
 impl Permission {
     pub fn new(name: &str, duration: u128) -> Self {
-        Self {name: name.to_owned(), duration}
+        Self {
+            name: name.to_owned(),
+            duration,
+        }
     }
-
 
     pub fn required_msg(&self) -> &str {
         &self.name
