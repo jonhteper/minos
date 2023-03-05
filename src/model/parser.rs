@@ -11,7 +11,7 @@ use serde_json::{Map, Value};
 use std::ops::Deref;
 use std::str::FromStr;
 
-pub(crate) const LAST_SINTAXIS_VERSION: &str = "0.6";
+pub(crate) const LAST_SYNTAX_VERSION: &str = "0.7";
 
 pub struct JsonParser<'obt> {
     object: &'obt Map<String, Value>,
