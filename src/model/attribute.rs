@@ -7,14 +7,14 @@ use std::str::FromStr;
 pub const ATTRIBUTE_PATH_REGEX_VALUE: &str = r"([a-z_]+)\.([a-zA-Z\d\._]+)";
 
 #[derive(Clone, Debug)]
-pub struct AttributePath {
+pub struct KeyPath {
     /// object key
     parent: String,
     /// attributes, can't be 0 size
     children: Vec<String>,
 }
 
-impl AttributePath {
+impl KeyPath {
     pub fn new(parent: String, children: Vec<String>) -> Self {
         Self { parent, children }
     }
@@ -26,7 +26,7 @@ impl AttributePath {
     }
 }
 
-impl FromStr for AttributePath {
+impl FromStr for KeyPath {
     type Err = MinosError;
 
     fn from_str(str: &str) -> Result<Self, Self::Err> {
@@ -47,7 +47,7 @@ impl FromStr for AttributePath {
     }
 }
 
-impl Display for AttributePath {
+impl Display for KeyPath {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}.{}", &self.parent, &self.children.join("."))
     }
@@ -60,6 +60,8 @@ pub enum Value<'str> {
     Float(f64),
     String(String),
     Str(&'str str),
+    VecString(Vec<String>),
+    RefVecString(&'str [String]),
 }
 
 impl Value<'_> {
@@ -91,6 +93,14 @@ impl Value<'_> {
             _ => None,
         }
     }
+
+    pub fn as_list(&self) -> Option<&[String]> {
+        match self {
+            Self::VecString(v) => Some(v),
+            Self::RefVecString(v) => Some(v),
+            _ => None,
+        }
+    }
 }
 
 impl Display for Value<'_> {
@@ -101,9 +111,11 @@ impl Display for Value<'_> {
             Value::Float(v) => Display::fmt(v, f),
             Value::String(v) => Display::fmt(v, f),
             Value::Str(v) => Display::fmt(v, f),
+            Value::VecString(v) => write!(f, "{}", v.join(",")),
+            Value::RefVecString(v) => write!(f, "{}", v.join(",")),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Attribute<'a>(AttributePath, Value<'a>);
+pub struct Attribute<'a>(KeyPath, Value<'a>);

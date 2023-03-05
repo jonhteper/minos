@@ -1,5 +1,5 @@
 use crate::model::assertion::Assertion;
-use crate::model::attribute::AttributePath;
+use crate::model::attribute::KeyPath;
 use crate::model::parser::JsonParser;
 use crate::model::permission::ToPermissions;
 use serde_json::Map as JsMap;
@@ -73,7 +73,7 @@ fn authorization_works() {
 fn attribute_path_from_str_works() {
     const TEXT: &str = "parent.child1.child_two.another";
 
-    let attribute_path = AttributePath::from_str(TEXT).expect("Error with attribute path parsing");
+    let attribute_path = KeyPath::from_str(TEXT).expect("Error with attribute path parsing");
 
     assert_eq!(&attribute_path.to_string(), TEXT);
     println!("{attribute_path:?}");

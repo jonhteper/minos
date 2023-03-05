@@ -1,5 +1,5 @@
 use crate::errors::MinosError;
-use crate::model::attribute::AttributePath;
+use crate::model::attribute::KeyPath;
 use regex::Regex;
 use serde_json::{Map, Value};
 use std::fmt::{Debug, Display, Formatter};
@@ -57,9 +57,9 @@ impl FromStr for Operator {
 /// Always must be true
 #[derive(Clone, Debug)]
 pub struct Assertion {
-    left: AttributePath,
+    left: KeyPath,
     operator: Operator,
-    right: AttributePath,
+    right: KeyPath,
 }
 
 impl FromStr for Assertion {
@@ -69,11 +69,11 @@ impl FromStr for Assertion {
         let regex = Regex::from_str(ASSERTION_REGEX_VALUE)?;
         let captures = regex.captures(str).ok_or_else(||error_fn.clone())?;
 
-        let left = AttributePath::from_str(captures.get(1).ok_or_else(||error_fn.clone())?.as_str())?;
+        let left = KeyPath::from_str(captures.get(1).ok_or_else(||error_fn.clone())?.as_str())?;
 
         let operator = Operator::from_str(captures.get(4).ok_or_else(||error_fn.clone())?.as_str())?;
 
-        let right = AttributePath::from_str(captures.get(5).ok_or(error_fn)?.as_str())?;
+        let right = KeyPath::from_str(captures.get(5).ok_or(error_fn)?.as_str())?;
 
         Ok(Self {
             left,
