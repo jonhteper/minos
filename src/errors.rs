@@ -157,6 +157,10 @@ pub enum MinosError {
     #[cfg(feature = "toml_storage")]
     #[error(transparent)]
     TomlDeserialize(#[from] toml::de::Error),
+
+    /// TODO: Remove in production
+    #[error("unimplemented code")]
+    __UnImplemented,
 }
 
 impl From<io::Error> for MinosError {
