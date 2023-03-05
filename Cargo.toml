@@ -23,6 +23,8 @@ tsu = "1.0.1"
 versions = "4.1.0"
 fundu = "0.4.1"
 rayon = "1.6.1"
+derive_builder = "0.12.0"
+regex = "1.7.1"
 
 [features]
 #server = ["jwt", "toml_storage"]
