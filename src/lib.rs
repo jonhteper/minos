@@ -1,14 +1,15 @@
 //! Authorization library
 //!
 
-pub mod model;
+#![allow(unused)] // TODO: remove in release
 
+
+pub mod model;
 pub mod errors;
 pub mod prelude;
 
 #[cfg(test)]
 mod test;
-
 
 /// [NonEmptyString] constructor, returns `Result<NonEmptyString, MinosError>`.
 /// # Examples
