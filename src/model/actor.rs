@@ -1,6 +1,5 @@
-use serde_json::{Map, Value};
 use crate::errors::MinosError;
-use crate::model::attribute::Attribute;
+use serde_json::{Map, Value};
 
 pub struct Actor<'a> {
     id: &'a str,

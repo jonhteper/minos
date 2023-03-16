@@ -7,4 +7,4 @@ pub mod parser;
 pub mod permission;
 pub mod policies;
 pub mod resources;
-pub mod rule;
+pub mod rules;

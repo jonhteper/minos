@@ -82,6 +82,19 @@ pub enum MinosError {
     MissingGroup,
 
     // Policy format errors
+
+    #[error("invalid policy format")]
+    InvalidPolicyFormat,
+
+    #[error("format without version")]
+    FormatWithoutVersion,
+
+    #[error("invalid version")]
+    InvalidVersion,
+
+    #[error("version not supported")]
+    NotSupportedVersion,
+
     #[error("the rule don't have any permission")]
     EmptyPermissions,
 
@@ -102,6 +115,9 @@ pub enum MinosError {
 
     #[error("invalid key syntax: {}", .0)]
     InvalidKeySyntax(String),
+
+    #[error("not parsable toml value: {}", .0)]
+    NotParsableTomlValue(String),
 
     #[error("the resource haven't an owner")]
     ResourceWithoutOwner,

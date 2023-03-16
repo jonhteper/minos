@@ -3,9 +3,8 @@
 
 #![allow(unused)] // TODO: remove in release
 
-
-pub mod model;
 pub mod errors;
+pub mod model;
 pub mod prelude;
 
 #[cfg(test)]

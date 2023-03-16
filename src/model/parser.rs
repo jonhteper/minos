@@ -1,119 +1,68 @@
+use std::collections::HashMap;
 use crate::errors::MinosError;
 use crate::model::actor::{Actor, ToActor};
 use crate::model::assertion::{Assertion, ToAssertions};
+use crate::model::attribute;
+use crate::model::attribute::Attribute;
 use crate::model::permission::{Permission, ToPermissions};
-use crate::model::rule::{Rule, RuleBuilder, ToRule};
 use fundu::parse_duration;
 use rayon::iter::ParallelIterator;
+use rayon::iter::IndexedParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use serde_json::Value::Bool;
 use serde_json::{Map, Value};
 use std::ops::Deref;
 use std::str::FromStr;
+use regex::{Captures, Match, Regex};
+use toml::Table;
+use versions::Versioning;
+use crate::model::policies::Policies;
 
-pub(crate) const LAST_SYNTAX_VERSION: &str = "0.7";
 
-pub struct JsonParser<'obt> {
-    object: &'obt Map<String, Value>,
+
+pub(crate) const MIN_COMPATIBLE_SYNTAX_VERSION: &str = "0.10";
+pub(crate) const MAX_COMPATIBLE_SYNTAX_VERSION: &str = "0.10";
+pub(crate) const FILE_POLICIES_REGEX: &str = r#"syntax_version\s*=\s*"([\d\.-]+)"|\[\[policies\]\]\n+(?:(?:resource_type|resource_id)\s*=\s*".+")\n+(?:(?:\[.+policies\.rules\]\])\n+(?:.+\n?)*\n*)*"#;
+pub(crate) const VERSION_REGEX: &str = r#"syntax_version\s*=\s*"([\d\.-]+)""#;
+pub(crate) const FILE_RULES_REGEX: &str = r#"(?:resource_type|resource_id)\s*=\s*".+"|(?:\[.+policies\.rules\]\])\n+permissions\s+=\s*\[\n*(?:\s*".+:\d+(?:ns|Ms|ms|s|m|h|d)",*\n*)+\]\n+(?:(?:actor|resource|environment)\.[a-zA-Z\d\._]+\s*(?:=|\$contains|>|<|>=|<=|!=)\s*.+\n*)+"#;
+
+pub struct FileParser<'a> {
+    file_content: &'a str,
+    policies_by_resource_type: HashMap<String, Policies>,
+    policies_by_resource_id: HashMap<String, Policies>,
 }
 
-impl ToPermissions for JsonParser<'_> {
-    fn to_permissions(&self) -> Result<Vec<Permission>, MinosError> {
-        let raw_permissions = self
-            .object
-            .get("permissions")
-            .and_then(|val| val.as_array())
-            .ok_or(MinosError::EmptyPermissions)?;
-
-        let permissions = raw_permissions
-            .par_iter()
-            .map(|permission| {
-                let permission = permission.as_array().ok_or(MinosError::EmptyPermissions)?;
-                if permission.len() != 2 {
-                    return Err(MinosError::PermissionsFormat(format!("{:?}", permission)));
-                }
-
-                let name = permission[0].as_str().ok_or_else(|| {
-                    MinosError::PermissionNameFormat(format!("{:?}", permission[0]))
-                })?;
-
-                let duration_str = permission[1].as_str().ok_or_else(|| {
-                    MinosError::PermissionDurationFormat(format!("{:?}", permission[1]))
-                })?;
-                let milliseconds = parse_duration(duration_str)
-                    .map_err(|_| {
-                        MinosError::PermissionDurationFormat(format!("{:?}", permission[1]))
-                    })?
-                    .as_millis();
-
-                Ok(Permission::new(name, milliseconds))
-            })
-            .collect();
-
-        permissions
+impl<'a> FileParser<'a> {
+    pub fn new(file_content: &'a str) -> Self {
+        Self {
+            file_content,
+            policies_by_resource_type: HashMap::new(),
+            policies_by_resource_id: HashMap::new(),
+        }
     }
-}
 
-impl ToAssertions for JsonParser<'_> {
-    fn to_assertions(&self) -> Result<Vec<Assertion>, MinosError> {
-        let raw_assertions = self.object.get("assertions").and_then(|val| val.as_array());
-
-        if raw_assertions.is_none() {
-            return Ok(vec![]);
+    pub fn obtain_policies(&self) -> Result<Vec<&str>, MinosError> {
+        let regex = Regex::new(FILE_POLICIES_REGEX)?;
+        let captures = regex.captures_iter(self.file_content).collect::<Vec<Captures>>();
+        let version = captures.get(0)
+            .and_then(|c| c.get(1))
+            .ok_or(MinosError::FormatWithoutVersion)?
+            .as_str();
+        let version = Versioning::new(version)
+            .ok_or(MinosError::InvalidVersion)?;
+        let min_valid_version = Versioning::new(MIN_COMPATIBLE_SYNTAX_VERSION).unwrap();
+        let max_valid_version = Versioning::new(MAX_COMPATIBLE_SYNTAX_VERSION).unwrap();
+        if version < min_valid_version || version > max_valid_version {
+            return Err(MinosError::InvalidVersion);
         }
 
-        let assetions = raw_assertions
-            .unwrap()
-            .par_iter()
-            .map(|val| {
-                let raw_assertion = val
-                    .as_str()
-                    .ok_or_else(|| MinosError::InvalidAssertionSyntax(format!("{:?}", val)))?;
+        let policies = captures.iter().skip(1).map(|c| {
+            let policies = c.get(0)
+                .ok_or(MinosError::InvalidPolicyFormat)?;
 
-                Assertion::from_str(raw_assertion)
-            })
-            .collect();
+            Ok(policies.as_str())
+        }).collect();
 
-        assetions
-    }
-}
-
-macro_rules! get_attributes {
-    ($object:ident, $key:literal) => {
-        $object
-            .get("resource")
-            .and_then(|val| val.as_object())
-            .cloned()
-    };
-}
-
-impl ToRule for JsonParser<'_> {
-    fn to_rule(&self) -> Result<Rule, MinosError> {
-        let object = self.object;
-
-        let permissions = self.to_permissions()?;
-        let by_owner = object
-            .get("by_owner")
-            .unwrap_or(&Bool(false))
-            .as_bool()
-            .unwrap_or_default();
-
-        let actor_attributes: Option<Map<String, Value>> = get_attributes!(object, "actor");
-        let resource_attributes: Option<Map<String, Value>> = get_attributes!(object, "resource");
-        let environment_attributes: Option<Map<String, Value>> =
-            get_attributes!(object, "environment");
-        let assertions = self.to_assertions()?;
-
-        /*Ok(RuleBuilder::default()
-        .permissions(permissions)
-        .by_owner(by_owner)
-        .actor_attributes(actor_attributes)
-        .resource_attributes(resource_attributes)
-        .environment_attributes(environment_attributes)
-        .assertions(assertions)
-        .build()
-        .unwrap())*/
-
-        Err(MinosError::__UnImplemented)
+        policies
     }
 }

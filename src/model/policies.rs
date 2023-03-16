@@ -1,7 +1,7 @@
-use crate::model::rule::Rule;
+use crate::model::rules::Rule;
 
-struct Policies<'r> {
+pub struct Policies {
     resource_type: Option<String>,
     resource_id: Option<String>,
-    rules: Vec<Rule<'r>>,
+    rules: Vec<Rule>,
 }
