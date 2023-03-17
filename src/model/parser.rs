@@ -23,7 +23,7 @@ lazy_static! {
     static ref MIN_COMPATIBLE_SYNTAX_VERSION: Versioning = Versioning::new("0.10").unwrap();
     static ref MAX_COMPATIBLE_SYNTAX_VERSION: Versioning = Versioning::new("0.10").unwrap();
     static ref FILE_POLICIES_REGEX: Regex = Regex::new(r#"syntax_version\s*=\s*"([\d\.-]+)"|\[\[policies\]\]\n+(?:(?:resource_type|resource_id)\s*=\s*".+")\n+(?:(?:\[.+policies\.rules\]\])\n+(?:.+\n?)*\n*)*"#).unwrap();
-    static ref FILE_RULES_REGEX: Regex = Regex::new(r#"(resource_type|resource_id)\s*=\s*"(.+)"|(?:\[.+policies\.rules\]\])\n+permissions\s+=\s*\[\n*(?:\s*".+:\d+(?:ns|Ms|ms|s|m|h|d)",*\n*)+\]\n+(?:(?:actor|resource|environment)\.[a-zA-Z\d\._]+\s*(?:=|\$contains|>|<|>=|<=|!=)\s*.+\n*)+"#).unwrap();
+    static ref FILE_RULES_REGEX: Regex = Regex::new(r#"(resource_type|resource_id)\s*=\s*"(.+)"|(?:\[.+policies\.rules\]\])\n+(permissions\s+=\s*\[\n*((?:\s*".+:\d+(?:ns|Ms|ms|s|m|h|d)",*\n*)+)\])\n+((?:(?:actor|resource|environment)\.[a-zA-Z\d\._]+\s*(?:=|\$contains|>|<|>=|<=|!=)\s*.+\n*)+)"#).unwrap();
 }
 
 
