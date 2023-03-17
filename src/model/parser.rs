@@ -13,18 +13,20 @@ use serde_json::Value::Bool;
 use serde_json::{Map, Value};
 use std::ops::Deref;
 use std::str::FromStr;
+use lazy_static::lazy_static;
 use regex::{Captures, Match, Regex};
 use toml::Table;
 use versions::Versioning;
 use crate::model::policies::Policies;
 
+lazy_static! {
+    static ref MIN_COMPATIBLE_SYNTAX_VERSION: Versioning = Versioning::new("0.10").unwrap();
+    static ref MAX_COMPATIBLE_SYNTAX_VERSION: Versioning = Versioning::new("0.10").unwrap();
+    static ref FILE_POLICIES_REGEX: Regex = Regex::new(r#"syntax_version\s*=\s*"([\d\.-]+)"|\[\[policies\]\]\n+(?:(?:resource_type|resource_id)\s*=\s*".+")\n+(?:(?:\[.+policies\.rules\]\])\n+(?:.+\n?)*\n*)*"#).unwrap();
+    static ref FILE_RULES_REGEX: Regex = Regex::new(r#"(resource_type|resource_id)\s*=\s*"(.+)"|(?:\[.+policies\.rules\]\])\n+permissions\s+=\s*\[\n*(?:\s*".+:\d+(?:ns|Ms|ms|s|m|h|d)",*\n*)+\]\n+(?:(?:actor|resource|environment)\.[a-zA-Z\d\._]+\s*(?:=|\$contains|>|<|>=|<=|!=)\s*.+\n*)+"#).unwrap();
+}
 
 
-pub(crate) const MIN_COMPATIBLE_SYNTAX_VERSION: &str = "0.10";
-pub(crate) const MAX_COMPATIBLE_SYNTAX_VERSION: &str = "0.10";
-pub(crate) const FILE_POLICIES_REGEX: &str = r#"syntax_version\s*=\s*"([\d\.-]+)"|\[\[policies\]\]\n+(?:(?:resource_type|resource_id)\s*=\s*".+")\n+(?:(?:\[.+policies\.rules\]\])\n+(?:.+\n?)*\n*)*"#;
-pub(crate) const VERSION_REGEX: &str = r#"syntax_version\s*=\s*"([\d\.-]+)""#;
-pub(crate) const FILE_RULES_REGEX: &str = r#"(?:resource_type|resource_id)\s*=\s*".+"|(?:\[.+policies\.rules\]\])\n+permissions\s+=\s*\[\n*(?:\s*".+:\d+(?:ns|Ms|ms|s|m|h|d)",*\n*)+\]\n+(?:(?:actor|resource|environment)\.[a-zA-Z\d\._]+\s*(?:=|\$contains|>|<|>=|<=|!=)\s*.+\n*)+"#;
 
 pub struct FileParser<'a> {
     file_content: &'a str,
@@ -42,7 +44,7 @@ impl<'a> FileParser<'a> {
     }
 
     pub fn obtain_policies(&self) -> Result<Vec<&str>, MinosError> {
-        let regex = Regex::new(FILE_POLICIES_REGEX)?;
+        let regex = &FILE_POLICIES_REGEX;
         let captures = regex.captures_iter(self.file_content).collect::<Vec<Captures>>();
         let version = captures.get(0)
             .and_then(|c| c.get(1))
@@ -50,9 +52,7 @@ impl<'a> FileParser<'a> {
             .as_str();
         let version = Versioning::new(version)
             .ok_or(MinosError::InvalidVersion)?;
-        let min_valid_version = Versioning::new(MIN_COMPATIBLE_SYNTAX_VERSION).unwrap();
-        let max_valid_version = Versioning::new(MAX_COMPATIBLE_SYNTAX_VERSION).unwrap();
-        if version < min_valid_version || version > max_valid_version {
+        if version < *MIN_COMPATIBLE_SYNTAX_VERSION || version > *MAX_COMPATIBLE_SYNTAX_VERSION {
             return Err(MinosError::InvalidVersion);
         }
 
@@ -65,4 +65,26 @@ impl<'a> FileParser<'a> {
 
         policies
     }
+
+    pub fn obtain_rules_from_policy(&self, policy: &str) -> Result<HashMap<ResourceIdentifier<'_>, &str>, MinosError> {
+        let captures = FILE_RULES_REGEX.captures_iter(policy).collect::<Vec<Captures>>();
+        let resource = captures.get(0).unwrap();
+        let identifier_key = resource.get(1).unwrap().as_str();
+        let identifier_value  = resource.get(2).unwrap().as_str();
+        let resource_identifier = match identifier_key {
+            "resource_id" => ResourceIdentifier::ResourceId(identifier_value),
+            "resource_type" => ResourceIdentifier::ResourceType(identifier_value),
+            _ => unreachable!(),
+        };
+
+        dbg!(resource_identifier);
+
+        Ok(HashMap::new())
+    }
+}
+
+#[derive(Debug)]
+pub enum ResourceIdentifier<'a> {
+    ResourceId(&'a str),
+    ResourceType(&'a str),
 }

@@ -98,5 +98,9 @@ fn parse_policies_from_text() {
     let mut parser = FileParser::new(POLICIES);
     let policies = parser.obtain_policies()
         .expect("Error parsing policies from text");
-    dbg!(policies);
+    println!("{} policies captures", policies.len());
+    for policy in policies {
+        let _= parser.obtain_rules_from_policy(policy)
+            .expect("Error obtaining rules");
+    }
 }
