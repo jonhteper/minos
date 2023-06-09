@@ -89,7 +89,7 @@ pub struct Requirement {
 impl Requirement {
     fn compare_type(&self, actor: &impl Actor) -> Result<bool, Error>{
         match self.operator {
-            Operator::Equal => Ok(&actor.actor_type() == self.value.unwrap_as_str()?),
+            Operator::Equal => Ok(&actor.actor_type() == self.value.try_as_str()?),
             Operator::Distinct => todo!(),
             Operator::Contains => todo!(),
         }
@@ -166,14 +166,14 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn unwrap_as_str(&self) -> Result<&String, Error> {
+    pub fn try_as_str(&self) -> Result<&String, Error> {
         match self {
             Value::Str(val) => Ok(val),
             Value::List(_) => Err(Error::UnwrapInvalidStringValue),
         }
     }
 
-    pub fn unwrap_as_list(&self) -> Result<&Vec<String>, Error> {
+    pub fn try_as_list(&self) -> Result<&Vec<String>, Error> {
         match self {
             Value::List(val) => Ok(val),
             Value::Str(_) => Err(Error::UnwrapInvalidListValue),
