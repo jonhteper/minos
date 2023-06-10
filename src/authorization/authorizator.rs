@@ -31,9 +31,26 @@ impl Authorizator {
         Ok(resource.policies())
     }
 
+    /// Return a list of [Permission] if the [Actor] is authorized.
+    /// This method fails if:
+    /// * Some [Policy] are malformed
+    /// * The [Actor] is not authorized
     pub fn authorize(&self, env_name: &EnvName, actor: &impl Actor, resource: &impl Resource) -> Result<Vec<Permission>, Error> {
         let policies = self.get_policies(env_name, resource)?;
+        let mut permissions = vec![];
 
-        todo!()
+        for policy in policies {
+            if let Some(granted_permissions) = policy.apply(actor)? {
+                let mut perms = granted_permissions.clone();
+                permissions.append(&mut perms);
+            }
+        }
+        
+        if permissions.is_empty() {
+            return Err(Error::ActorNotAuthorized(actor.actor_id()));
+        }
+
+
+        Ok(permissions)
     }
 }

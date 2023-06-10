@@ -43,15 +43,16 @@ pub struct Policy {
 }
 
 impl Policy {
-    /// Returns the [Permission] list f the actor satisfies at least one of the rules.
-    pub fn apply(&self, actor: &impl Actor) -> Result<&Vec<Permission>, Error> {
+    /// Returns the [Permission] list if the actor satisfies at least one of the rules.
+    /// This function can fail if the rules are bad created.
+    pub fn apply(&self, actor: &impl Actor) -> Result<Option<&Vec<Permission>>, Error> {
         for rule in &self.rules {
             if rule.apply(actor)? {
-                return Ok(&self.allow);
+                return Ok(Some(&self.allow));
             }
         }
         
-        Err(Error::ActorNotAuthorized(actor.actor_id()))
+        Ok(None)
     }
 }
 
@@ -67,13 +68,13 @@ pub struct AuthorizationRule {
 impl AuthorizationRule {
     /// Apply all requirements and return true only if actor satisfies all.
     pub fn apply(&self, actor: &impl Actor) -> Result<bool, Error> {
-        let mut is_authorized = false;
-
         for requirement in &self.requirements {
-            is_authorized = requirement.apply(actor)?;
+            if !requirement.apply(actor)? {
+                return Ok(false);
+            }
         }
 
-        Ok(is_authorized)
+        Ok(true)
     }
 }
 
@@ -90,32 +91,43 @@ impl Requirement {
     fn compare_type(&self, actor: &impl Actor) -> Result<bool, Error>{
         match self.operator {
             Operator::Equal => Ok(&actor.actor_type() == self.value.try_as_str()?),
-            Operator::Distinct => todo!(),
-            Operator::Contains => todo!(),
+            Operator::Distinct => Ok(&actor.actor_type() != self.value.try_as_str()?),
+            Operator::Contains => Err(Error::InvalidOperation(Operator::Contains)),
         }
     }
 
     fn compare_id(&self, actor: &impl Actor) -> Result<bool, Error>{
         match self.operator {
-            Operator::Equal => todo!(),
-            Operator::Distinct => todo!(),
-            Operator::Contains => todo!(),
+            Operator::Equal => Ok(&actor.actor_id() == self.value.try_as_str()?),
+            Operator::Distinct => Ok(&actor.actor_id() != self.value.try_as_str()?),
+            Operator::Contains => Err(Error::InvalidOperation(Operator::Contains)),
         }
     }
 
+    fn find_in_list(actor_list: &Vec<String>, to_find: &Vec<String>) -> bool {
+        for to_find_item in to_find {
+            if !actor_list.contains(to_find_item) {
+                return false;
+            }
+        }
+
+        true
+    }
+    
+
     fn compare_groups(&self, actor: &impl Actor) -> Result<bool, Error>{
         match self.operator {
-            Operator::Equal => todo!(),
-            Operator::Distinct => todo!(),
-            Operator::Contains => todo!(),
+            Operator::Equal => Ok(self.value.try_as_list()? == &actor.actor_groups()),
+            Operator::Distinct => Err(Error::InvalidOperation(Operator::Distinct)),
+            Operator::Contains => Ok(Self::find_in_list(&actor.actor_groups(), self.value.try_as_list()?)),
         }
     }
 
     fn compare_roles(&self, actor: &impl Actor) -> Result<bool, Error>{
         match self.operator {
-            Operator::Equal => todo!(),
-            Operator::Distinct => todo!(),
-            Operator::Contains => todo!(),
+            Operator::Equal => Ok(self.value.try_as_list()? == &actor.actor_roles()),
+            Operator::Distinct => Err(Error::InvalidOperation(Operator::Distinct)),
+            Operator::Contains => Ok(Self::find_in_list(&actor.actor_roles(), self.value.try_as_list()?)),
         }
     }
 
