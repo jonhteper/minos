@@ -39,7 +39,7 @@ pub struct Resource {
 #[getset(get = "pub")]
 pub struct Policy {
     allow: Vec<Permission>,
-    rules: Vec<AuthorizationRule>,
+    rules: Vec<Rule>,
 }
 
 impl Policy {
@@ -61,11 +61,11 @@ pub type Permission = String;
 
 #[derive(Debug, Clone, Ctor, Getters)]
 #[getset(get = "pub")]
-pub struct AuthorizationRule {
+pub struct Rule {
     requirements: Vec<Requirement>,
 }
 
-impl AuthorizationRule {
+impl Rule {
     /// Apply all requirements and return true only if actor satisfies all.
     pub fn apply(&self, actor: &impl Actor) -> Result<bool, Error> {
         for requirement in &self.requirements {

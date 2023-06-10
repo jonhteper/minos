@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use derived::Ctor;
 
-use crate::{minos::{EnvName, Environment, Permission, Policy}, errors::Error};
+use crate::{minos::lang::{EnvName, Environment, Permission, Policy}, errors::Error};
 
 use super::{Actor, resource, Resource};
 

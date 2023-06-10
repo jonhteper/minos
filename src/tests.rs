@@ -2,7 +2,7 @@ use std::fs;
 
 use pest::Parser;
 
-use crate::minos::{MinosParser, Rule};
+use crate::minos::parser::{MinosParser, Rule};
 
 const V0_14_MINOS_CONTENT: &str = r#"
 sintaxis=0.14;

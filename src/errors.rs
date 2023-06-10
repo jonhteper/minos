@@ -1,7 +1,7 @@
 use parse_display::Display;
 use thiserror::Error as ThisError;
 
-use crate::minos::Operator;
+use crate::minos::lang::Operator;
 
 
 #[non_exhaustive]

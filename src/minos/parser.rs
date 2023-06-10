@@ -1,6 +1,6 @@
 use pest_derive::Parser;
 
-use super::File;
+use super::lang::File;
 
 
 #[derive(Debug, Parser)]
