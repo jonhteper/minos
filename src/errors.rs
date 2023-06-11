@@ -3,11 +3,9 @@ use std::io;
 use parse_display::{Display, ParseError};
 use thiserror::Error as ThisError;
 
-use crate::minos::{parser::v0_14::Rule, lang::Token};
+use crate::minos::{lang::Token, parser::v0_14::Rule};
 
 pub type MinosResult<T> = Result<T, Error>;
-
-
 
 #[non_exhaustive]
 #[derive(Debug, ThisError, PartialEq, Eq)]
@@ -28,10 +26,7 @@ pub enum Error {
     UnwrapInvalidListValue,
 
     #[error("invalid token found: {found}, expected: {expected}")]
-    InvalidToken {
-        expected: String,
-        found: String,
-    },
+    InvalidToken { expected: String, found: String },
 
     #[error("sintaxis not supported")]
     SintaxisNotSupported,
@@ -44,7 +39,7 @@ pub enum Error {
     Pest(#[from] pest::error::Error<Rule>),
 
     #[error(transparent)]
-    ParseError(#[from] ParseError)
+    ParseError(#[from] ParseError),
 }
 
 impl From<io::Error> for Error {

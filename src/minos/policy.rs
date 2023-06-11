@@ -1,10 +1,13 @@
 use derived::Ctor;
 use getset::Getters;
 
-use crate::{authorization::Actor, errors::Error};
+use crate::{
+    authorization::Actor,
+    errors::{Error, MinosResult},
+    minos::lang::Array,
+};
 
-use super::rule::Rule;
-
+use super::{lang::Token, rule::Rule};
 
 pub type Permission = String;
 
@@ -29,3 +32,27 @@ impl Policy {
     }
 }
 
+impl TryFrom<&Token<'_>> for Policy {
+    type Error = Error;
+
+    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+        let inner_tokens = token.inner_policy().ok_or(Error::InvalidToken {
+            expected: Token::Policy(vec![]).to_string(),
+            found: token.to_string(),
+        })?;
+        let Array(borrowed_allow) = inner_tokens[0].inner_allow().unwrap()[0]
+            .inner_array()
+            .unwrap();
+        let allow = borrowed_allow.iter().map(|p| p.to_string()).collect();
+        let rules: MinosResult<Vec<Rule>> = inner_tokens
+            .iter()
+            .skip(0)
+            .map(|r| Rule::try_from(r))
+            .collect();
+
+        Ok(Policy {
+            allow,
+            rules: rules?,
+        })
+    }
+}

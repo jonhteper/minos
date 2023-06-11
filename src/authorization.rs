@@ -1,7 +1,7 @@
 pub mod actor;
-pub mod resource;
 pub mod authorizator;
+pub mod resource;
 
 pub use actor::*;
-pub use resource::*;
 pub use authorizator::*;
+pub use resource::*;

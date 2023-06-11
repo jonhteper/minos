@@ -62,7 +62,6 @@ pub enum Token<'a> {
 
     #[display("Null")]
     Null,
-
 }
 
 impl<'a> Token<'a> {
@@ -152,44 +151,43 @@ impl<'a> Token<'a> {
         }
 
         None
-        
     }
 
-    pub fn inner_single_value_attribute(&self) -> Option<&SingleValueAttribute> {
+    pub fn inner_single_value_attribute(&self) -> Option<SingleValueAttribute> {
         if let Token::SingleValueAttribute(inner) = self {
-            return Some(inner);
+            return Some(*inner);
         }
 
         None
     }
 
-    pub fn inner_single_value_operator(&self) -> Option<&SingleValueOperator> {
+    pub fn inner_single_value_operator(&self) -> Option<SingleValueOperator> {
         if let Token::SingleValueOperator(inner) = self {
-            return Some(inner);
+            return Some(*inner);
         }
 
         None
     }
 
-    pub fn inner_list_value_attribute(&self) -> Option<&ListValueAttribute> {
+    pub fn inner_list_value_attribute(&self) -> Option<ListValueAttribute> {
         if let Token::ListValueAttribute(inner) = self {
-            return Some(inner);
+            return Some(*inner);
         }
 
         None
     }
 
-    pub fn inner_list_value_operator(&self) -> Option<&ListValueOperator> {
+    pub fn inner_list_value_operator(&self) -> Option<ListValueOperator> {
         if let Token::ListValueOperator(inner) = self {
-            return Some(inner);
+            return Some(*inner);
         }
 
         None
     }
 
-    pub fn inner_identifier(&self) -> Option<&Indentifier<'a>> {
+    pub fn inner_identifier(&self) -> Option<Indentifier<'a>> {
         if let Token::Identifier(inner) = self {
-            return Some(inner);
+            return Some(*inner);
         }
 
         None
@@ -202,10 +200,7 @@ impl<'a> Token<'a> {
 
         None
     }
-
 }
-
-
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FileVersion {
@@ -213,11 +208,10 @@ pub enum FileVersion {
     V0_14,
 }
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Array<'a>(pub Vec<&'a str>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Indentifier<'a>(pub &'a str);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]

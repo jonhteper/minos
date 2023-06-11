@@ -1,5 +1,8 @@
-use super::lang::{SingleValueAttribute, SingleValueOperator, ListValueAttribute, ListValueOperator};
+use crate::errors::Error;
 
+use super::lang::{
+    ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
+};
 
 #[derive(Debug, Clone)]
 pub enum Requirement {
@@ -12,6 +15,47 @@ pub enum Requirement {
         attribute: ListValueAttribute,
         operator: ListValueOperator,
         value: Vec<String>,
+    },
+}
+
+impl Requirement {
+    fn single_value_from_tokens(tokens: &Vec<Token>) -> Self {
+        Self::SingleValue {
+            attribute: tokens[0].inner_single_value_attribute().unwrap(),
+            operator: tokens[1].inner_single_value_operator().unwrap(),
+            value: tokens[2].inner_string().unwrap().to_string(),
+        }
+    }
+
+    fn list_value_from_tokens(tokens: &Vec<Token>) -> Self {
+        Self::ListValue {
+            attribute: tokens[0].inner_list_value_attribute().unwrap(),
+            operator: tokens[1].inner_list_value_operator().unwrap(),
+            value: tokens[2]
+                .inner_array()
+                .unwrap()
+                .0
+                .iter()
+                .map(|v| v.to_string())
+                .collect(),
+        }
+    }
+}
+
+impl TryFrom<&Token<'_>> for Requirement {
+    type Error = Error;
+
+    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+        let inner_tokens = token.inner_requirement().ok_or(Error::InvalidToken {
+            expected: Token::Requirement(vec![]).to_string(),
+            found: token.to_string(),
+        })?;
+
+        match &inner_tokens[0] {
+            Token::SingleValueRequirement(tokens) => Ok(Self::single_value_from_tokens(tokens)),
+            Token::ListValueRequirement(tokens) => Ok(Self::list_value_from_tokens(tokens)),
+            _ => unreachable!(),
+        }
     }
 }
 

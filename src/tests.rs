@@ -1,11 +1,11 @@
-use std::{fs, env};
+use std::{env, fs};
 
 use pest::Parser;
 
 use crate::minos::file::File;
 use crate::minos::lang::Token;
-use crate::{minos::parser::MinosParser, errors::MinosResult};
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
+use crate::{errors::MinosResult, minos::parser::MinosParser};
 
 const V0_14_MINOS_CONTENT: &str = r#"
 sintaxis=0.14;
@@ -57,19 +57,19 @@ env ProductUseCases--tests {
 }
 "#;
 
-
 #[test]
 pub fn parser_test() -> MinosResult<()> {
-    let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)?.next().unwrap();
+    let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)?
+        .next()
+        .unwrap();
     let file_token = MinosParserV0_14::parse_token(pairs)?;
 
     match file_token {
-        Token::File(_) => {},
-        _ => panic!("Expect Token::File")
+        Token::File(_) => {}
+        _ => panic!("Expect Token::File"),
     }
 
     Ok(())
-
 }
 
 #[test]

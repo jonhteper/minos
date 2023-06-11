@@ -5,7 +5,7 @@ use regex::Regex;
 
 use crate::errors::{Error, MinosResult};
 
-use super::{lang::{FileVersion}, file::File};
+use super::{file::File, lang::FileVersion};
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
@@ -100,14 +100,17 @@ pub(crate) mod v0_14 {
                         pair.into_inner().map(|p| Self::parse_token(p)).collect();
                     Token::ListValueRequirement(inner_tokens?)
                 }
-                Rule::COMMENT | Rule::inner | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
+                Rule::COMMENT | Rule::inner | Rule::char | Rule::WHITESPACE | Rule::EOI => {
+                    Token::Null
+                }
             })
         }
 
         pub fn parse_file_content(content: &str) -> MinosResult<File> {
-            let file_rules = MinosParserV0_14::parse(Rule::file, content)?.next().unwrap();
+            let file_rules = MinosParserV0_14::parse(Rule::file, content)?
+                .next()
+                .unwrap();
             let file_token = MinosParserV0_14::parse_token(file_rules)?;
-
 
             // let envs: Vec<lang::Environment> = env_pairs
             //     .into_iter()

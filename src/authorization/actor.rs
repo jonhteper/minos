@@ -1,4 +1,3 @@
-
 pub trait Actor {
     fn actor_type(&self) -> String;
     fn actor_id(&self) -> String;
