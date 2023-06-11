@@ -1,11 +1,16 @@
-use parse_display::Display;
+use std::io;
+
+use parse_display::{Display, ParseError};
 use thiserror::Error as ThisError;
 
-use crate::minos::lang::Operator;
+use crate::minos::{/*lang::Operator,*/ parser::v0_14::Rule};
+
+pub type MinosResult<T> = Result<T, Error>;
+
 
 
 #[non_exhaustive]
-#[derive(Debug, ThisError)]
+#[derive(Debug, ThisError, PartialEq, Eq)]
 pub enum Error {
     #[error("environment '{0}' not found")]
     EnvironmentNotFound(String),
@@ -22,6 +27,25 @@ pub enum Error {
     #[error("unwrap invalid value, expects List found Str")]
     UnwrapInvalidListValue,
 
-    #[error("invalid comparation, found '{0}'")]
-    InvalidOperation(Operator),
+    /* #[error("invalid comparation, found '{0}'")] TODO: Remove
+    InvalidOperation(Operator), */
+
+    #[error("sintaxis not supported")]
+    SintaxisNotSupported,
+
+    // 3-party errors
+    #[error("io err: {0}")]
+    Io(String),
+
+    #[error(transparent)]
+    Pest(#[from] pest::error::Error<Rule>),
+
+    #[error(transparent)]
+    ParseError(#[from] ParseError)
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Self::Io(err.to_string())
+    }
 }

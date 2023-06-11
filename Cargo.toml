@@ -13,12 +13,13 @@ all-features = true
 
 [dependencies]
 thiserror = "1.0.38"
-versions = "5.0.0"
 pest = "2.1"
 pest_derive = "2.1"
 getset = "0.1.2"
 derived = "0.4.2"
 parse-display = "0.8.0"
+lazy_static = "1.4.0"
+regex = "1.8.4"
 
 [features]
 

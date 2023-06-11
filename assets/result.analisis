@@ -1,0 +1,509 @@
+&pair = Pair {
+    rule: file,
+    span: Span {
+        str: "\nsintaxis=0.14;\n\n/* Ejemplo de comentario*/\nenv ProductUseCases {\n    resource Product {\n        policy {\n            allow = [\"crear\", \"eliminar\"];\n\n            rule {\n                actor.type = RootUser; /*Comentario2*/\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n        }\n\n        policy {\n            allow = [\"get inner\"];\n\n            rule {\n                actor.type = CostumerUser;\n            }\n\n        }\n    }\n}\n\nenv ProductUseCases--tests {\n    resource example {\n        id = \"id.example.a158$\";\n\n        policy {\n            allow = [\"crear\", \"obtener\", \"modificar\", \"eliminar\"];\n\n            rule {\n                actor.type != RootUser;\n            }\n        }\n    }\n}\n",
+        start: 0,
+        end: 898,
+    },
+    inner: [
+        Pair {
+            rule: version,
+            span: Span {
+                str: "0.14",
+                start: 10,
+                end: 14,
+            },
+            inner: [],
+        },
+        Pair {
+            rule: env,
+            span: Span {
+                str: "env ProductUseCases {\n    resource Product {\n        policy {\n            allow = [\"crear\", \"eliminar\"];\n\n            rule {\n                actor.type = RootUser; /*Comentario2*/\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n        }\n\n        policy {\n            allow = [\"get inner\"];\n\n            rule {\n                actor.type = CostumerUser;\n            }\n\n        }\n    }\n}",
+                start: 44,
+                end: 634,
+            },
+            inner: [
+                Pair {
+                    rule: identifier,
+                    span: Span {
+                        str: "ProductUseCases",
+                        start: 48,
+                        end: 63,
+                    },
+                    inner: [],
+                },
+                Pair {
+                    rule: resource,
+                    span: Span {
+                        str: "resource Product {\n        policy {\n            allow = [\"crear\", \"eliminar\"];\n\n            rule {\n                actor.type = RootUser; /*Comentario2*/\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n        }\n\n        policy {\n            allow = [\"get inner\"];\n\n            rule {\n                actor.type = CostumerUser;\n            }\n\n        }\n    }",
+                        start: 70,
+                        end: 632,
+                    },
+                    inner: [
+                        Pair {
+                            rule: identifier,
+                            span: Span {
+                                str: "Product",
+                                start: 79,
+                                end: 86,
+                            },
+                            inner: [],
+                        },
+                        Pair {
+                            rule: policy,
+                            span: Span {
+                                str: "policy {\n            allow = [\"crear\", \"eliminar\"];\n\n            rule {\n                actor.type = RootUser; /*Comentario2*/\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n\n            rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }\n        }",
+                                start: 97,
+                                end: 485,
+                            },
+                            inner: [
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"crear\"",
+                                        start: 127,
+                                        end: 134,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "crear",
+                                                start: 128,
+                                                end: 133,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"eliminar\"",
+                                        start: 136,
+                                        end: 146,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "eliminar",
+                                                start: 137,
+                                                end: 145,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: rule,
+                                    span: Span {
+                                        str: "rule {\n                actor.type = RootUser; /*Comentario2*/\n            }",
+                                        start: 162,
+                                        end: 237,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.type = RootUser;",
+                                                start: 185,
+                                                end: 207,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: identifier,
+                                                    span: Span {
+                                                        str: "RootUser",
+                                                        start: 198,
+                                                        end: 206,
+                                                    },
+                                                    inner: [],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: rule,
+                                    span: Span {
+                                        str: "rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }",
+                                        start: 251,
+                                        end: 356,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.groups *= [\"ventas\"];",
+                                                start: 274,
+                                                end: 301,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: string,
+                                                    span: Span {
+                                                        str: "\"ventas\"",
+                                                        start: 291,
+                                                        end: 299,
+                                                    },
+                                                    inner: [
+                                                        Pair {
+                                                            rule: inner,
+                                                            span: Span {
+                                                                str: "ventas",
+                                                                start: 292,
+                                                                end: 298,
+                                                            },
+                                                            inner: [],
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.roles = [\"admin\"];",
+                                                start: 318,
+                                                end: 342,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: string,
+                                                    span: Span {
+                                                        str: "\"admin\"",
+                                                        start: 333,
+                                                        end: 340,
+                                                    },
+                                                    inner: [
+                                                        Pair {
+                                                            rule: inner,
+                                                            span: Span {
+                                                                str: "admin",
+                                                                start: 334,
+                                                                end: 339,
+                                                            },
+                                                            inner: [],
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: rule,
+                                    span: Span {
+                                        str: "rule {\n                actor.groups *= [\"ventas\"];\n                actor.roles = [\"admin\"];\n            }",
+                                        start: 370,
+                                        end: 475,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.groups *= [\"ventas\"];",
+                                                start: 393,
+                                                end: 420,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: string,
+                                                    span: Span {
+                                                        str: "\"ventas\"",
+                                                        start: 410,
+                                                        end: 418,
+                                                    },
+                                                    inner: [
+                                                        Pair {
+                                                            rule: inner,
+                                                            span: Span {
+                                                                str: "ventas",
+                                                                start: 411,
+                                                                end: 417,
+                                                            },
+                                                            inner: [],
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.roles = [\"admin\"];",
+                                                start: 437,
+                                                end: 461,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: string,
+                                                    span: Span {
+                                                        str: "\"admin\"",
+                                                        start: 452,
+                                                        end: 459,
+                                                    },
+                                                    inner: [
+                                                        Pair {
+                                                            rule: inner,
+                                                            span: Span {
+                                                                str: "admin",
+                                                                start: 453,
+                                                                end: 458,
+                                                            },
+                                                            inner: [],
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        Pair {
+                            rule: policy,
+                            span: Span {
+                                str: "policy {\n            allow = [\"get inner\"];\n\n            rule {\n                actor.type = CostumerUser;\n            }\n\n        }",
+                                start: 495,
+                                end: 626,
+                            },
+                            inner: [
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"get inner\"",
+                                        start: 525,
+                                        end: 536,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "get inner",
+                                                start: 526,
+                                                end: 535,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: rule,
+                                    span: Span {
+                                        str: "rule {\n                actor.type = CostumerUser;\n            }",
+                                        start: 552,
+                                        end: 615,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.type = CostumerUser;",
+                                                start: 575,
+                                                end: 601,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: identifier,
+                                                    span: Span {
+                                                        str: "CostumerUser",
+                                                        start: 588,
+                                                        end: 600,
+                                                    },
+                                                    inner: [],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+        Pair {
+            rule: env,
+            span: Span {
+                str: "env ProductUseCases--tests {\n    resource example {\n        id = \"id.example.a158$\";\n\n        policy {\n            allow = [\"crear\", \"obtener\", \"modificar\", \"eliminar\"];\n\n            rule {\n                actor.type != RootUser;\n            }\n        }\n    }\n}",
+                start: 636,
+                end: 897,
+            },
+            inner: [
+                Pair {
+                    rule: identifier,
+                    span: Span {
+                        str: "ProductUseCases--tests",
+                        start: 640,
+                        end: 662,
+                    },
+                    inner: [],
+                },
+                Pair {
+                    rule: resource,
+                    span: Span {
+                        str: "resource example {\n        id = \"id.example.a158$\";\n\n        policy {\n            allow = [\"crear\", \"obtener\", \"modificar\", \"eliminar\"];\n\n            rule {\n                actor.type != RootUser;\n            }\n        }\n    }",
+                        start: 669,
+                        end: 895,
+                    },
+                    inner: [
+                        Pair {
+                            rule: identifier,
+                            span: Span {
+                                str: "example",
+                                start: 678,
+                                end: 685,
+                            },
+                            inner: [],
+                        },
+                        Pair {
+                            rule: string,
+                            span: Span {
+                                str: "\"id.example.a158$\"",
+                                start: 701,
+                                end: 719,
+                            },
+                            inner: [
+                                Pair {
+                                    rule: inner,
+                                    span: Span {
+                                        str: "id.example.a158$",
+                                        start: 702,
+                                        end: 718,
+                                    },
+                                    inner: [],
+                                },
+                            ],
+                        },
+                        Pair {
+                            rule: policy,
+                            span: Span {
+                                str: "policy {\n            allow = [\"crear\", \"obtener\", \"modificar\", \"eliminar\"];\n\n            rule {\n                actor.type != RootUser;\n            }\n        }",
+                                start: 730,
+                                end: 889,
+                            },
+                            inner: [
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"crear\"",
+                                        start: 760,
+                                        end: 767,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "crear",
+                                                start: 761,
+                                                end: 766,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"obtener\"",
+                                        start: 769,
+                                        end: 778,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "obtener",
+                                                start: 770,
+                                                end: 777,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"modificar\"",
+                                        start: 780,
+                                        end: 791,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "modificar",
+                                                start: 781,
+                                                end: 790,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: string,
+                                    span: Span {
+                                        str: "\"eliminar\"",
+                                        start: 793,
+                                        end: 803,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: inner,
+                                            span: Span {
+                                                str: "eliminar",
+                                                start: 794,
+                                                end: 802,
+                                            },
+                                            inner: [],
+                                        },
+                                    ],
+                                },
+                                Pair {
+                                    rule: rule,
+                                    span: Span {
+                                        str: "rule {\n                actor.type != RootUser;\n            }",
+                                        start: 819,
+                                        end: 879,
+                                    },
+                                    inner: [
+                                        Pair {
+                                            rule: requirement,
+                                            span: Span {
+                                                str: "actor.type != RootUser;",
+                                                start: 842,
+                                                end: 865,
+                                            },
+                                            inner: [
+                                                Pair {
+                                                    rule: identifier,
+                                                    span: Span {
+                                                        str: "RootUser",
+                                                        start: 856,
+                                                        end: 864,
+                                                    },
+                                                    inner: [],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+        Pair {
+            rule: EOI,
+            span: Span {
+                str: "",
+                start: 898,
+                end: 898,
+            },
+            inner: [],
+        },
+    ],
+}

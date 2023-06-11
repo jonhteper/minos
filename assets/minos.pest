@@ -1,21 +1,34 @@
-file = { SOI ~ "sintaxis" ~ "=" ~ number ~ ";" ~ env+ ~ EOI }
+file = { SOI ~ "sintaxis" ~ "=" ~ version ~ ";" ~ env+ ~ EOI }
+version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 
 env = { "env" ~ identifier ~ "{" ~ resource+ ~ "}" }
 
-resource = { "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ policy+ ~ "}" }
+resource = { "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ resource_id ~ ";")? ~ policy+ ~ "}" }
 
-rule = { "rule" ~ "{" ~ (actorAttribute)+ ~ "}" }
+resource_id = { string }
 
-policy = { "policy" ~ "{" ~ "allow" ~ "=" ~ "[" ~ string ~ ("," ~ string)* ~ "]" ~ ";" ~ rule+ ~ "}" }
+rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
-actorAttribute = {
-    ("actor.type" | "actor.id") ~ ("=" | "!=") ~ identifier ~ ";"
-  | ("actor.groups" | "actor.roles") ~ ("=" | "*=") ~ "[" ~ string ~ ("," ~ string)* ~ "]" ~ ";"
-}
+policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
+
+allow = { "allow" ~ "=" ~ array }
+
+array = { "[" ~ string ~ ("," ~ string)* ~ "]" }
+
+requirement = { single_value_requirement | list_value_requirement }
+
+single_value_attribute = { ("actor.type" | "actor.id") }
+single_value_operator = { ("=" | "!=") }
+
+list_value_attribute = { ("actor.groups" | "actor.roles") }
+list_value_operator = { ("=" | "*=") }
+
+single_value_requirement = { single_value_attribute  ~ single_value_operator ~ identifier ~ ";" }
+
+list_value_requirement = { list_value_attribute  ~ list_value_operator ~ array ~ ";"}
 
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 
 identifier = @{ (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER |ASCII_DIGIT | "_" | "/" | "-" )* }
 

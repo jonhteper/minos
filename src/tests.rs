@@ -1,8 +1,9 @@
-use std::fs;
+use std::{fs, env};
 
 use pest::Parser;
 
-use crate::minos::parser::{MinosParser, Rule};
+use crate::{minos::parser::MinosParser, errors::MinosResult};
+use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 
 const V0_14_MINOS_CONTENT: &str = r#"
 sintaxis=0.14;
@@ -57,29 +58,23 @@ env ProductUseCases--tests {
 
 #[test]
 pub fn parser_test() {
-    let pairs = MinosParser::parse(Rule::file, &V0_14_MINOS_CONTENT)
+    let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)
         .expect("Error getting file");
     
         for pair in pairs {
-            // A pair is a combination of the rule which matched and a span of input
-           
-            for inner_pair in pair.into_inner() {
-                match inner_pair.as_rule() {
-                    Rule::EOI => println!("Fin del documento"),
-                    Rule::file => println!("Documento válido"),
-                    Rule::env => println!("Env: {}", inner_pair.as_str()),
-                    Rule::resource => println!("Resource: {}", inner_pair.as_str()),
-                    Rule::rule => println!("Resource: {}", inner_pair.as_str()),
-                    Rule::policy => println!("Policy: {}", inner_pair.as_str()),
-                    Rule::actorAttribute => println!("Actor Attribute: {}", inner_pair.as_str()),
-                    Rule::number => println!("Number: {}", inner_pair.as_str()),
-                    Rule::identifier => println!("Identifier: {}", inner_pair.as_str()),
-                    Rule::string => println!("String: {}", inner_pair.as_str()),
-                    Rule::inner => println!("Inner String: {}", inner_pair.as_str()),
-                    Rule::char => println!("Char: {}", inner_pair.as_str()),
-                    _=> println!("Error!!!")
-                }
-            }
+            //dbg!(&pair);
+            let actual_token = MinosParserV0_14::parse_token(pair).expect("Error to parsing token");
+            dbg!(actual_token);
         }
 
+}
+
+#[test]
+fn parse_file_works() -> MinosResult<()> {
+    let mut path = env::current_dir()?;
+    path.push("assets/test.minos");
+
+    let file = MinosParser::parse_file(&path)?;
+
+    Ok(())
 }
