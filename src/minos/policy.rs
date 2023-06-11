@@ -46,7 +46,7 @@ impl TryFrom<&Token<'_>> for Policy {
         let allow = borrowed_allow.iter().map(|p| p.to_string()).collect();
         let rules: MinosResult<Vec<Rule>> = inner_tokens
             .iter()
-            .skip(0)
+            .skip(1)
             .map(|r| Rule::try_from(r))
             .collect();
 

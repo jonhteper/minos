@@ -5,7 +5,7 @@ env = { "env" ~ identifier ~ "{" ~ resource+ ~ "}" }
 
 resource = { "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ resource_id ~ ";")? ~ policy+ ~ "}" }
 
-resource_id = { string }
+resource_id = { "\"" ~ string ~ "\"" }
 
 rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
@@ -13,7 +13,7 @@ policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
 
 allow = { "allow" ~ "=" ~ array }
 
-array = { "[" ~ string ~ ("," ~ string)* ~ "]" }
+array = { "[" ~ "\"" ~ string ~ "\"" ~ ("," ~ "\"" ~ string ~ "\"")* ~ "]" }
 
 requirement = { single_value_requirement | list_value_requirement }
 
@@ -32,8 +32,7 @@ COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 identifier = @{ (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER |ASCII_DIGIT | "_" | "/" | "-" )* }
 
-string     = ${ "\"" ~ inner ~ "\"" }
-inner      = @{ char* }
+string     = @{ char* }
 char       =  {
     !("\"" | "\\") ~ ANY
   | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")

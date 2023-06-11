@@ -100,7 +100,7 @@ pub(crate) mod v0_14 {
                         pair.into_inner().map(|p| Self::parse_token(p)).collect();
                     Token::ListValueRequirement(inner_tokens?)
                 }
-                Rule::COMMENT | Rule::inner | Rule::char | Rule::WHITESPACE | Rule::EOI => {
+                Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => {
                     Token::Null
                 }
             })

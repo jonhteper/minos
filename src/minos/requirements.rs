@@ -1,4 +1,4 @@
-use crate::errors::Error;
+use crate::{errors::Error, minos::lang::Indentifier};
 
 use super::lang::{
     ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
@@ -20,10 +20,11 @@ pub enum Requirement {
 
 impl Requirement {
     fn single_value_from_tokens(tokens: &Vec<Token>) -> Self {
+        let Indentifier(value) = tokens[2].inner_identifier().unwrap();
         Self::SingleValue {
             attribute: tokens[0].inner_single_value_attribute().unwrap(),
             operator: tokens[1].inner_single_value_operator().unwrap(),
-            value: tokens[2].inner_string().unwrap().to_string(),
+            value: value.to_string(),
         }
     }
 
