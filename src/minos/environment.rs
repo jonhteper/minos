@@ -12,7 +12,7 @@ use super::{
 
 pub type EnvName = String;
 
-#[derive(Debug, Clone, Ctor, Getters)]
+#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Environment {
     name: EnvName,

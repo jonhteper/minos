@@ -112,12 +112,7 @@ pub(crate) mod v0_14 {
                 .unwrap();
             let file_token = MinosParserV0_14::parse_token(file_rules)?;
 
-            // let envs: Vec<lang::Environment> = env_pairs
-            //     .into_iter()
-            //     .flat_map(|pair| Self::pair_as_env(pair))
-            //     .collect();
-
-            todo!()
+            File::try_from(file_token)
         }
     }
 }

@@ -4,7 +4,7 @@ use super::lang::{
     ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Requirement {
     SingleValue {
         attribute: SingleValueAttribute,

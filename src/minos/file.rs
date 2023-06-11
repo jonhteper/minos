@@ -10,7 +10,7 @@ use super::{
     lang::{FileVersion, Token},
 };
 
-#[derive(Debug, Clone, Ctor, Getters)]
+#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct File {
     sintaxis_version: FileVersion,

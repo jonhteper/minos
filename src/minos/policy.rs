@@ -11,7 +11,7 @@ use super::{lang::Token, rule::Rule};
 
 pub type Permission = String;
 
-#[derive(Debug, Clone, Ctor, Getters)]
+#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Policy {
     allow: Vec<Permission>,

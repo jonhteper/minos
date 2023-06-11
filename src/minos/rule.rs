@@ -11,7 +11,7 @@ use super::{
     requirements::{self, Requirement},
 };
 
-#[derive(Debug, Clone, Ctor, Getters)]
+#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Rule {
     requirements: Vec<Requirement>,

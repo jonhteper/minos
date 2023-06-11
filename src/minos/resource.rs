@@ -13,7 +13,7 @@ use super::{lang::Token, policy::Policy};
 pub type ResourceId = String;
 pub type ResourceName = String;
 
-#[derive(Debug, Clone, Ctor, Getters)]
+#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Resource {
     name: ResourceName,
