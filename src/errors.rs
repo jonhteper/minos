@@ -3,7 +3,7 @@ use std::io;
 use parse_display::{Display, ParseError};
 use thiserror::Error as ThisError;
 
-use crate::minos::{/*lang::Operator,*/ parser::v0_14::Rule};
+use crate::minos::{parser::v0_14::Rule, lang::Token};
 
 pub type MinosResult<T> = Result<T, Error>;
 
@@ -27,8 +27,11 @@ pub enum Error {
     #[error("unwrap invalid value, expects List found Str")]
     UnwrapInvalidListValue,
 
-    /* #[error("invalid comparation, found '{0}'")] TODO: Remove
-    InvalidOperation(Operator), */
+    #[error("invalid token found: {found}, expected: {expected}")]
+    InvalidToken {
+        expected: String,
+        found: String,
+    },
 
     #[error("sintaxis not supported")]
     SintaxisNotSupported,
