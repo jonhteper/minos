@@ -2,6 +2,8 @@ use std::{fs, env};
 
 use pest::Parser;
 
+use crate::minos::file::File;
+use crate::minos::lang::Token;
 use crate::{minos::parser::MinosParser, errors::MinosResult};
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 
@@ -57,15 +59,16 @@ env ProductUseCases--tests {
 
 
 #[test]
-pub fn parser_test() {
-    let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)
-        .expect("Error getting file");
-    
-        for pair in pairs {
-            //dbg!(&pair);
-            let actual_token = MinosParserV0_14::parse_token(pair).expect("Error to parsing token");
-            dbg!(actual_token);
-        }
+pub fn parser_test() -> MinosResult<()> {
+    let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)?.next().unwrap();
+    let file_token = MinosParserV0_14::parse_token(pairs)?;
+
+    match file_token {
+        Token::File(_) => {},
+        _ => panic!("Expect Token::File")
+    }
+
+    Ok(())
 
 }
 
