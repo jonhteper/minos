@@ -19,7 +19,7 @@ pub struct Rule {
 
 impl Rule {
     /// Apply all requirements and return true only if actor satisfies all.
-    pub fn apply(&self, actor: &impl Actor) -> bool {
+    pub fn apply(&self, actor: &Actor) -> bool {
         for requirement in &self.requirements {
             if !requirement.apply(actor) {
                 return false;

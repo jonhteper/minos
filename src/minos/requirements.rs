@@ -43,7 +43,7 @@ impl Requirement {
     }
 
     fn apply_sinlge_value(
-        actor: &impl Actor,
+        actor: &Actor,
         attribute: &SingleValueAttribute,
         operator: &SingleValueOperator,
         value: &String,
@@ -54,22 +54,22 @@ impl Requirement {
         }
     }
 
-    fn compare_type(actor: &impl Actor, operator: &SingleValueOperator, value: &String) -> bool {
+    fn compare_type(actor: &Actor, operator: &SingleValueOperator, value: &String) -> bool {
         match operator {
-            SingleValueOperator::Equal => &actor.actor_type() == value,
-            SingleValueOperator::Distinct => &actor.actor_type() != value,
+            SingleValueOperator::Equal => actor.actor_type() == value,
+            SingleValueOperator::Distinct => actor.actor_type() != value,
         }
     }
 
-    fn compare_id(actor: &impl Actor, operator: &SingleValueOperator, value: &String) -> bool {
+    fn compare_id(actor: &Actor, operator: &SingleValueOperator, value: &String) -> bool {
         match operator {
-            SingleValueOperator::Equal => &actor.actor_id() == value,
-            SingleValueOperator::Distinct => &actor.actor_id() != value,
+            SingleValueOperator::Equal => actor.actor_id() == value,
+            SingleValueOperator::Distinct => actor.actor_id() != value,
         }
     }
 
     fn apply_list_value(
-        actor: &impl Actor,
+        actor: &Actor,
         attribute: &ListValueAttribute,
         operator: &ListValueOperator,
         value: &Vec<String>,
@@ -81,24 +81,24 @@ impl Requirement {
     }
 
     fn compare_groups(
-        actor: &impl Actor,
+        actor: &Actor,
         operator: &ListValueOperator,
         value: &Vec<String>,
     ) -> bool {
         match operator {
-            ListValueOperator::Equal => &actor.actor_groups() == value,
-            ListValueOperator::Contains => Self::find_in_list(&actor.actor_groups(), value),
+            ListValueOperator::Equal => actor.actor_groups() == value,
+            ListValueOperator::Contains => Self::find_in_list(actor.actor_groups(), value),
         }
     }
 
     fn compare_roles(
-        actor: &impl Actor,
+        actor: &Actor,
         operator: &ListValueOperator,
         value: &Vec<String>,
     ) -> bool {
         match operator {
-            ListValueOperator::Equal => &actor.actor_roles() == value,
-            ListValueOperator::Contains => Self::find_in_list(&actor.actor_roles(), value),
+            ListValueOperator::Equal => actor.actor_roles() == value,
+            ListValueOperator::Contains => Self::find_in_list(actor.actor_roles(), value),
         }
     }
 
@@ -112,7 +112,7 @@ impl Requirement {
         true
     }
 
-    pub fn apply(&self, actor: &impl Actor) -> bool {
+    pub fn apply(&self, actor: &Actor) -> bool {
         match self {
             Requirement::SingleValue {
                 attribute,

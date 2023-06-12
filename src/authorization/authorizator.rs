@@ -50,7 +50,7 @@ impl Authorizator {
     pub fn authorize(
         &self,
         env_name: &EnvName,
-        actor: &impl Actor,
+        actor: &Actor,
         resource: &impl Resource,
     ) -> Result<Vec<Permission>, Error> {
         let policies = self.get_policies(env_name, resource)?;
@@ -64,7 +64,7 @@ impl Authorizator {
         }
 
         if permissions.is_empty() {
-            return Err(Error::ActorNotAuthorized(actor.actor_id()));
+            return Err(Error::ActorNotAuthorized(actor.actor_id().clone()));
         }
 
         Ok(permissions)

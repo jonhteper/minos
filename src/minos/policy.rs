@@ -20,7 +20,7 @@ pub struct Policy {
 
 impl Policy {
     /// Returns the [Permission] list if the actor satisfies at least one of the rules.
-    pub fn apply(&self, actor: &impl Actor) -> Option<&Vec<Permission>> {
+    pub fn apply(&self, actor: &Actor) -> Option<&Vec<Permission>> {
         for rule in &self.rules {
             if rule.apply(actor) {
                 return Some(&self.allow);
