@@ -76,7 +76,7 @@ pub(crate) mod v0_14 {
                     Token::SingleValueRequirement(Self::parse_tokens(pair)?)
                 }
                 Rule::list_value_attribute => {
-                    Token::ListValueRequirement(Self::parse_tokens(pair)?)
+                    Token::ListValueAttribute(ListValueAttribute::from_str(pair.as_str())?)
                 }
                 Rule::array => {
                     let inner_values = pair.into_inner().map(|p| p.as_str()).collect();
