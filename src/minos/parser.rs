@@ -60,6 +60,7 @@ impl MinosParser {
 
         Ok(environments)
     }
+
 }
 
 pub(crate) mod v0_14 {

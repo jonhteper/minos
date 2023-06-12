@@ -1,4 +1,4 @@
-use crate::{errors::Error, minos::lang::Indentifier};
+use crate::{authorization::Actor, errors::Error, minos::lang::Indentifier};
 
 use super::lang::{
     ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
@@ -29,7 +29,6 @@ impl Requirement {
     }
 
     fn list_value_from_tokens(tokens: &Vec<Token>) -> Self {
-
         Self::ListValue {
             attribute: tokens[0].inner_list_value_attribute().unwrap(),
             operator: tokens[1].inner_list_value_operator().unwrap(),
@@ -40,6 +39,91 @@ impl Requirement {
                 .iter()
                 .map(|v| v.to_string())
                 .collect(),
+        }
+    }
+
+    fn apply_sinlge_value(
+        actor: &impl Actor,
+        attribute: &SingleValueAttribute,
+        operator: &SingleValueOperator,
+        value: &String,
+    ) -> bool {
+        match attribute {
+            SingleValueAttribute::Type => Self::compare_type(actor, operator, value),
+            SingleValueAttribute::Id => Self::compare_id(actor, operator, value),
+        }
+    }
+
+    fn compare_type(actor: &impl Actor, operator: &SingleValueOperator, value: &String) -> bool {
+        match operator {
+            SingleValueOperator::Equal => &actor.actor_type() == value,
+            SingleValueOperator::Distinct => &actor.actor_type() != value,
+        }
+    }
+
+    fn compare_id(actor: &impl Actor, operator: &SingleValueOperator, value: &String) -> bool {
+        match operator {
+            SingleValueOperator::Equal => &actor.actor_id() == value,
+            SingleValueOperator::Distinct => &actor.actor_id() != value,
+        }
+    }
+
+    fn apply_list_value(
+        actor: &impl Actor,
+        attribute: &ListValueAttribute,
+        operator: &ListValueOperator,
+        value: &Vec<String>,
+    ) -> bool {
+        match attribute {
+            ListValueAttribute::Groups => Self::compare_groups(actor, operator, value),
+            ListValueAttribute::Roles => Self::compare_roles(actor, operator, value),
+        }
+    }
+
+    fn compare_groups(
+        actor: &impl Actor,
+        operator: &ListValueOperator,
+        value: &Vec<String>,
+    ) -> bool {
+        match operator {
+            ListValueOperator::Equal => &actor.actor_groups() == value,
+            ListValueOperator::Contains => Self::find_in_list(&actor.actor_groups(), value),
+        }
+    }
+
+    fn compare_roles(
+        actor: &impl Actor,
+        operator: &ListValueOperator,
+        value: &Vec<String>,
+    ) -> bool {
+        match operator {
+            ListValueOperator::Equal => &actor.actor_roles() == value,
+            ListValueOperator::Contains => Self::find_in_list(&actor.actor_roles(), value),
+        }
+    }
+
+    fn find_in_list(actor_list: &Vec<String>, to_find: &Vec<String>) -> bool {
+        for to_find_item in to_find {
+            if !actor_list.contains(to_find_item) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn apply(&self, actor: &impl Actor) -> bool {
+        match self {
+            Requirement::SingleValue {
+                attribute,
+                operator,
+                value,
+            } => Self::apply_sinlge_value(actor, attribute, operator, value),
+            Requirement::ListValue {
+                attribute,
+                operator,
+                value,
+            } => Self::apply_list_value(actor, attribute, operator, value),
         }
     }
 }
@@ -60,125 +144,3 @@ impl TryFrom<&Token<'_>> for Requirement {
         }
     }
 }
-
-/*
-#[derive(Debug, Clone, Ctor, Getters)]
-#[getset(get = "pub")]
-pub struct Requirement {
-    attribute: ActorAttribute,
-    operator: Operator,
-    value: Value,
-}
-
-impl Requirement {
-    fn compare_type(&self, actor: &impl Actor) -> Result<bool, Error> {
-        match self.operator {
-            Operator::Equal => Ok(&actor.actor_type() == self.value.try_as_str()?),
-            Operator::Distinct => Ok(&actor.actor_type() != self.value.try_as_str()?),
-            Operator::Contains => Err(Error::InvalidOperation(Operator::Contains)),
-        }
-    }
-
-    fn compare_id(&self, actor: &impl Actor) -> Result<bool, Error> {
-        match self.operator {
-            Operator::Equal => Ok(&actor.actor_id() == self.value.try_as_str()?),
-            Operator::Distinct => Ok(&actor.actor_id() != self.value.try_as_str()?),
-            Operator::Contains => Err(Error::InvalidOperation(Operator::Contains)),
-        }
-    }
-
-    fn find_in_list(actor_list: &Vec<String>, to_find: &Vec<String>) -> bool {
-        for to_find_item in to_find {
-            if !actor_list.contains(to_find_item) {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    fn compare_groups(&self, actor: &impl Actor) -> Result<bool, Error> {
-        match self.operator {
-            Operator::Equal => Ok(self.value.try_as_list()? == &actor.actor_groups()),
-            Operator::Distinct => Err(Error::InvalidOperation(Operator::Distinct)),
-            Operator::Contains => Ok(Self::find_in_list(
-                &actor.actor_groups(),
-                self.value.try_as_list()?,
-            )),
-        }
-    }
-
-    fn compare_roles(&self, actor: &impl Actor) -> Result<bool, Error> {
-        match self.operator {
-            Operator::Equal => Ok(self.value.try_as_list()? == &actor.actor_roles()),
-            Operator::Distinct => Err(Error::InvalidOperation(Operator::Distinct)),
-            Operator::Contains => Ok(Self::find_in_list(
-                &actor.actor_roles(),
-                self.value.try_as_list()?,
-            )),
-        }
-    }
-
-    pub fn apply(&self, actor: &impl Actor) -> Result<bool, Error> {
-        match self.attribute {
-            ActorAttribute::Type => self.compare_type(actor),
-            ActorAttribute::Id => self.compare_id(actor),
-            ActorAttribute::Groups => self.compare_groups(actor),
-            ActorAttribute::Roles => self.compare_roles(actor),
-        }
-    }
-}
-
-
-#[derive(Debug, Clone, Copy, Display, FromStr)]
-pub enum ActorAttribute {
-    #[display("actor.type")]
-    Type,
-
-    #[display("actor.id")]
-    Id,
-
-    #[display("actor.groups")]
-    Groups,
-
-    #[display("actor.roles")]
-    Roles,
-}
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum Operator {
-    #[display("=")]
-    Equal,
-
-    #[display("*=")]
-    Contains,
-
-    #[display("!=")]
-    Distinct,
-}
-
-#[derive(Debug, Clone)]
-pub enum Value {
-    Str(String),
-    List(Vec<String>),
-}
-
-impl Value {
-    pub fn try_as_str(&self) -> Result<&String, Error> {
-        match self {
-            Value::Str(val) => Ok(val),
-            Value::List(_) => Err(Error::UnwrapInvalidStringValue),
-        }
-    }
-
-    pub fn try_as_list(&self) -> Result<&Vec<String>, Error> {
-        match self {
-            Value::List(val) => Ok(val),
-            Value::Str(_) => Err(Error::UnwrapInvalidListValue),
-        }
-    }
-}
-
-
-
-*/
