@@ -29,7 +29,7 @@ impl Authorizator {
     fn get_policies(
         &self,
         env_name: &EnvName,
-        resource: &impl Resource,
+        resource: &Resource,
     ) -> Result<&Vec<Policy>, Error> {
         let env = self
             .environments
@@ -38,7 +38,7 @@ impl Authorizator {
 
         let resource = env
             .resources()
-            .get(&(resource.name(), resource.id()))
+            .get(&(resource.name().clone(), resource.id().clone()))
             .ok_or(Error::ResourceNotFound(resource.name().clone()))?;
 
         Ok(resource.policies())
@@ -51,7 +51,7 @@ impl Authorizator {
         &self,
         env_name: &EnvName,
         actor: &Actor,
-        resource: &impl Resource,
+        resource: &Resource,
     ) -> Result<Vec<Permission>, Error> {
         let policies = self.get_policies(env_name, resource)?;
         let mut permissions = vec![];
