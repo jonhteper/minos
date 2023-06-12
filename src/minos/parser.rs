@@ -61,6 +61,12 @@ impl MinosParser {
         Ok(environments)
     }
 
+
+    pub fn parse_str(version: FileVersion, file_content: &str) -> MinosResult<HashMap<EnvName, Environment>> {
+        match version {
+            FileVersion::V0_14 => v0_14::MinosParserV0_14::parse_file_content(&file_content),
+        }
+    }
 }
 
 pub(crate) mod v0_14 {
