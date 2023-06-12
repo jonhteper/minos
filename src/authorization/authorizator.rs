@@ -46,7 +46,6 @@ impl Authorizator {
 
     /// Return a list of [Permission] if the [Actor] is authorized.
     /// This method fails if:
-    /// * Some [Policy] are malformed
     /// * The [Actor] is not authorized
     pub fn authorize(
         &self,
@@ -58,7 +57,7 @@ impl Authorizator {
         let mut permissions = vec![];
 
         for policy in policies {
-            if let Some(granted_permissions) = policy.apply(actor)? {
+            if let Some(granted_permissions) = policy.apply(actor) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
             }

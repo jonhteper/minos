@@ -20,15 +20,14 @@ pub struct Policy {
 
 impl Policy {
     /// Returns the [Permission] list if the actor satisfies at least one of the rules.
-    /// This function can fail if the rules are bad created.
-    pub fn apply(&self, actor: &impl Actor) -> Result<Option<&Vec<Permission>>, Error> {
+    pub fn apply(&self, actor: &impl Actor) -> Option<&Vec<Permission>> {
         for rule in &self.rules {
-            if rule.apply(actor)? {
-                return Ok(Some(&self.allow));
+            if rule.apply(actor) {
+                return Some(&self.allow);
             }
         }
 
-        Ok(None)
+        None
     }
 }
 
