@@ -29,6 +29,7 @@ impl Requirement {
     }
 
     fn list_value_from_tokens(tokens: &Vec<Token>) -> Self {
+
         Self::ListValue {
             attribute: tokens[0].inner_list_value_attribute().unwrap(),
             operator: tokens[1].inner_list_value_operator().unwrap(),

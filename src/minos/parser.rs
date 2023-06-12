@@ -1,11 +1,15 @@
-use std::{fs, path::Path, str::FromStr};
+use std::{collections::HashMap, fs, path::Path, str::FromStr};
 
 use lazy_static::lazy_static;
 use regex::Regex;
 
 use crate::errors::{Error, MinosResult};
 
-use super::{file::File, lang::FileVersion};
+use super::{
+    environment::{EnvName, Environment},
+    file::File,
+    lang::FileVersion,
+};
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
@@ -27,7 +31,8 @@ impl MinosParser {
         None
     }
 
-    pub fn parse_file(path: &Path) -> MinosResult<File> {
+    /// Return the list of [Environment] inside a valid minos file.
+    pub fn parse_file(path: &Path) -> MinosResult<HashMap<EnvName, Environment>> {
         let file_content = fs::read_to_string(path)?;
         let version = Self::get_file_version(&file_content).ok_or(Error::SintaxisNotSupported)?;
 
@@ -36,20 +41,38 @@ impl MinosParser {
         }
     }
 
-    pub fn parse_dir() -> Vec<File> {
-        todo!()
+    pub fn parse_dir(path: &Path) -> MinosResult<HashMap<EnvName, Environment>> {
+        let dir = fs::read_dir(path)?;
+        let mut environments = HashMap::new();
+
+        for entry in dir {
+            let path = entry?.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
+            if is_minos_file {
+                let mut file_environments = Self::parse_file(&path)?;
+                environments.extend(file_environments);
+            }
+        }
+
+        Ok(environments)
     }
 }
 
 pub(crate) mod v0_14 {
     use pest::{iterators::Pair, Parser};
     use pest_derive::Parser;
+    use std::collections::HashMap;
     use std::path::Path;
     use std::str::FromStr;
 
     use crate::errors::MinosResult;
+    use crate::minos::environment::{EnvName, Environment};
     use crate::minos::file::File;
-    use crate::minos::lang::{self, Array, Indentifier};
+    use crate::minos::lang::{self, Array, Indentifier, ListValueAttribute};
 
     #[derive(Debug, Parser)]
     #[grammar = "../assets/minos.pest"]
@@ -100,19 +123,17 @@ pub(crate) mod v0_14 {
                         pair.into_inner().map(|p| Self::parse_token(p)).collect();
                     Token::ListValueRequirement(inner_tokens?)
                 }
-                Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => {
-                    Token::Null
-                }
+                Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
             })
         }
 
-        pub fn parse_file_content(content: &str) -> MinosResult<File> {
+        pub fn parse_file_content(content: &str) -> MinosResult<HashMap<EnvName, Environment>> {
             let file_rules = MinosParserV0_14::parse(Rule::file, content)?
                 .next()
                 .unwrap();
             let file_token = MinosParserV0_14::parse_token(file_rules)?;
 
-            File::try_from(file_token)
+            Ok(File::try_from(file_token)?.environments().clone())
         }
     }
 }

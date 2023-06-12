@@ -74,7 +74,7 @@ fn file_from_tokens_works() -> MinosResult<()> {
     let file_builtin = file_builtin();
     let file_parsed = MinosParserV0_14::parse_file_content(V0_14_MINOS_CONTENT)?;
 
-    assert_eq!(file_builtin, file_parsed);
+    assert_eq!(file_builtin.environments(), &file_parsed);
 
     Ok(())
 }
@@ -86,7 +86,18 @@ fn parse_file_works() -> MinosResult<()> {
     let mut path = env::current_dir()?;
     path.push("assets/test.minos");
 
-    let file = MinosParser::parse_file(&path)?;
+    let _environments = MinosParser::parse_file(&path)?;
+
+    Ok(())
+}
+
+#[test]
+fn parse_dir_works() -> MinosResult<()> {
+    let mut path = env::current_dir()?;
+    path.push("assets");
+
+    let _environments = MinosParser::parse_dir(&path)?;
+
 
     Ok(())
 }
