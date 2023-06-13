@@ -75,7 +75,7 @@ impl Authorizator {
         env_name: &EnvName,
         actor: &Actor,
         resource: &Resource,
-    ) -> Result<Vec<Permission>, Error> {
+    ) -> MinosResult<Vec<Permission>> {
         let (policies, policies_from_identified) = self.get_policies(env_name, resource)?;
         let mut permissions = vec![];
 
