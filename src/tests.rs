@@ -4,6 +4,7 @@ use std::{env, fs};
 use pest::Parser;
 
 use crate::authorization::{self, Actor, Authorizator};
+use crate::minos::container::Container;
 use crate::minos::environment::Environment;
 use crate::minos::file::File;
 use crate::minos::lang::{FileVersion, SingleValueAttribute, SingleValueOperator, Token};
@@ -97,7 +98,7 @@ fn parse_dir_works() -> MinosResult<()> {
 #[test]
 fn authorizator_works() -> MinosResult<()> {
     let envs = MinosParser::parse_str(FileVersion::V0_14, V0_14_MINOS_CONTENT)?;
-    let authorizator = Authorizator::new(envs);
+    let authorizator = Authorizator::new(&envs);
 
     let actor = Actor::new(
         "RootUser".to_string(),
@@ -116,6 +117,23 @@ fn authorizator_works() -> MinosResult<()> {
         permissions,
         vec!["create".to_string(), "delete".to_string()]
     );
+
+    Ok(())
+}
+
+#[test]
+fn container_works() -> MinosResult<()> {
+    let mut path = env::current_dir()?;
+    path.push("assets");
+
+    let container = Container::new(
+        "TestContainer".to_string(),
+        "Container used in tests".to_string(),
+        vec![path],
+    )
+    .load()?;
+
+    assert!(container.environments().len() > 0);
 
     Ok(())
 }
