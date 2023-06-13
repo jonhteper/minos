@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use derived::Ctor;
 use getset::Getters;
@@ -14,9 +14,10 @@ pub type EnvName = String;
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
-pub struct Environment {
+pub struct Environment{
     name: EnvName,
-    resources: HashMap<(ResourceName, Option<ResourceId>), Resource>,
+    resources: HashMap<ResourceName, Resource>,
+    resources_identefied: HashMap<(ResourceName, ResourceId), Resource>,
 }
 
 impl TryFrom<&Token<'_>> for Environment {
@@ -30,14 +31,21 @@ impl TryFrom<&Token<'_>> for Environment {
 
         let Indentifier(name) = inner_tokens[0].inner_identifier().unwrap();
         let mut resources = HashMap::new();
+        let mut resources_with_id = HashMap::new();
         for inner_token in inner_tokens.iter().skip(1) {
             let resource = Resource::try_from(inner_token)?;
-            resources.insert((resource.name().clone(), resource.id().clone()), resource);
+            if let Some(id) = resource.id() {
+                resources_with_id.insert((resource.name().clone(), id.to_string()), resource);
+                continue;
+            }
+
+            resources.insert(resource.name().clone(), resource);
         }
 
         Ok(Environment {
             name: name.to_string(),
             resources,
+            resources_identefied: resources_with_id,
         })
     }
 }

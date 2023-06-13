@@ -3,14 +3,15 @@ use std::{env, fs};
 
 use pest::Parser;
 
-use crate::minos::requirements::Requirement;
-use crate::minos::{self, rule};
+use crate::authorization::{self, Actor, Authorizator};
 use crate::minos::environment::Environment;
 use crate::minos::file::File;
-use crate::minos::lang::{Token, FileVersion, SingleValueAttribute, SingleValueOperator};
+use crate::minos::lang::{FileVersion, SingleValueAttribute, SingleValueOperator, Token};
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 use crate::minos::policy::Policy;
+use crate::minos::requirements::Requirement;
 use crate::minos::resource::Resource;
+use crate::minos::{self, rule};
 use crate::{errors::MinosResult, minos::parser::MinosParser};
 
 const V0_14_MINOS_CONTENT: &str = r#"
@@ -47,25 +48,19 @@ pub fn parser_test() -> MinosResult<()> {
 fn file_builtin() -> File {
     let policy = Policy::new(
         vec!["create".to_string(), "delete".to_string()],
-        vec![
-            rule::Rule::new(vec![Requirement::SingleValue { attribute: SingleValueAttribute::Type, operator: SingleValueOperator::Equal, value: "RootUser".to_string() }]),
-        ]
-
+        vec![rule::Rule::new(vec![Requirement::SingleValue {
+            attribute: SingleValueAttribute::Type,
+            operator: SingleValueOperator::Equal,
+            value: "RootUser".to_string(),
+        }])],
     );
-    let resource = Resource::new(
-        "Product".to_string(),
-        None,
-        vec![policy]
-    );
+    let resource = Resource::new("Product".to_string(), None, vec![policy]);
     let mut resources = HashMap::new();
-    resources.insert((resource.name().clone(), resource.id().clone()), resource);
-    let environment = Environment::new(
-        "TestEnv".to_string(),
-        resources,
-    );
+    resources.insert(resource.name().clone(), resource);
+    let environment = Environment::new("TestEnv".to_string(), resources, HashMap::new());
     let mut environments = HashMap::new();
     environments.insert(environment.name().clone(), environment);
-    
+
     File::new(FileVersion::V0_14, environments)
 }
 
@@ -78,8 +73,6 @@ fn file_from_tokens_works() -> MinosResult<()> {
 
     Ok(())
 }
-
-
 
 #[test]
 fn parse_file_works() -> MinosResult<()> {
@@ -98,6 +91,31 @@ fn parse_dir_works() -> MinosResult<()> {
 
     let _environments = MinosParser::parse_dir(&path)?;
 
+    Ok(())
+}
+
+#[test]
+fn authorizator_works() -> MinosResult<()> {
+    let envs = MinosParser::parse_str(FileVersion::V0_14, V0_14_MINOS_CONTENT)?;
+    let authorizator = Authorizator::new(envs);
+
+    let actor = Actor::new(
+        "RootUser".to_string(),
+        "actor.id".to_string(),
+        vec![],
+        vec![],
+    );
+
+    let product = authorization::Resource::new(
+        "Product".to_string(),
+        Some("example.product.id".to_string()),
+    );
+
+    let permissions = authorizator.authorize(&"TestEnv".to_string(), &actor, &product)?;
+    assert_eq!(
+        permissions,
+        vec!["create".to_string(), "delete".to_string()]
+    );
 
     Ok(())
 }

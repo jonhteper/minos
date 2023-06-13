@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use derived::Ctor;
+use lazy_static::lazy_static;
 
 use crate::{
-    errors::Error,
+    errors::{Error, MinosResult},
     minos::{
         environment::{EnvName, Environment},
         policy::{Permission, Policy},
@@ -11,6 +12,10 @@ use crate::{
 };
 
 use super::{resource, Actor, Resource};
+
+lazy_static! {
+    pub static ref EMPTY_POLICY_VEC: Vec<Policy> = Vec::new();
+}
 
 #[derive(Debug, Clone, Ctor)]
 pub struct Authorizator {
@@ -26,22 +31,40 @@ impl Authorizator {
         self.environments.insert(env.name().clone(), env);
     }
 
+    fn get_policies_from_resourse_identified<'a>(
+        env: &'a Environment,
+        resource: &Resource,
+    ) -> MinosResult<&'a Vec<Policy>> {
+        if let Some(id) = resource.id() {
+            return Ok(env
+                .resources_identefied()
+                .get(&(resource.name().clone(), id.clone()))
+                .map(|r| r.policies())
+                .unwrap_or(&EMPTY_POLICY_VEC));
+        }
+
+        Ok(&EMPTY_POLICY_VEC)
+    }
+
     fn get_policies(
         &self,
         env_name: &EnvName,
         resource: &Resource,
-    ) -> Result<&Vec<Policy>, Error> {
+    ) -> MinosResult<(&Vec<Policy>, &Vec<Policy>)> {
         let env = self
             .environments
             .get(env_name)
             .ok_or(Error::EnvironmentNotFound(env_name.clone()))?;
 
-        let resource = env
+        let mut resource_policies = env
             .resources()
-            .get(&(resource.name().clone(), resource.id().clone()))
-            .ok_or(Error::ResourceNotFound(resource.name().clone()))?;
+            .get(resource.name())
+            .ok_or(Error::ResourceNotFound(resource.name().clone()))?
+            .policies();
 
-        Ok(resource.policies())
+        let policies_from_identified = Self::get_policies_from_resourse_identified(&env, resource)?;
+
+        Ok((resource_policies, policies_from_identified))
     }
 
     /// Return a list of [Permission] if the [Actor] is authorized.
@@ -53,10 +76,17 @@ impl Authorizator {
         actor: &Actor,
         resource: &Resource,
     ) -> Result<Vec<Permission>, Error> {
-        let policies = self.get_policies(env_name, resource)?;
+        let (policies, policies_from_identified) = self.get_policies(env_name, resource)?;
         let mut permissions = vec![];
 
         for policy in policies {
+            if let Some(granted_permissions) = policy.apply(actor) {
+                let mut perms = granted_permissions.clone();
+                permissions.append(&mut perms);
+            }
+        }
+
+        for policy in policies_from_identified {
             if let Some(granted_permissions) = policy.apply(actor) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
