@@ -36,7 +36,7 @@ pub enum Error {
     Io(String),
 
     #[error(transparent)]
-    Pest(#[from] pest::error::Error<Rule>),
+    Pest(Box<pest::error::Error<Rule>>),
 
     #[error(transparent)]
     ParseError(#[from] ParseError),
@@ -45,5 +45,11 @@ pub enum Error {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Self::Io(err.to_string())
+    }
+}
+
+impl From<pest::error::Error<Rule>> for Error {
+    fn from(err: pest::error::Error<Rule>) -> Self {
+        Self::Pest(Box::new(err))
     }
 }
