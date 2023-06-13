@@ -14,7 +14,7 @@ pub type EnvName = String;
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
-pub struct Environment{
+pub struct Environment {
     name: EnvName,
     resources: HashMap<ResourceName, Resource>,
     resources_identefied: HashMap<(ResourceName, ResourceId), Resource>,

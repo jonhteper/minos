@@ -10,7 +10,6 @@ pub struct Actor {
     actor_roles: Vec<String>,
 }
 
-
 pub trait AsActor {
     fn as_actor(&self) -> Actor;
 }

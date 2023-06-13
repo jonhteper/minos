@@ -80,22 +80,14 @@ impl Requirement {
         }
     }
 
-    fn compare_groups(
-        actor: &Actor,
-        operator: &ListValueOperator,
-        value: &Vec<String>,
-    ) -> bool {
+    fn compare_groups(actor: &Actor, operator: &ListValueOperator, value: &Vec<String>) -> bool {
         match operator {
             ListValueOperator::Equal => actor.actor_groups() == value,
             ListValueOperator::Contains => Self::find_in_list(actor.actor_groups(), value),
         }
     }
 
-    fn compare_roles(
-        actor: &Actor,
-        operator: &ListValueOperator,
-        value: &Vec<String>,
-    ) -> bool {
+    fn compare_roles(actor: &Actor, operator: &ListValueOperator, value: &Vec<String>) -> bool {
         match operator {
             ListValueOperator::Equal => actor.actor_roles() == value,
             ListValueOperator::Contains => Self::find_in_list(actor.actor_roles(), value),

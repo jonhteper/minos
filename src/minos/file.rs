@@ -27,8 +27,8 @@ impl TryFrom<Token<'_>> for File {
         })?;
         let sintaxis_version = inner_tokens[0].inner_version().unwrap();
         let mut environments = HashMap::new();
-    
-        for inner_token in &inner_tokens[1..inner_tokens.len()-1] {
+
+        for inner_token in &inner_tokens[1..inner_tokens.len() - 1] {
             let env = Environment::try_from(inner_token)?;
             environments.insert(env.name().clone(), env);
         }
