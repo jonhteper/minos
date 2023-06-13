@@ -18,17 +18,13 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Ctor)]
-pub struct Authorizator {
-    environments: HashMap<EnvName, Environment>,
+pub struct Authorizator<'env> {
+    environments: &'env HashMap<EnvName, Environment>,
 }
 
-impl Authorizator {
+impl<'env> Authorizator<'env> {
     pub fn has_env(&self, env_name: &EnvName) -> bool {
         self.environments.contains_key(env_name)
-    }
-
-    pub fn add_environment(&mut self, env: Environment) {
-        self.environments.insert(env.name().clone(), env);
     }
 
     fn get_policies_from_resourse_identified<'a>(
