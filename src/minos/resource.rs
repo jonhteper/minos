@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use derived::Ctor;
 use getset::Getters;
 
@@ -34,16 +32,8 @@ impl TryFrom<&Token<'_>> for Resource {
         let id = inner_tokens[1].inner_string().map(|s| s.to_string());
 
         let policies: MinosResult<Vec<Policy>> = match id.is_some() {
-            true => inner_tokens
-                .iter()
-                .skip(2)
-                .map(Policy::try_from)
-                .collect(),
-            false => inner_tokens
-                .iter()
-                .skip(1)
-                .map(Policy::try_from)
-                .collect(),
+            true => inner_tokens.iter().skip(2).map(Policy::try_from).collect(),
+            false => inner_tokens.iter().skip(1).map(Policy::try_from).collect(),
         };
 
         Ok(Resource {

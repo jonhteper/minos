@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{resource, Actor, Resource};
+use super::{Actor, Resource};
 
 lazy_static! {
     pub static ref EMPTY_POLICY_VEC: Vec<Policy> = Vec::new();
@@ -52,7 +52,7 @@ impl<'env> Authorizator<'env> {
             .get(env_name)
             .ok_or(Error::EnvironmentNotFound(env_name.clone()))?;
 
-        let mut resource_policies = env
+        let resource_policies = env
             .resources()
             .get(resource.name())
             .ok_or(Error::ResourceNotFound(resource.name().clone()))?

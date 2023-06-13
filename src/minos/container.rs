@@ -1,10 +1,5 @@
-use std::{
-    collections::HashMap,
-    marker::PhantomData,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
 
-use derived::Ctor;
 use getset::Getters;
 
 use crate::{
@@ -14,7 +9,6 @@ use crate::{
 
 use super::{
     environment::{EnvName, Environment},
-    file::File,
     parser::MinosParser,
     policy::Permission,
 };
@@ -55,16 +49,16 @@ impl Container {
             id,
             description,
             paths,
-            environments,
-            state,
+            environments: _,
+            state: _,
         } = self;
         let mut environments = HashMap::new();
         for path in &paths {
             if path.is_dir() {
-                let mut envs = MinosParser::parse_dir(path)?;
+                let envs = MinosParser::parse_dir(path)?;
                 environments.extend(envs);
             } else if path.is_file() {
-                let mut envs = MinosParser::parse_file(path)?;
+                let envs = MinosParser::parse_file(path)?;
                 environments.extend(envs);
             }
         }

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::{env, fs};
+use std::env;
 
 use pest::Parser;
 
@@ -12,7 +12,7 @@ use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 use crate::minos::policy::Policy;
 use crate::minos::requirements::Requirement;
 use crate::minos::resource::Resource;
-use crate::minos::{self, rule};
+use crate::minos::rule;
 use crate::{errors::MinosResult, minos::parser::MinosParser};
 
 const V0_14_MINOS_CONTENT: &str = r#"

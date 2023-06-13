@@ -6,10 +6,7 @@ use crate::{
     errors::{Error, MinosResult},
 };
 
-use super::{
-    lang::Token,
-    requirements::{self, Requirement},
-};
+use super::{lang::Token, requirements::Requirement};
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
@@ -38,10 +35,8 @@ impl TryFrom<&Token<'_>> for Rule {
             expected: Token::Rule(vec![]).to_string(),
             found: token.to_string(),
         })?;
-        let requirements: MinosResult<Vec<Requirement>> = inner_tokens
-            .iter()
-            .map(Requirement::try_from)
-            .collect();
+        let requirements: MinosResult<Vec<Requirement>> =
+            inner_tokens.iter().map(Requirement::try_from).collect();
 
         Ok(Rule {
             requirements: requirements?,

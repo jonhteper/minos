@@ -1,9 +1,9 @@
 use std::io;
 
-use parse_display::{Display, ParseError};
+use parse_display::ParseError;
 use thiserror::Error as ThisError;
 
-use crate::minos::{lang::Token, parser::v0_14::Rule};
+use crate::minos::parser::v0_14::Rule;
 
 pub type MinosResult<T> = Result<T, Error>;
 

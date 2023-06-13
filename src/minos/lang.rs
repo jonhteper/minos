@@ -1,11 +1,4 @@
-use std::collections::HashMap;
-
-use derived::Ctor;
-use getset::Getters;
 use parse_display::{Display, FromStr};
-use pest::iterators::Pair;
-
-use crate::{authorization::Actor, errors::Error};
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum Token<'a> {

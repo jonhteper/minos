@@ -43,11 +43,8 @@ impl TryFrom<&Token<'_>> for Policy {
             .inner_array()
             .unwrap();
         let allow = borrowed_allow.iter().map(|p| p.to_string()).collect();
-        let rules: MinosResult<Vec<Rule>> = inner_tokens
-            .iter()
-            .skip(1)
-            .map(Rule::try_from)
-            .collect();
+        let rules: MinosResult<Vec<Rule>> =
+            inner_tokens.iter().skip(1).map(Rule::try_from).collect();
 
         Ok(Policy {
             allow,

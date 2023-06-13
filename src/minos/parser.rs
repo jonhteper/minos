@@ -7,7 +7,6 @@ use crate::errors::{Error, MinosResult};
 
 use super::{
     environment::{EnvName, Environment},
-    file::File,
     lang::FileVersion,
 };
 
@@ -52,7 +51,7 @@ impl MinosParser {
 
             let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
             if is_minos_file {
-                let mut file_environments = Self::parse_file(&path)?;
+                let file_environments = Self::parse_file(&path)?;
                 environments.extend(file_environments);
             }
         }
@@ -74,7 +73,6 @@ pub(crate) mod v0_14 {
     use pest::{iterators::Pair, Parser};
     use pest_derive::Parser;
     use std::collections::HashMap;
-    use std::path::Path;
     use std::str::FromStr;
 
     use crate::errors::MinosResult;
