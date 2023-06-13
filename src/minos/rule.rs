@@ -40,7 +40,7 @@ impl TryFrom<&Token<'_>> for Rule {
         })?;
         let requirements: MinosResult<Vec<Requirement>> = inner_tokens
             .iter()
-            .map(|r| Requirement::try_from(r))
+            .map(Requirement::try_from)
             .collect();
 
         Ok(Rule {

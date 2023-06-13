@@ -37,12 +37,12 @@ impl TryFrom<&Token<'_>> for Resource {
             true => inner_tokens
                 .iter()
                 .skip(2)
-                .map(|t| Policy::try_from(t))
+                .map(Policy::try_from)
                 .collect(),
             false => inner_tokens
                 .iter()
                 .skip(1)
-                .map(|t| Policy::try_from(t))
+                .map(Policy::try_from)
                 .collect(),
         };
 

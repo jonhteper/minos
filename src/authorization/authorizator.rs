@@ -58,7 +58,7 @@ impl<'env> Authorizator<'env> {
             .ok_or(Error::ResourceNotFound(resource.name().clone()))?
             .policies();
 
-        let policies_from_identified = Self::get_policies_from_resourse_identified(&env, resource)?;
+        let policies_from_identified = Self::get_policies_from_resourse_identified(env, resource)?;
 
         Ok((resource_policies, policies_from_identified))
     }

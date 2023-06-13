@@ -24,8 +24,7 @@ impl MinosParser {
         if let Some(captures) = VERSION_REGEX.captures(content) {
             return captures
                 .name("VERSION")
-                .map(|v| FileVersion::from_str(v.as_str()).ok())
-                .flatten();
+                .and_then(|v| FileVersion::from_str(v.as_str()).ok());
         }
 
         None
@@ -66,7 +65,7 @@ impl MinosParser {
         file_content: &str,
     ) -> MinosResult<HashMap<EnvName, Environment>> {
         match version {
-            FileVersion::V0_14 => v0_14::MinosParserV0_14::parse_file_content(&file_content),
+            FileVersion::V0_14 => v0_14::MinosParserV0_14::parse_file_content(file_content),
         }
     }
 }
@@ -89,7 +88,7 @@ pub(crate) mod v0_14 {
 
     impl MinosParserV0_14 {
         fn parse_tokens(pair: Pair<Rule>) -> MinosResult<Vec<lang::Token>> {
-            pair.into_inner().map(|p| Self::parse_token(p)).collect()
+            pair.into_inner().map(Self::parse_token).collect()
         }
 
         pub(crate) fn parse_token(pair: Pair<Rule>) -> MinosResult<lang::Token> {
@@ -129,7 +128,7 @@ pub(crate) mod v0_14 {
                 }
                 Rule::list_value_requirement => {
                     let inner_tokens: MinosResult<Vec<Token>> =
-                        pair.into_inner().map(|p| Self::parse_token(p)).collect();
+                        pair.into_inner().map(Self::parse_token).collect();
                     Token::ListValueRequirement(inner_tokens?)
                 }
                 Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,

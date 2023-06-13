@@ -46,7 +46,7 @@ impl TryFrom<&Token<'_>> for Policy {
         let rules: MinosResult<Vec<Rule>> = inner_tokens
             .iter()
             .skip(1)
-            .map(|r| Rule::try_from(r))
+            .map(Rule::try_from)
             .collect();
 
         Ok(Policy {

@@ -19,7 +19,7 @@ pub enum Requirement {
 }
 
 impl Requirement {
-    fn single_value_from_tokens(tokens: &Vec<Token>) -> Self {
+    fn single_value_from_tokens(tokens: &[Token]) -> Self {
         let Indentifier(value) = tokens[2].inner_identifier().unwrap();
         Self::SingleValue {
             attribute: tokens[0].inner_single_value_attribute().unwrap(),
@@ -28,7 +28,7 @@ impl Requirement {
         }
     }
 
-    fn list_value_from_tokens(tokens: &Vec<Token>) -> Self {
+    fn list_value_from_tokens(tokens: &[Token]) -> Self {
         Self::ListValue {
             attribute: tokens[0].inner_list_value_attribute().unwrap(),
             operator: tokens[1].inner_list_value_operator().unwrap(),
@@ -94,7 +94,7 @@ impl Requirement {
         }
     }
 
-    fn find_in_list(actor_list: &Vec<String>, to_find: &Vec<String>) -> bool {
+    fn find_in_list(actor_list: &[String], to_find: &[String]) -> bool {
         for to_find_item in to_find {
             if !actor_list.contains(to_find_item) {
                 return false;
