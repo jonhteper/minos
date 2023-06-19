@@ -4,7 +4,7 @@ use getset::{Getters, MutGetters};
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
 #[getset(get = "pub", get_mut = "pub")]
 pub struct Resource {
-    name: String,
+    resource_type: String,
     id: Option<String>,
 }
 

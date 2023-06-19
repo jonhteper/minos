@@ -34,7 +34,7 @@ impl<'env> Authorizator<'env> {
         if let Some(id) = resource.id() {
             return Ok(env
                 .resources_identefied()
-                .get(&(resource.name().clone(), id.clone()))
+                .get(&(resource.resource_type().clone(), id.clone()))
                 .map(|r| r.policies())
                 .unwrap_or(&EMPTY_POLICY_VEC));
         }
@@ -54,8 +54,8 @@ impl<'env> Authorizator<'env> {
 
         let resource_policies = env
             .resources()
-            .get(resource.name())
-            .ok_or(Error::ResourceNotFound(resource.name().clone()))?
+            .get(resource.resource_type())
+            .ok_or(Error::ResourceNotFound(resource.resource_type().clone()))?
             .policies();
 
         let policies_from_identified = Self::get_policies_from_resourse_identified(env, resource)?;
