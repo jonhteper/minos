@@ -7,7 +7,7 @@ use crate::errors::Error;
 
 use super::{
     environment::{EnvName, Environment},
-    lang::{FileVersion, Token},
+    parser::tokens::{FileVersion, Token},
 };
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]

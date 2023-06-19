@@ -3,7 +3,10 @@ use std::io;
 use parse_display::ParseError;
 use thiserror::Error as ThisError;
 
-use crate::minos::parser::v0_14::Rule;
+use crate::minos::parser::v0_14;
+use crate::minos::parser::v0_15;
+
+
 
 pub type MinosResult<T> = Result<T, Error>;
 
@@ -36,7 +39,10 @@ pub enum Error {
     Io(String),
 
     #[error(transparent)]
-    Pest(Box<pest::error::Error<Rule>>),
+    RuleV0_14(Box<pest::error::Error<v0_14::Rule>>),
+
+    #[error(transparent)]
+    RuleV0_15(Box<pest::error::Error<v0_15::Rule>>),
 
     #[error(transparent)]
     ParseError(#[from] ParseError),
@@ -48,8 +54,15 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<pest::error::Error<Rule>> for Error {
-    fn from(err: pest::error::Error<Rule>) -> Self {
-        Self::Pest(Box::new(err))
+impl From<pest::error::Error<v0_14::Rule>> for Error {
+    fn from(err: pest::error::Error<v0_14::Rule>) -> Self {
+        Self::RuleV0_14(Box::new(err))
+    }
+}
+
+
+impl From<pest::error::Error<v0_15::Rule>> for Error {
+    fn from(err: pest::error::Error<v0_15::Rule>) -> Self {
+        Self::RuleV0_15(Box::new(err))
     }
 }

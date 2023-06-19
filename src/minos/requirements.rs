@@ -1,6 +1,6 @@
-use crate::{authorization::Actor, errors::Error, minos::lang::Indentifier};
+use crate::{authorization::Actor, errors::Error, minos::parser::tokens::Indentifier};
 
-use super::lang::{
+use super::parser::tokens::{
     ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
 };
 

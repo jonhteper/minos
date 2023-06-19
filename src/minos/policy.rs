@@ -4,10 +4,10 @@ use getset::Getters;
 use crate::{
     authorization::Actor,
     errors::{Error, MinosResult},
-    minos::lang::Array,
+    minos::parser::tokens::Array,
 };
 
-use super::{lang::Token, rule::Rule};
+use super::{parser::tokens::Token, rule::Rule};
 
 pub type Permission = String;
 

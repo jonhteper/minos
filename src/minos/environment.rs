@@ -3,11 +3,10 @@ use std::collections::HashMap;
 use derived::Ctor;
 use getset::Getters;
 
-use crate::{errors::Error, minos::lang::Indentifier};
+use crate::{errors::Error, minos::parser::tokens::Indentifier};
 
 use super::{
-    lang::Token,
-    resource::{Resource, ResourceId, ResourceName},
+    resource::{Resource, ResourceId, ResourceName}, parser::tokens::Token,
 };
 
 pub type EnvName = String;

@@ -6,7 +6,7 @@ use crate::{
     errors::{Error, MinosResult},
 };
 
-use super::{lang::Token, requirements::Requirement};
+use super::{parser::tokens::Token, requirements::Requirement};
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]

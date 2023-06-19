@@ -7,7 +7,7 @@ use crate::authorization::{self, Actor, Authorizator};
 use crate::minos::container::Container;
 use crate::minos::environment::Environment;
 use crate::minos::file::File;
-use crate::minos::lang::{FileVersion, SingleValueAttribute, SingleValueOperator, Token};
+use crate::minos::parser::tokens::{FileVersion, SingleValueAttribute, SingleValueOperator, Token};
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 use crate::minos::policy::Policy;
 use crate::minos::requirements::Requirement;

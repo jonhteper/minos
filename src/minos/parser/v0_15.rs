@@ -43,22 +43,22 @@ impl MinosParserV0_15 {
             Rule::identifier => Token::Identifier(Indentifier(pair.as_str())),
             Rule::string => Token::String(pair.as_str()),
             Rule::resource_id => Token::String(pair.as_str()),
-            Rule::actor_single_value_attribute => Token::SingleValueAttribute(
-                tokens::SingleValueAttribute::from_str(pair.as_str())?,
-            ),
+            Rule::actor_single_value_attribute => {
+                Token::SingleValueAttribute(tokens::SingleValueAttribute::from_str(pair.as_str())?)
+            }
             Rule::single_value_operator => {
                 Token::SingleValueOperator(tokens::SingleValueOperator::from_str(pair.as_str())?)
             }
             Rule::list_value_operator => {
                 Token::ListValueOperator(tokens::ListValueOperator::from_str(pair.as_str())?)
             }
-            Rule::list_value_requirement => {
-                let inner_tokens: MinosResult<Vec<Token>> =
-                    pair.into_inner().map(Self::parse_token).collect();
-                Token::ListValueRequirement(inner_tokens?)
+            Rule::list_value_requirement => Token::ListValueRequirement(Self::parse_tokens(pair)?),
+            Rule::attribute_comparation_requirement => {
+                Token::AttributeComparationRequirement(Self::parse_tokens(pair)?)
             }
-            Rule::attribute_comparation => todo!(),
-            Rule::resource_attribute => todo!(),
+            Rule::resource_attribute => {
+                Token::ResourceAttribute(tokens::ResourceAttribute::from_str(pair.as_str())?)
+            }
             Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
         })
     }

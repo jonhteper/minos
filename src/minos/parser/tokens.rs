@@ -35,6 +35,12 @@ pub enum Token<'a> {
     #[display("ListValueRequirement")]
     ListValueRequirement(Vec<Token<'a>>),
 
+    #[display("AttributeComparationRequirement")]
+    AttributeComparationRequirement(Vec<Token<'a>>),
+
+    #[display("ResourceAttribute")]
+    ResourceAttribute(ResourceAttribute),
+
     #[display("SingleValueAttribute")]
     SingleValueAttribute(SingleValueAttribute),
 
@@ -146,6 +152,21 @@ impl<'a> Token<'a> {
         None
     }
 
+    pub fn attribute_comparation_requirement(&self) -> Option<&Vec<Token<'a>>> {
+        if let Token::AttributeComparationRequirement(inner) = self {
+            return Some(inner);
+        }
+
+        None
+    }
+    pub fn resource_attribute(&self) -> Option<ResourceAttribute> {
+        if let Token::ResourceAttribute(inner) = self {
+            return Some(*inner);
+        }
+
+        None
+    }
+
     pub fn inner_single_value_attribute(&self) -> Option<SingleValueAttribute> {
         if let Token::SingleValueAttribute(inner) = self {
             return Some(*inner);
@@ -199,6 +220,8 @@ impl<'a> Token<'a> {
 pub enum FileVersion {
     #[display("0.14")]
     V0_14,
+    #[display("0.14")]
+    V0_15,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -242,3 +265,13 @@ pub enum ListValueOperator {
     #[display("*=")]
     Contains,
 }
+
+#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
+pub enum ResourceAttribute {
+    #[display("resource.id")]
+    Id,
+
+    #[display("resource.type")]
+    Type,
+}
+
