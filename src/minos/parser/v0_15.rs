@@ -6,7 +6,7 @@ use std::str::FromStr;
 use crate::errors::MinosResult;
 use crate::minos::environment::{EnvName, Environment};
 use crate::minos::file::File;
-use crate::minos::parser::tokens::{self, Array, Indentifier, ListValueAttribute};
+use crate::minos::parser::tokens::{self, Array, Indentifier, ActorListValueAttribute};
 
 #[derive(Debug, Parser)]
 #[grammar = "../assets/minos-v0_15.pest"]
@@ -33,7 +33,7 @@ impl MinosParserV0_15 {
                 Token::SingleValueRequirement(Self::parse_tokens(pair)?)
             }
             Rule::actor_list_value_attribute => {
-                Token::ListValueAttribute(ListValueAttribute::from_str(pair.as_str())?)
+                Token::ActorListValueAttribute(ActorListValueAttribute::from_str(pair.as_str())?)
             }
             Rule::array => {
                 let inner_values = pair.into_inner().map(|p| p.as_str()).collect();
@@ -44,7 +44,7 @@ impl MinosParserV0_15 {
             Rule::string => Token::String(pair.as_str()),
             Rule::resource_id => Token::String(pair.as_str()),
             Rule::actor_single_value_attribute => {
-                Token::SingleValueAttribute(tokens::SingleValueAttribute::from_str(pair.as_str())?)
+                Token::ActorSingleValueAttribute(tokens::ActorSingleValueAttribute::from_str(pair.as_str())?)
             }
             Rule::single_value_operator => {
                 Token::SingleValueOperator(tokens::SingleValueOperator::from_str(pair.as_str())?)

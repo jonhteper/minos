@@ -41,14 +41,14 @@ pub enum Token<'a> {
     #[display("ResourceAttribute")]
     ResourceAttribute(ResourceAttribute),
 
-    #[display("SingleValueAttribute")]
-    SingleValueAttribute(SingleValueAttribute),
+    #[display("ActorSingleValueAttribute")]
+    ActorSingleValueAttribute(ActorSingleValueAttribute),
 
     #[display("SingleValueOperator")]
     SingleValueOperator(SingleValueOperator),
 
-    #[display("ListValueAttribute")]
-    ListValueAttribute(ListValueAttribute),
+    #[display("ActorListValueAttribute")]
+    ActorListValueAttribute(ActorListValueAttribute),
 
     #[display("ListValueOperator")]
     ListValueOperator(ListValueOperator),
@@ -167,8 +167,8 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_single_value_attribute(&self) -> Option<SingleValueAttribute> {
-        if let Token::SingleValueAttribute(inner) = self {
+    pub fn inner_actor_single_value_attribute(&self) -> Option<ActorSingleValueAttribute> {
+        if let Token::ActorSingleValueAttribute(inner) = self {
             return Some(*inner);
         }
 
@@ -183,8 +183,8 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_list_value_attribute(&self) -> Option<ListValueAttribute> {
-        if let Token::ListValueAttribute(inner) = self {
+    pub fn inner_actor_list_value_attribute(&self) -> Option<ActorListValueAttribute> {
+        if let Token::ActorListValueAttribute(inner) = self {
             return Some(*inner);
         }
 
@@ -231,7 +231,7 @@ pub struct Array<'a>(pub Vec<&'a str>);
 pub struct Indentifier<'a>(pub &'a str);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum SingleValueAttribute {
+pub enum ActorSingleValueAttribute {
     #[display("actor.type")]
     Type,
 
@@ -240,7 +240,7 @@ pub enum SingleValueAttribute {
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum ListValueAttribute {
+pub enum ActorListValueAttribute {
     #[display("actor.groups")]
     Groups,
 

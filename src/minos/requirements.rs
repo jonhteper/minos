@@ -5,24 +5,24 @@ use crate::{
 };
 
 use super::parser::tokens::{
-    ListValueAttribute, ListValueOperator, ResourceAttribute, SingleValueAttribute,
+    ActorListValueAttribute, ListValueOperator, ResourceAttribute, ActorSingleValueAttribute,
     SingleValueOperator, Token,
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Requirement {
     SingleValue {
-        attribute: SingleValueAttribute,
+        attribute: ActorSingleValueAttribute,
         operator: SingleValueOperator,
         value: String,
     },
     ListValue {
-        attribute: ListValueAttribute,
+        attribute: ActorListValueAttribute,
         operator: ListValueOperator,
         value: Vec<String>,
     },
     AttributesComparation {
-        left_attribute: SingleValueAttribute,
+        left_attribute: ActorSingleValueAttribute,
         operator: SingleValueOperator,
         right_attribute: ResourceAttribute,
     },
@@ -32,7 +32,7 @@ impl Requirement {
     fn single_value_from_tokens(tokens: &[Token]) -> Self {
         let Indentifier(value) = tokens[2].inner_identifier().unwrap();
         Self::SingleValue {
-            attribute: tokens[0].inner_single_value_attribute().unwrap(),
+            attribute: tokens[0].inner_actor_single_value_attribute().unwrap(),
             operator: tokens[1].inner_single_value_operator().unwrap(),
             value: value.to_string(),
         }
@@ -40,7 +40,7 @@ impl Requirement {
 
     fn list_value_from_tokens(tokens: &[Token]) -> Self {
         Self::ListValue {
-            attribute: tokens[0].inner_list_value_attribute().unwrap(),
+            attribute: tokens[0].inner_actor_list_value_attribute().unwrap(),
             operator: tokens[1].inner_list_value_operator().unwrap(),
             value: tokens[2]
                 .inner_array()
@@ -54,7 +54,7 @@ impl Requirement {
 
     fn attributes_comparation_from_tokens(tokens: &[Token]) -> Self {
         Self::AttributesComparation {
-            left_attribute: tokens[0].inner_single_value_attribute().unwrap(),
+            left_attribute: tokens[0].inner_actor_single_value_attribute().unwrap(),
             operator: tokens[1].inner_single_value_operator().unwrap(),
             right_attribute: tokens[2].inner_resource_attribute().unwrap(),
         }
@@ -62,13 +62,13 @@ impl Requirement {
 
     fn apply_sinlge_value(
         actor: &Actor,
-        attribute: &SingleValueAttribute,
+        attribute: &ActorSingleValueAttribute,
         operator: &SingleValueOperator,
         value: &String,
     ) -> bool {
         match attribute {
-            SingleValueAttribute::Type => Self::compare_type(actor, operator, value),
-            SingleValueAttribute::Id => Self::compare_id(actor, operator, value),
+            ActorSingleValueAttribute::Type => Self::compare_type(actor, operator, value),
+            ActorSingleValueAttribute::Id => Self::compare_id(actor, operator, value),
         }
     }
 
@@ -88,13 +88,13 @@ impl Requirement {
 
     fn apply_list_value(
         actor: &Actor,
-        attribute: &ListValueAttribute,
+        attribute: &ActorListValueAttribute,
         operator: &ListValueOperator,
         value: &Vec<String>,
     ) -> bool {
         match attribute {
-            ListValueAttribute::Groups => Self::compare_groups(actor, operator, value),
-            ListValueAttribute::Roles => Self::compare_roles(actor, operator, value),
+            ActorListValueAttribute::Groups => Self::compare_groups(actor, operator, value),
+            ActorListValueAttribute::Roles => Self::compare_roles(actor, operator, value),
         }
     }
 
@@ -125,13 +125,13 @@ impl Requirement {
     fn apply_attribute_comparation(
         actor: &Actor,
         resource: &Resource,
-        left_attribute: &SingleValueAttribute,
+        left_attribute: &ActorSingleValueAttribute,
         operator: &SingleValueOperator,
         right_attribute: &ResourceAttribute,
     ) -> bool {
         match left_attribute {
-            SingleValueAttribute::Type => todo!(),
-            SingleValueAttribute::Id => todo!(),
+            ActorSingleValueAttribute::Type => todo!(),
+            ActorSingleValueAttribute::Id => todo!(),
         }
     }
 
