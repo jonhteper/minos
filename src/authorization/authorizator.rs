@@ -76,14 +76,14 @@ impl<'env> Authorizator<'env> {
         let mut permissions = vec![];
 
         for policy in policies {
-            if let Some(granted_permissions) = policy.apply(actor) {
+            if let Some(granted_permissions) = policy.apply(actor, resource) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
             }
         }
 
         for policy in policies_from_identified {
-            if let Some(granted_permissions) = policy.apply(actor) {
+            if let Some(granted_permissions) = policy.apply(actor, resource) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
             }

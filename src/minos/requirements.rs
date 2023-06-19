@@ -1,7 +1,12 @@
-use crate::{authorization::Actor, errors::Error, minos::parser::tokens::Indentifier};
+use crate::{
+    authorization::{Actor, Resource},
+    errors::Error,
+    minos::parser::tokens::Indentifier,
+};
 
 use super::parser::tokens::{
-    ListValueAttribute, ListValueOperator, SingleValueAttribute, SingleValueOperator, Token,
+    ListValueAttribute, ListValueOperator, ResourceAttribute, SingleValueAttribute,
+    SingleValueOperator, Token,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,6 +20,11 @@ pub enum Requirement {
         attribute: ListValueAttribute,
         operator: ListValueOperator,
         value: Vec<String>,
+    },
+    AttributesComparation {
+        left_attribute: SingleValueAttribute,
+        operator: SingleValueOperator,
+        right_attribute: ResourceAttribute,
     },
 }
 
@@ -39,6 +49,14 @@ impl Requirement {
                 .iter()
                 .map(|v| v.to_string())
                 .collect(),
+        }
+    }
+
+    fn attributes_comparation_from_tokens(tokens: &[Token]) -> Self {
+        Self::AttributesComparation {
+            left_attribute: tokens[0].inner_single_value_attribute().unwrap(),
+            operator: tokens[1].inner_single_value_operator().unwrap(),
+            right_attribute: tokens[2].inner_resource_attribute().unwrap(),
         }
     }
 
@@ -104,7 +122,22 @@ impl Requirement {
         true
     }
 
-    pub fn apply(&self, actor: &Actor) -> bool {
+    fn apply_attribute_comparation(
+        actor: &Actor,
+        resource: &Resource,
+        left_attribute: &SingleValueAttribute,
+        operator: &SingleValueOperator,
+        right_attribute: &ResourceAttribute,
+    ) -> bool {
+        match left_attribute {
+            SingleValueAttribute::Type => todo!(),
+            SingleValueAttribute::Id => todo!(),
+        }
+    }
+
+    //fn compare_type
+
+    pub fn apply(&self, actor: &Actor, resource: &Resource) -> bool {
         match self {
             Requirement::SingleValue {
                 attribute,
@@ -116,6 +149,17 @@ impl Requirement {
                 operator,
                 value,
             } => Self::apply_list_value(actor, attribute, operator, value),
+            Requirement::AttributesComparation {
+                left_attribute,
+                operator,
+                right_attribute,
+            } => Self::apply_attribute_comparation(
+                actor,
+                resource,
+                left_attribute,
+                operator,
+                right_attribute,
+            ),
         }
     }
 }
@@ -132,6 +176,7 @@ impl TryFrom<&Token<'_>> for Requirement {
         match &inner_tokens[0] {
             Token::SingleValueRequirement(tokens) => Ok(Self::single_value_from_tokens(tokens)),
             Token::ListValueRequirement(tokens) => Ok(Self::list_value_from_tokens(tokens)),
+            Token::AttributeComparationRequirement(tokens) => Ok(Self::attributes_comparation_from_tokens(tokens)),
             _ => unreachable!(),
         }
     }

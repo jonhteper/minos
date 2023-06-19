@@ -2,7 +2,7 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    authorization::Actor,
+    authorization::{Actor, Resource},
     errors::{Error, MinosResult},
     minos::parser::tokens::Array,
 };
@@ -20,9 +20,9 @@ pub struct Policy {
 
 impl Policy {
     /// Returns the [Permission] list if the actor satisfies at least one of the rules.
-    pub fn apply(&self, actor: &Actor) -> Option<&Vec<Permission>> {
+    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<&Vec<Permission>> {
         for rule in &self.rules {
-            if rule.apply(actor) {
+            if rule.apply(actor, resource) {
                 return Some(&self.allow);
             }
         }

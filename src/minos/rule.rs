@@ -2,7 +2,7 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    authorization::Actor,
+    authorization::{Actor, Resource},
     errors::{Error, MinosResult},
 };
 
@@ -16,9 +16,9 @@ pub struct Rule {
 
 impl Rule {
     /// Apply all requirements and return true only if actor satisfies all.
-    pub fn apply(&self, actor: &Actor) -> bool {
+    pub fn apply(&self, actor: &Actor, resource: &Resource) -> bool {
         for requirement in &self.requirements {
-            if !requirement.apply(actor) {
+            if !requirement.apply(actor, resource) {
                 return false;
             }
         }

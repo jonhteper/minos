@@ -152,14 +152,14 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn attribute_comparation_requirement(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_attribute_comparation_requirement(&self) -> Option<&Vec<Token<'a>>> {
         if let Token::AttributeComparationRequirement(inner) = self {
             return Some(inner);
         }
 
         None
     }
-    pub fn resource_attribute(&self) -> Option<ResourceAttribute> {
+    pub fn inner_resource_attribute(&self) -> Option<ResourceAttribute> {
         if let Token::ResourceAttribute(inner) = self {
             return Some(*inner);
         }
