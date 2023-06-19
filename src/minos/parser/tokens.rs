@@ -220,7 +220,7 @@ impl<'a> Token<'a> {
 pub enum FileVersion {
     #[display("0.14")]
     V0_14,
-    #[display("0.14")]
+    #[display("0.15")]
     V0_15,
 }
 
