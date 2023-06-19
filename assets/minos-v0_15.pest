@@ -1,0 +1,46 @@
+file = { SOI ~ "sintaxis" ~ "=" ~ version ~ ";" ~ env+ ~ EOI }
+version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+
+env = { "env" ~ identifier ~ "{" ~ resource+ ~ "}" }
+
+resource = { "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ resource_id ~ ";")? ~ policy+ ~ "}" }
+
+resource_id = { "\"" ~ string ~ "\"" }
+
+rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
+
+policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
+
+allow = { "allow" ~ "=" ~ array }
+
+array = { "[" ~ "\"" ~ string ~ "\"" ~ ("," ~ "\"" ~ string ~ "\"")* ~ "]" }
+
+requirement = { single_value_requirement | list_value_requirement | attribute_comparation}
+
+single_value_requirement = { actor_single_value_attribute  ~ single_value_operator ~ identifier ~ ";" }
+list_value_requirement = { actor_list_value_attribute  ~ list_value_operator ~ array ~ ";"}
+attribute_comparation = { actor_single_value_attribute ~ single_value_operator ~ resource_attribute ~ ";"}
+
+
+actor_single_value_attribute = { ("actor.type" | "actor.id") }
+single_value_operator = { ("=" | "!=") }
+
+actor_list_value_attribute = { ("actor.groups" | "actor.roles") }
+list_value_operator = { ("=" | "*=") }
+
+resource_attribute = {("resource.id" | "resource.type")}
+
+
+
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+
+identifier = @{ (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER |ASCII_DIGIT | "_" | "/" | "-" )* }
+
+string     = @{ char* }
+char       =  {
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
