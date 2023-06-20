@@ -2,15 +2,9 @@ use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
 
 use getset::Getters;
 
-use crate::{
-    engine::{Actor, Engine, Resource},
-    errors::MinosResult,
-};
+use crate::{engine::Engine, errors::MinosResult};
 
-use crate::language::{
-    environment::{EnvName, Environment},
-    policy::Permission,
-};
+use crate::language::environment::{EnvName, Environment};
 use crate::parser::MinosParser;
 
 #[derive(Debug, Clone)]
@@ -78,14 +72,7 @@ impl Container<StaticContainer> {
         &self.environments
     }
 
-    pub fn authorize(
-        &self,
-        env_name: &EnvName,
-        actor: &Actor,
-        resource: &Resource,
-    ) -> MinosResult<Vec<Permission>> {
-        let auth = Engine::new(&self.environments);
-
-        auth.authorize(env_name, actor, resource)
+    pub fn engine(&self) -> Engine {
+        Engine::new(&self.environments)
     }
 }
