@@ -7,10 +7,12 @@ use crate::authorization::{self, Actor, Authorizator};
 use crate::minos::container::Container;
 use crate::minos::environment::Environment;
 use crate::minos::file::File;
-use crate::minos::parser::tokens::{FileVersion, SingleValueAttribute, SingleValueOperator, Token};
+use crate::minos::parser::tokens::{
+    ActorSingleValueAttribute, FileVersion, SingleValueOperator, Token,
+};
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
 use crate::minos::policy::Policy;
-use crate::minos::requirements::Requirement;
+use crate::minos::requirements::SingleValueRequirement;
 use crate::minos::resource::Resource;
 use crate::minos::rule;
 use crate::{errors::MinosResult, minos::parser::MinosParser};
@@ -25,6 +27,22 @@ env TestEnv {
 
             rule {
                 actor.type = RootUser;
+            }
+        }
+    }
+}
+"#;
+
+const V0_15_MINOS_CONTENT: &str = r#"
+sintaxis=0.14;
+
+env TestEnv {
+    resource Product {
+        policy {
+            allow = ["create", "delete"];
+
+            rule {
+                actor.type = resource.type;
             }
         }
     }
@@ -49,11 +67,12 @@ pub fn parser_test() -> MinosResult<()> {
 fn file_builtin() -> File {
     let policy = Policy::new(
         vec!["create".to_string(), "delete".to_string()],
-        vec![rule::Rule::new(vec![Requirement::SingleValue {
-            attribute: SingleValueAttribute::Type,
-            operator: SingleValueOperator::Equal,
-            value: "RootUser".to_string(),
-        }])],
+        vec![rule::Rule::new(vec![SingleValueRequirement::new(
+            ActorSingleValueAttribute::Type,
+            SingleValueOperator::Equal,
+            "RootUser".to_string(),
+        )
+        .into()])],
     );
     let resource = Resource::new("Product".to_string(), None, vec![policy]);
     let mut resources = HashMap::new();
