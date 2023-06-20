@@ -3,6 +3,7 @@ use std::io;
 use parse_display::ParseError;
 use thiserror::Error as ThisError;
 
+use crate::language::policy::Permission;
 use crate::parser::v0_14;
 use crate::parser::v0_15;
 
@@ -31,6 +32,9 @@ pub enum Error {
 
     #[error("sintaxis not supported")]
     SintaxisNotSupported,
+
+    #[error("permission '{0}' not found")]
+    PermissionNotFound(Permission),
 
     // 3-party errors
     #[error("io err: {0}")]

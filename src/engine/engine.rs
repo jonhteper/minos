@@ -18,11 +18,11 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Ctor)]
-pub struct Authorizator<'env> {
+pub struct Engine<'env> {
     environments: &'env HashMap<EnvName, Environment>,
 }
 
-impl<'env> Authorizator<'env> {
+impl<'env> Engine<'env> {
     pub fn has_env(&self, env_name: &EnvName) -> bool {
         self.environments.contains_key(env_name)
     }
@@ -94,5 +94,37 @@ impl<'env> Authorizator<'env> {
         }
 
         Ok(permissions)
+    }
+
+    pub fn find_permission(
+        &self,
+        env_name: &EnvName,
+        actor: &Actor,
+        resource: &Resource,
+        permission: &Permission,
+    ) -> MinosResult<()> {
+        let permissions = self.authorize(env_name, actor, resource)?;
+        if !permissions.contains(permission) {
+            return Err(Error::PermissionNotFound(permission.clone()));
+        }
+
+        Ok(())
+    }
+
+    pub fn find_permissions(
+        &self,
+        env_name: &EnvName,
+        actor: &Actor,
+        resource: &Resource,
+        permissions: &[Permission],
+    ) -> MinosResult<()> {
+        let granted_permissions = self.authorize(env_name, actor, resource)?;
+        for permission in permissions {
+            if !granted_permissions.contains(permission) {
+                return Err(Error::PermissionNotFound(permission.clone()));
+            }
+        }
+
+        Ok(())
     }
 }

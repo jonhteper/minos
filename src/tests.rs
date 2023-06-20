@@ -4,7 +4,7 @@ use std::env;
 use pest::Parser;
 
 use crate::engine::container::Container;
-use crate::engine::{self, Actor, Authorizator};
+use crate::engine::{self, Actor, Engine};
 use crate::errors::MinosResult;
 use crate::language::environment::Environment;
 use crate::language::file::File;
@@ -119,7 +119,7 @@ fn parse_dir_works() -> MinosResult<()> {
 #[test]
 fn authorizator_works() -> MinosResult<()> {
     let envs = MinosParser::parse_str(FileVersion::V0_14, V0_14_MINOS_CONTENT)?;
-    let authorizator = Authorizator::new(&envs);
+    let authorizator = Engine::new(&envs);
 
     let actor = Actor::new(
         "RootUser".to_string(),
@@ -194,14 +194,17 @@ fn v0_15_file_from_tokens_works() -> MinosResult<()> {
 #[test]
 fn attributes_comparation_rules_works() -> MinosResult<()> {
     let envs = MinosParser::parse_str(FileVersion::V0_15, V0_15_MINOS_CONTENT)?;
-    let auth = Authorizator::new(&envs);
+    let auth = Engine::new(&envs);
 
     let resource = engine::Resource::new("User".to_string(), Some("Example.Id".to_string()));
     let actor = Actor::new("User".to_string(), "Example.Id".to_string(), vec![], vec![]);
 
-    let permissions = auth.authorize(&"TestEnv".to_string(), &actor, &resource)?;
-
-    assert!(permissions.len() == 2);
+    auth.find_permissions(
+        &"TestEnv".to_string(),
+        &actor,
+        &resource,
+        &vec!["create".to_string(), "delete".to_string()],
+    )?;
 
     Ok(())
 }

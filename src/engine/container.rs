@@ -3,7 +3,7 @@ use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
 use getset::Getters;
 
 use crate::{
-    engine::{Actor, Authorizator, Resource},
+    engine::{Actor, Engine, Resource},
     errors::MinosResult,
 };
 
@@ -84,7 +84,7 @@ impl Container<StaticContainer> {
         actor: &Actor,
         resource: &Resource,
     ) -> MinosResult<Vec<Permission>> {
-        let auth = Authorizator::new(&self.environments);
+        let auth = Engine::new(&self.environments);
 
         auth.authorize(env_name, actor, resource)
     }
