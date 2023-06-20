@@ -8,11 +8,12 @@ use crate::minos::container::Container;
 use crate::minos::environment::Environment;
 use crate::minos::file::File;
 use crate::minos::parser::tokens::{
-    ActorSingleValueAttribute, FileVersion, SingleValueOperator, Token,
+    ActorSingleValueAttribute, FileVersion, ResourceAttribute, SingleValueOperator, Token,
 };
 use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
+use crate::minos::parser::v0_15::MinosParserV0_15;
 use crate::minos::policy::Policy;
-use crate::minos::requirements::SingleValueRequirement;
+use crate::minos::requirements::{AttributesComparationRequirement, SingleValueRequirement};
 use crate::minos::resource::Resource;
 use crate::minos::rule;
 use crate::{errors::MinosResult, minos::parser::MinosParser};
@@ -34,10 +35,10 @@ env TestEnv {
 "#;
 
 const V0_15_MINOS_CONTENT: &str = r#"
-sintaxis=0.14;
+sintaxis=0.15;
 
 env TestEnv {
-    resource Product {
+    resource User {
         policy {
             allow = ["create", "delete"];
 
@@ -153,6 +154,53 @@ fn container_works() -> MinosResult<()> {
     .load()?;
 
     assert!(container.environments().len() > 0);
+
+    Ok(())
+}
+
+fn v0_15_file_builtin() -> File {
+    let policy = Policy::new(
+        vec!["create".to_string(), "delete".to_string()],
+        vec![rule::Rule::new(vec![
+            AttributesComparationRequirement::new(
+                ActorSingleValueAttribute::Type,
+                SingleValueOperator::Equal,
+                ResourceAttribute::Type,
+            )
+            .into(),
+        ])],
+    );
+    let resource = Resource::new("User".to_string(), None, vec![policy]);
+    let mut resources = HashMap::new();
+    resources.insert(resource.name().clone(), resource);
+    let environment = Environment::new("TestEnv".to_string(), resources, HashMap::new());
+    let mut environments = HashMap::new();
+    environments.insert(environment.name().clone(), environment);
+
+    File::new(FileVersion::V0_14, environments)
+}
+
+#[test]
+fn v0_15_file_from_tokens_works() -> MinosResult<()> {
+    let file_builtin = v0_15_file_builtin();
+    let file_parsed = MinosParserV0_15::parse_file_content(V0_15_MINOS_CONTENT)?;
+
+    assert_eq!(file_builtin.environments(), &file_parsed);
+
+    Ok(())
+}
+
+#[test]
+fn attributes_comparation_rules_works() -> MinosResult<()> {
+    let envs = MinosParser::parse_str(FileVersion::V0_15, V0_15_MINOS_CONTENT)?;
+    let auth = Authorizator::new(&envs);
+
+    let resource = authorization::Resource::new("User".to_string(), Some("Example.Id".to_string()));
+    let actor = Actor::new("User".to_string(), "Example.Id".to_string(), vec![], vec![]);
+
+    let permissions = auth.authorize(&"TestEnv".to_string(), &actor, &resource)?;
+
+    assert!(permissions.len() == 2);
 
     Ok(())
 }
