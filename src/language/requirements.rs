@@ -2,14 +2,13 @@ use derived::Ctor;
 use getset::{CopyGetters, Getters};
 
 use crate::{
-    authorization::{Actor, Resource},
+    engine::{Actor, Resource},
     errors::Error,
-    minos::parser::tokens::Indentifier,
 };
 
-use super::parser::tokens::{
-    ActorListValueAttribute, ActorSingleValueAttribute, ListValueOperator, ResourceAttribute,
-    SingleValueOperator, Token,
+use crate::parser::tokens::{
+    ActorListValueAttribute, ActorSingleValueAttribute, Indentifier, ListValueOperator,
+    ResourceAttribute, SingleValueOperator, Token,
 };
 
 #[derive(Debug, Clone, PartialEq)]

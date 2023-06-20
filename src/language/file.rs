@@ -4,11 +4,9 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::errors::Error;
+use crate::parser::tokens::{FileVersion, Token};
 
-use super::{
-    environment::{EnvName, Environment},
-    parser::tokens::{FileVersion, Token},
-};
+use super::environment::{EnvName, Environment};
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]

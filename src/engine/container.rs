@@ -3,15 +3,15 @@ use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
 use getset::Getters;
 
 use crate::{
-    authorization::{Actor, Authorizator, Resource},
+    engine::{Actor, Authorizator, Resource},
     errors::MinosResult,
 };
 
-use super::{
+use crate::language::{
     environment::{EnvName, Environment},
-    parser::MinosParser,
     policy::Permission,
 };
+use crate::parser::MinosParser;
 
 #[derive(Debug, Clone)]
 pub struct EmptyContainer;

@@ -1,9 +1,10 @@
 //! Authorization library based in Minos lang
 //!
 
-pub mod authorization;
+pub mod engine;
 pub mod errors;
-pub mod minos;
+pub mod language;
 
+pub mod parser;
 #[cfg(test)]
 mod tests;

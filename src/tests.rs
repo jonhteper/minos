@@ -3,20 +3,21 @@ use std::env;
 
 use pest::Parser;
 
-use crate::authorization::{self, Actor, Authorizator};
-use crate::minos::container::Container;
-use crate::minos::environment::Environment;
-use crate::minos::file::File;
-use crate::minos::parser::tokens::{
+use crate::engine::container::Container;
+use crate::engine::{self, Actor, Authorizator};
+use crate::errors::MinosResult;
+use crate::language::environment::Environment;
+use crate::language::file::File;
+use crate::language::policy::Policy;
+use crate::language::requirements::{AttributesComparationRequirement, SingleValueRequirement};
+use crate::language::resource::Resource;
+use crate::language::rule;
+use crate::parser::tokens::{
     ActorSingleValueAttribute, FileVersion, ResourceAttribute, SingleValueOperator, Token,
 };
-use crate::minos::parser::v0_14::{MinosParserV0_14, Rule};
-use crate::minos::parser::v0_15::MinosParserV0_15;
-use crate::minos::policy::Policy;
-use crate::minos::requirements::{AttributesComparationRequirement, SingleValueRequirement};
-use crate::minos::resource::Resource;
-use crate::minos::rule;
-use crate::{errors::MinosResult, minos::parser::MinosParser};
+use crate::parser::v0_14::{MinosParserV0_14, Rule};
+use crate::parser::v0_15::MinosParserV0_15;
+use crate::parser::MinosParser;
 
 const V0_14_MINOS_CONTENT: &str = r#"
 sintaxis=0.14;
@@ -127,7 +128,7 @@ fn authorizator_works() -> MinosResult<()> {
         vec![],
     );
 
-    let product = authorization::Resource::new(
+    let product = engine::Resource::new(
         "Product".to_string(),
         Some("example.product.id".to_string()),
     );
@@ -195,7 +196,7 @@ fn attributes_comparation_rules_works() -> MinosResult<()> {
     let envs = MinosParser::parse_str(FileVersion::V0_15, V0_15_MINOS_CONTENT)?;
     let auth = Authorizator::new(&envs);
 
-    let resource = authorization::Resource::new("User".to_string(), Some("Example.Id".to_string()));
+    let resource = engine::Resource::new("User".to_string(), Some("Example.Id".to_string()));
     let actor = Actor::new("User".to_string(), "Example.Id".to_string(), vec![], vec![]);
 
     let permissions = auth.authorize(&"TestEnv".to_string(), &actor, &resource)?;

@@ -2,11 +2,12 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    authorization::{Actor, Resource},
+    engine::{Actor, Resource},
     errors::{Error, MinosResult},
+    parser::tokens::Token,
 };
 
-use super::{parser::tokens::Token, requirements::Requirement};
+use super::requirements::Requirement;
 
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]

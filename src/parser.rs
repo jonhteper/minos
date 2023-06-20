@@ -5,18 +5,16 @@ use regex::Regex;
 
 use crate::errors::{Error, MinosResult};
 
-use crate::minos::parser::v0_14::MinosParserV0_14;
+use crate::parser::v0_14::MinosParserV0_14;
 
 use self::tokens::FileVersion;
 use self::v0_15::MinosParserV0_15;
 
-use super::{
-    environment::{EnvName, Environment}
-};
+use crate::language::environment::{EnvName, Environment};
 
+pub mod tokens;
 pub(crate) mod v0_14;
 pub(crate) mod v0_15;
-pub mod tokens;
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
@@ -75,4 +73,3 @@ impl MinosParser {
         }
     }
 }
-

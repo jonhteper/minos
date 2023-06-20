@@ -3,10 +3,10 @@ use getset::Getters;
 
 use crate::{
     errors::{Error, MinosResult},
-    minos::parser::tokens::Indentifier,
+    parser::tokens::{Indentifier, Token},
 };
 
-use super::{parser::tokens::Token, policy::Policy};
+use super::policy::Policy;
 
 pub type ResourceId = String;
 pub type ResourceName = String;

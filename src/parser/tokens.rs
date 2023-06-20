@@ -274,4 +274,3 @@ pub enum ResourceAttribute {
     #[display("resource.type")]
     Type,
 }
-

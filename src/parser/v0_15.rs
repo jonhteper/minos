@@ -4,15 +4,15 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::errors::MinosResult;
-use crate::minos::environment::{EnvName, Environment};
-use crate::minos::file::File;
-use crate::minos::parser::tokens::{self, Array, Indentifier, ActorListValueAttribute};
+use crate::language::environment::{EnvName, Environment};
+use crate::language::file::File;
+use crate::parser::tokens::{self, ActorListValueAttribute, Array, Indentifier};
 
 #[derive(Debug, Parser)]
-#[grammar = "../assets/minos.pest"]
-pub struct MinosParserV0_14;
+#[grammar = "../assets/minos-v0_15.pest"]
+pub struct MinosParserV0_15;
 
-impl MinosParserV0_14 {
+impl MinosParserV0_15 {
     fn parse_tokens(pair: Pair<Rule>) -> MinosResult<Vec<tokens::Token>> {
         pair.into_inner().map(Self::parse_token).collect()
     }
@@ -32,7 +32,7 @@ impl MinosParserV0_14 {
             Rule::single_value_requirement => {
                 Token::SingleValueRequirement(Self::parse_tokens(pair)?)
             }
-            Rule::list_value_attribute => {
+            Rule::actor_list_value_attribute => {
                 Token::ActorListValueAttribute(ActorListValueAttribute::from_str(pair.as_str())?)
             }
             Rule::array => {
@@ -43,7 +43,7 @@ impl MinosParserV0_14 {
             Rule::identifier => Token::Identifier(Indentifier(pair.as_str())),
             Rule::string => Token::String(pair.as_str()),
             Rule::resource_id => Token::String(pair.as_str()),
-            Rule::single_value_attribute => Token::ActorSingleValueAttribute(
+            Rule::actor_single_value_attribute => Token::ActorSingleValueAttribute(
                 tokens::ActorSingleValueAttribute::from_str(pair.as_str())?,
             ),
             Rule::single_value_operator => {
@@ -52,20 +52,22 @@ impl MinosParserV0_14 {
             Rule::list_value_operator => {
                 Token::ListValueOperator(tokens::ListValueOperator::from_str(pair.as_str())?)
             }
-            Rule::list_value_requirement => {
-                let inner_tokens: MinosResult<Vec<Token>> =
-                    pair.into_inner().map(Self::parse_token).collect();
-                Token::ListValueRequirement(inner_tokens?)
+            Rule::list_value_requirement => Token::ListValueRequirement(Self::parse_tokens(pair)?),
+            Rule::attribute_comparation_requirement => {
+                Token::AttributeComparationRequirement(Self::parse_tokens(pair)?)
+            }
+            Rule::resource_attribute => {
+                Token::ResourceAttribute(tokens::ResourceAttribute::from_str(pair.as_str())?)
             }
             Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
         })
     }
 
     pub fn parse_file_content(content: &str) -> MinosResult<HashMap<EnvName, Environment>> {
-        let file_rules = MinosParserV0_14::parse(Rule::file, content)?
+        let file_rules = MinosParserV0_15::parse(Rule::file, content)?
             .next()
             .unwrap();
-        let file_token = MinosParserV0_14::parse_token(file_rules)?;
+        let file_token = MinosParserV0_15::parse_token(file_rules)?;
 
         Ok(File::try_from(file_token)?.environments().clone())
     }

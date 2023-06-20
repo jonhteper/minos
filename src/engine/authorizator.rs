@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 
 use crate::{
     errors::{Error, MinosResult},
-    minos::{
+    language::{
         environment::{EnvName, Environment},
         policy::{Permission, Policy},
     },
@@ -27,7 +27,7 @@ impl<'env> Authorizator<'env> {
         self.environments.contains_key(env_name)
     }
 
-    fn get_policies_from_resourse_identified<'a>(
+    fn get_policies_from_resource_identified<'a>(
         env: &'a Environment,
         resource: &Resource,
     ) -> MinosResult<&'a Vec<Policy>> {
@@ -58,7 +58,7 @@ impl<'env> Authorizator<'env> {
             .ok_or(Error::ResourceNotFound(resource.resource_type().clone()))?
             .policies();
 
-        let policies_from_identified = Self::get_policies_from_resourse_identified(env, resource)?;
+        let policies_from_identified = Self::get_policies_from_resource_identified(env, resource)?;
 
         Ok((resource_policies, policies_from_identified))
     }

@@ -2,12 +2,12 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    authorization::{Actor, Resource},
+    engine::{Actor, Resource},
     errors::{Error, MinosResult},
-    minos::parser::tokens::Array,
+    parser::tokens::{Array, Token},
 };
 
-use super::{parser::tokens::Token, rule::Rule};
+use super::rule::Rule;
 
 pub type Permission = String;
 
