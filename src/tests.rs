@@ -5,7 +5,7 @@ use std::env;
 use pest::Parser;
 
 use crate::engine::container::Container;
-use crate::engine::{self, Actor, AsActor, Engine, IntoActor, IntoResource};
+use crate::engine::{self, Actor, AsActor, Engine, IntoResource};
 use crate::errors::MinosResult;
 use crate::language::environment::Environment;
 use crate::language::file::File;
@@ -132,7 +132,7 @@ fn authorizator_works() -> MinosResult<()> {
     let product =
         engine::Resource::new(Cow::from("Product"), Some(Cow::from("example.product.id")));
 
-    let permissions = authorizator.authorize(&"TestEnv".to_string(), &actor, &product)?;
+    let permissions = authorizator.authorize("TestEnv", actor, product)?;
     assert_eq!(
         permissions,
         vec!["create".to_string(), "delete".to_string()]
@@ -204,9 +204,9 @@ fn attributes_comparation_rules_works() -> MinosResult<()> {
     );
 
     auth.find_permissions(
-        &"TestEnv".to_string(),
-        &actor,
-        &resource,
+        "TestEnv",
+        actor,
+        resource,
         &vec!["create".to_string(), "delete".to_string()],
     )?;
 
@@ -222,7 +222,7 @@ struct User {
 impl AsActor for User {
     fn as_actor(&self) -> Actor {
         Actor::new(
-            Cow::from("RootUser"),
+            Cow::from("User"),
             Cow::from(&self.id),
             Cow::from(vec![]),
             Cow::from(&self.roles),
@@ -232,7 +232,7 @@ impl AsActor for User {
 
 impl IntoResource for User {
     fn into_resource<'a>(self) -> engine::Resource<'a> {
-        engine::Resource::new(Cow::from("RootUser"), Some(Cow::from(self.id)))
+        engine::Resource::new(Cow::from("User"), Some(Cow::from(self.id)))
     }
 }
 
@@ -247,13 +247,11 @@ fn actor_traits_tests() -> MinosResult<()> {
     let auth = Engine::new(&envs);
 
     auth.find_permission(
-        &"TestEnv".to_string(),
-        &user.as_actor(),
-        &user.clone().into_resource(),
+        "TestEnv",
+        user.as_actor(),
+        user.clone().into_resource(),
         &"delete".to_string(),
     )?;
-
-
 
     Ok(())
 }

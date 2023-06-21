@@ -44,13 +44,13 @@ impl<'env> Engine<'env> {
 
     fn get_policies(
         &self,
-        env_name: &EnvName,
+        env_name: &str,
         resource: &Resource,
     ) -> MinosResult<(&Vec<Policy>, &Vec<Policy>)> {
         let env = self
             .environments
             .get(env_name)
-            .ok_or(Error::EnvironmentNotFound(env_name.clone()))?;
+            .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
 
         let resource_policies = env
             .resources()
@@ -70,22 +70,22 @@ impl<'env> Engine<'env> {
     /// * The [Actor] is not authorized
     pub fn authorize(
         &self,
-        env_name: &EnvName,
-        actor: &Actor,
-        resource: &Resource,
+        env_name: &str,
+        actor: Actor,
+        resource: Resource,
     ) -> MinosResult<Vec<Permission>> {
-        let (policies, policies_from_identified) = self.get_policies(env_name, resource)?;
+        let (policies, policies_from_identified) = self.get_policies(env_name, &resource)?;
         let mut permissions = vec![];
 
         for policy in policies {
-            if let Some(granted_permissions) = policy.apply(actor, resource) {
+            if let Some(granted_permissions) = policy.apply(&actor, &resource) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
             }
         }
 
         for policy in policies_from_identified {
-            if let Some(granted_permissions) = policy.apply(actor, resource) {
+            if let Some(granted_permissions) = policy.apply(&actor, &resource) {
                 let mut perms = granted_permissions.clone();
                 permissions.append(&mut perms);
             }
@@ -100,9 +100,9 @@ impl<'env> Engine<'env> {
 
     pub fn find_permission(
         &self,
-        env_name: &EnvName,
-        actor: &Actor,
-        resource: &Resource,
+        env_name: &str,
+        actor: Actor,
+        resource: Resource,
         permission: &Permission,
     ) -> MinosResult<()> {
         let permissions = self.authorize(env_name, actor, resource)?;
@@ -115,9 +115,9 @@ impl<'env> Engine<'env> {
 
     pub fn find_permissions(
         &self,
-        env_name: &EnvName,
-        actor: &Actor,
-        resource: &Resource,
+        env_name: &str,
+        actor: Actor,
+        resource: Resource,
         permissions: &[Permission],
     ) -> MinosResult<()> {
         let granted_permissions = self.authorize(env_name, actor, resource)?;
