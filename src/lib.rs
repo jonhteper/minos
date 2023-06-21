@@ -8,6 +8,6 @@ pub mod parser;
 #[cfg(test)]
 mod tests;
 
-pub use errors::*;
 pub use engine::Container;
+pub use errors::*;
 pub use parser::MinosParser;

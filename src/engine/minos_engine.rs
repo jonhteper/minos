@@ -34,7 +34,7 @@ impl<'env> Engine<'env> {
         if let Some(id) = resource.id() {
             return Ok(env
                 .resources_identefied()
-                .get(&(resource.resource_type().clone(), id.clone()))
+                .get(&(resource.resource_type().to_string(), id.to_string()))
                 .map(|r| r.policies())
                 .unwrap_or(&EMPTY_POLICY_VEC));
         }
@@ -54,8 +54,10 @@ impl<'env> Engine<'env> {
 
         let resource_policies = env
             .resources()
-            .get(resource.resource_type())
-            .ok_or(Error::ResourceNotFound(resource.resource_type().clone()))?
+            .get(resource.resource_type().as_ref())
+            .ok_or(Error::ResourceNotFound(
+                resource.resource_type().to_string(),
+            ))?
             .policies();
 
         let policies_from_identified = Self::get_policies_from_resource_identified(env, resource)?;
@@ -90,7 +92,7 @@ impl<'env> Engine<'env> {
         }
 
         if permissions.is_empty() {
-            return Err(Error::ActorNotAuthorized(actor.actor_id().clone()));
+            return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
         }
 
         Ok(permissions)

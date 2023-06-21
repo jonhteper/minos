@@ -1,10 +1,11 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
 
 use pest::Parser;
 
 use crate::engine::container::Container;
-use crate::engine::{self, Actor, Engine};
+use crate::engine::{self, Actor, AsActor, Engine, IntoActor, IntoResource};
 use crate::errors::MinosResult;
 use crate::language::environment::Environment;
 use crate::language::file::File;
@@ -122,16 +123,14 @@ fn authorizator_works() -> MinosResult<()> {
     let authorizator = Engine::new(&envs);
 
     let actor = Actor::new(
-        "RootUser".to_string(),
-        "actor.id".to_string(),
-        vec![],
-        vec![],
+        Cow::from("RootUser"),
+        Cow::from("actor.id"),
+        Cow::from(vec![]),
+        Cow::from(vec![]),
     );
 
-    let product = engine::Resource::new(
-        "Product".to_string(),
-        Some("example.product.id".to_string()),
-    );
+    let product =
+        engine::Resource::new(Cow::from("Product"), Some(Cow::from("example.product.id")));
 
     let permissions = authorizator.authorize(&"TestEnv".to_string(), &actor, &product)?;
     assert_eq!(
@@ -196,8 +195,13 @@ fn attributes_comparation_rules_works() -> MinosResult<()> {
     let envs = MinosParser::parse_str(FileVersion::V0_15, V0_15_MINOS_CONTENT)?;
     let auth = Engine::new(&envs);
 
-    let resource = engine::Resource::new("User".to_string(), Some("Example.Id".to_string()));
-    let actor = Actor::new("User".to_string(), "Example.Id".to_string(), vec![], vec![]);
+    let resource = engine::Resource::new(Cow::from("User"), Some(Cow::from("Example.Id")));
+    let actor = Actor::new(
+        Cow::from("User"),
+        Cow::from("Example.Id"),
+        Cow::from(vec![]),
+        Cow::from(vec![]),
+    );
 
     auth.find_permissions(
         &"TestEnv".to_string(),
@@ -205,6 +209,51 @@ fn attributes_comparation_rules_works() -> MinosResult<()> {
         &resource,
         &vec!["create".to_string(), "delete".to_string()],
     )?;
+
+    Ok(())
+}
+
+#[derive(Debug, Clone)]
+struct User {
+    pub id: String,
+    pub roles: Vec<String>,
+}
+
+impl AsActor for User {
+    fn as_actor(&self) -> Actor {
+        Actor::new(
+            Cow::from("RootUser"),
+            Cow::from(&self.id),
+            Cow::from(vec![]),
+            Cow::from(&self.roles),
+        )
+    }
+}
+
+impl IntoResource for User {
+    fn into_resource<'a>(self) -> engine::Resource<'a> {
+        engine::Resource::new(Cow::from("RootUser"), Some(Cow::from(self.id)))
+    }
+}
+
+#[test]
+fn actor_traits_tests() -> MinosResult<()> {
+    let user = User {
+        id: "UserId".to_string(),
+        roles: vec!["SpecialUser".to_string()],
+    };
+
+    let envs = MinosParser::parse_str(FileVersion::V0_15, V0_15_MINOS_CONTENT)?;
+    let auth = Engine::new(&envs);
+
+    auth.find_permission(
+        &"TestEnv".to_string(),
+        &user.as_actor(),
+        &user.clone().into_resource(),
+        &"delete".to_string(),
+    )?;
+
+
 
     Ok(())
 }

@@ -1,13 +1,15 @@
+use std::borrow::Cow;
+
 use derived::Ctor;
 use getset::{Getters, MutGetters};
 
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
-#[getset(get = "pub", get_mut = "pub")]
-pub struct Actor {
-    actor_type: String,
-    actor_id: String,
-    actor_groups: Vec<String>,
-    actor_roles: Vec<String>,
+#[getset(get = "pub")]
+pub struct Actor<'a> {
+    actor_type: Cow<'a, str>,
+    actor_id: Cow<'a, str>,
+    actor_groups: Cow<'a, [String]>,
+    actor_roles: Cow<'a, [String]>,
 }
 
 pub trait AsActor {
@@ -15,10 +17,10 @@ pub trait AsActor {
 }
 
 pub trait IntoActor {
-    fn into_actor(self) -> Actor;
+    fn into_actor<'a>(self) -> Actor<'a>;
 }
 
 pub trait TryIntoActor {
     type Error;
-    fn try_into_actor(self) -> Result<Actor, Self::Error>;
+    fn try_into_actor<'a>(self) -> Result<Actor<'a>, Self::Error>;
 }

@@ -1,11 +1,13 @@
+use std::borrow::Cow;
+
 use derived::Ctor;
 use getset::{Getters, MutGetters};
 
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
-#[getset(get = "pub", get_mut = "pub")]
-pub struct Resource {
-    resource_type: String,
-    id: Option<String>,
+#[getset(get = "pub")]
+pub struct Resource<'a> {
+    resource_type: Cow<'a, str>,
+    id: Option<Cow<'a, str>>,
 }
 
 pub trait AsResource {
@@ -13,10 +15,10 @@ pub trait AsResource {
 }
 
 pub trait IntoResource {
-    fn into_resource(self) -> Resource;
+    fn into_resource<'a>(self) -> Resource<'a>;
 }
 
 pub trait TryIntoResource {
     type Error;
-    fn try_into_resource(self) -> Result<Resource, Self::Error>;
+    fn try_into_resource<'a>(self) -> Result<Resource<'a>, Self::Error>;
 }
