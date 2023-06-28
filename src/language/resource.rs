@@ -3,7 +3,7 @@ use getset::Getters;
 
 use crate::{
     errors::{Error, MinosResult},
-    parser::tokens::{Indentifier, Token},
+    parser::tokens::{Identifier, Token},
 };
 
 use super::policy::Policy;
@@ -28,7 +28,7 @@ impl TryFrom<&Token<'_>> for Resource {
             found: token.to_string(),
         })?;
 
-        let Indentifier(name) = inner_tokens[0].inner_identifier().unwrap();
+        let Identifier(name) = inner_tokens[0].inner_identifier().unwrap();
         let id = inner_tokens[1].inner_string().map(|s| s.to_string());
 
         let policies: MinosResult<Vec<Policy>> = match id.is_some() {

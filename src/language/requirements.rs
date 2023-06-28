@@ -7,7 +7,7 @@ use crate::{
 };
 
 use crate::parser::tokens::{
-    ActorListValueAttribute, ActorSingleValueAttribute, Indentifier, ListValueOperator,
+    ActorListValueAttribute, ActorSingleValueAttribute, Identifier, ListValueOperator,
     ResourceAttribute, SingleValueOperator, Token,
 };
 
@@ -105,7 +105,7 @@ impl SingleValueRequirement {
 
 impl From<&Vec<Token<'_>>> for SingleValueRequirement {
     fn from(tokens: &Vec<Token>) -> Self {
-        let Indentifier(value) = tokens[2].inner_identifier().unwrap();
+        let Identifier(value) = tokens[2].inner_identifier().unwrap();
         Self {
             attribute: tokens[0].inner_actor_single_value_attribute().unwrap(),
             operator: tokens[1].inner_single_value_operator().unwrap(),

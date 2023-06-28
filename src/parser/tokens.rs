@@ -54,7 +54,7 @@ pub enum Token<'a> {
     ListValueOperator(ListValueOperator),
 
     #[display("Identifier")]
-    Identifier(Indentifier<'a>),
+    Identifier(Identifier<'a>),
 
     #[display("String")]
     String(&'a str),
@@ -199,7 +199,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_identifier(&self) -> Option<Indentifier<'a>> {
+    pub fn inner_identifier(&self) -> Option<Identifier<'a>> {
         if let Token::Identifier(inner) = self {
             return Some(*inner);
         }
@@ -228,7 +228,7 @@ pub enum FileVersion {
 pub struct Array<'a>(pub Vec<&'a str>);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Indentifier<'a>(pub &'a str);
+pub struct Identifier<'a>(pub &'a str);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorSingleValueAttribute {

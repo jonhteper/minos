@@ -6,7 +6,7 @@ use std::str::FromStr;
 use crate::errors::MinosResult;
 use crate::language::environment::{EnvName, Environment};
 use crate::language::file::File;
-use crate::parser::tokens::{self, ActorListValueAttribute, Array, Indentifier};
+use crate::parser::tokens::{self, ActorListValueAttribute, Array, Identifier};
 
 #[derive(Debug, Parser)]
 #[grammar = "../assets/minos-v0_15.pest"]
@@ -40,7 +40,7 @@ impl MinosParserV0_15 {
 
                 Token::Array(Array(inner_values))
             }
-            Rule::identifier => Token::Identifier(Indentifier(pair.as_str())),
+            Rule::identifier => Token::Identifier(Identifier(pair.as_str())),
             Rule::string => Token::String(pair.as_str()),
             Rule::resource_id => Token::String(pair.as_str()),
             Rule::actor_single_value_attribute => Token::ActorSingleValueAttribute(

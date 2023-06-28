@@ -5,7 +5,7 @@ use getset::Getters;
 
 use crate::{
     errors::Error,
-    parser::tokens::{Indentifier, Token},
+    parser::tokens::{Identifier, Token},
 };
 
 use super::resource::{Resource, ResourceId, ResourceName};
@@ -17,7 +17,7 @@ pub type EnvName = String;
 pub struct Environment {
     name: EnvName,
     resources: HashMap<ResourceName, Resource>,
-    resources_identefied: HashMap<(ResourceName, ResourceId), Resource>,
+    resources_identified: HashMap<(ResourceName, ResourceId), Resource>,
 }
 
 impl TryFrom<&Token<'_>> for Environment {
@@ -29,7 +29,7 @@ impl TryFrom<&Token<'_>> for Environment {
             found: token.to_string(),
         })?;
 
-        let Indentifier(name) = inner_tokens[0].inner_identifier().unwrap();
+        let Identifier(name) = inner_tokens[0].inner_identifier().unwrap();
         let mut resources = HashMap::new();
         let mut resources_with_id = HashMap::new();
         for inner_token in inner_tokens.iter().skip(1) {
@@ -45,7 +45,7 @@ impl TryFrom<&Token<'_>> for Environment {
         Ok(Environment {
             name: name.to_string(),
             resources,
-            resources_identefied: resources_with_id,
+            resources_identified: resources_with_id,
         })
     }
 }

@@ -33,7 +33,7 @@ impl<'env> Engine<'env> {
     ) -> MinosResult<&'a Vec<Policy>> {
         if let Some(id) = resource.id() {
             return Ok(env
-                .resources_identefied()
+                .resources_identified()
                 .get(&(resource.resource_type().to_string(), id.to_string()))
                 .map(|r| r.policies())
                 .unwrap_or(&EMPTY_POLICY_VEC));
