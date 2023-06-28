@@ -15,6 +15,7 @@ use crate::language::environment::{EnvName, Environment};
 pub mod tokens;
 pub(crate) mod v0_14;
 pub(crate) mod v0_15;
+pub(crate) mod v0_16;
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
