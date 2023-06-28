@@ -54,7 +54,7 @@ impl MinosParserV0_15 {
             }
             Rule::list_value_requirement => Token::ListValueRequirement(Self::parse_tokens(pair)?),
             Rule::attribute_comparation_requirement => {
-                Token::AttributeComparationRequirement(Self::parse_tokens(pair)?)
+                Token::AttributeComparisonRequirement(Self::parse_tokens(pair)?)
             }
             Rule::resource_attribute => {
                 Token::ResourceAttribute(tokens::ResourceAttribute::from_str(pair.as_str())?)

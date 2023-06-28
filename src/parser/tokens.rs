@@ -35,8 +35,8 @@ pub enum Token<'a> {
     #[display("ListValueRequirement")]
     ListValueRequirement(Vec<Token<'a>>),
 
-    #[display("AttributeComparationRequirement")]
-    AttributeComparationRequirement(Vec<Token<'a>>),
+    #[display("AttributeComparisonRequirement")]
+    AttributeComparisonRequirement(Vec<Token<'a>>),
 
     #[display("ResourceAttribute")]
     ResourceAttribute(ResourceAttribute),
@@ -152,8 +152,8 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_attribute_comparation_requirement(&self) -> Option<&Vec<Token<'a>>> {
-        if let Token::AttributeComparationRequirement(inner) = self {
+    pub fn inner_attribute_comparison_requirement(&self) -> Option<&Vec<Token<'a>>> {
+        if let Token::AttributeComparisonRequirement(inner) = self {
             return Some(inner);
         }
 

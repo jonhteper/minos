@@ -60,7 +60,7 @@ impl TryFrom<&Token<'_>> for Requirement {
                 Ok(SingleValueRequirement::from(tokens).into())
             }
             Token::ListValueRequirement(tokens) => Ok(ListValueRequirement::from(tokens).into()),
-            Token::AttributeComparationRequirement(tokens) => {
+            Token::AttributeComparisonRequirement(tokens) => {
                 Ok(AttributesComparationRequirement::from(tokens).into())
             }
             _ => unreachable!(),
