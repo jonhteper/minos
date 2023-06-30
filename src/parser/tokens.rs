@@ -1,4 +1,5 @@
 use parse_display::{Display, FromStr};
+use pest::iterators::Pair;
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum Token<'a> {
@@ -8,14 +9,20 @@ pub enum Token<'a> {
     #[display("Version")]
     Version(FileVersion),
 
-    #[display("Env")]
-    Env(Vec<Token<'a>>),
-
     #[display("Resource")]
     Resource(Vec<Token<'a>>),
 
-    #[display("Rule")]
-    Rule(Vec<Token<'a>>),
+    #[display("AttributedResource")]
+    AttributedResource(Vec<Token<'a>>),
+
+    #[display("NamedEnv")]
+    NamedEnv(Vec<Token<'a>>),
+
+    #[display("DefaultEnv")]
+    DefaultEnv(Vec<Token<'a>>),
+
+    #[display("ImplicitDefaultEnv")]
+    ImplicitDefaultEnv(Vec<Token<'a>>),
 
     #[display("Policy")]
     Policy(Vec<Token<'a>>),
@@ -23,11 +30,35 @@ pub enum Token<'a> {
     #[display("Allow")]
     Allow(Vec<Token<'a>>),
 
+    #[display("Rule")]
+    Rule(Vec<Token<'a>>),
+
     #[display("Array")]
     Array(Array<'a>),
 
     #[display("Requirement")]
     Requirement(Vec<Token<'a>>),
+
+    #[display("Assertion")]
+    Assertion(Vec<Token<'a>>),
+
+    #[display("Negation")]
+    Negation(Vec<Token<'a>>),
+
+    #[display("Search")]
+    Search(Vec<Token<'a>>),
+
+    #[display("ActorAttribute")]
+    ActorAttribute(ActorAttribute),
+
+    #[display("ResourceAttribute")]
+    ResourceAttribute(ResourceAttribute),
+
+    #[display("Operator")]
+    Operator(Operator),
+
+    #[display("StringDefinition")]
+    StringDefinition(Vec<Token<'a>>),
 
     #[display("SingleValueRequirement")]
     SingleValueRequirement(Vec<Token<'a>>),
@@ -37,9 +68,6 @@ pub enum Token<'a> {
 
     #[display("AttributeComparisonRequirement")]
     AttributeComparisonRequirement(Vec<Token<'a>>),
-
-    #[display("ResourceAttribute")]
-    ResourceAttribute(ResourceAttribute),
 
     #[display("ActorSingleValueAttribute")]
     ActorSingleValueAttribute(ActorSingleValueAttribute),
@@ -81,7 +109,7 @@ impl<'a> Token<'a> {
     }
 
     pub fn inner_env(&self) -> Option<&Vec<Token<'a>>> {
-        if let Token::Env(inner) = self {
+        if let Token::NamedEnv(inner) = self {
             return Some(inner);
         }
 
@@ -222,6 +250,8 @@ pub enum FileVersion {
     V0_14,
     #[display("0.15")]
     V0_15,
+    #[display("0.16")]
+    V0_16,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -231,6 +261,26 @@ pub struct Array<'a>(pub Vec<&'a str>);
 pub struct Identifier<'a>(pub &'a str);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
+pub enum ActorAttribute {
+    #[display("actor.type")]
+    Type,
+
+    #[display("actor.id")]
+    Id,
+
+    #[display("actor.groups")]
+    Groups,
+
+    #[display("actor.roles")]
+    Roles,
+}
+
+
+
+
+
+
+#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorSingleValueAttribute {
     #[display("actor.type")]
     Type,
@@ -238,6 +288,32 @@ pub enum ActorSingleValueAttribute {
     #[display("actor.id")]
     Id,
 }
+
+#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
+pub enum ResourceAttribute {
+    #[display("resource.id")]
+    Id,
+
+    #[display("resource.type")]
+    Type,
+
+    #[display("resource.owner")]
+    Owner,
+}
+
+#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
+pub enum Operator {
+    #[display("=")]
+    Assertion,
+
+    #[display("!=")]
+    Negation,
+
+    #[display("*=")]
+    Search,
+}
+
+
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorListValueAttribute {
@@ -264,13 +340,4 @@ pub enum ListValueOperator {
 
     #[display("*=")]
     Contains,
-}
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum ResourceAttribute {
-    #[display("resource.id")]
-    Id,
-
-    #[display("resource.type")]
-    Type,
 }
