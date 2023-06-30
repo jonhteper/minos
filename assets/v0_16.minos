@@ -1,17 +1,7 @@
-sintaxis = 0.16;
-
-/* Commentary Example */
+syntax = 0.16;
 
 
 
-/* -----------------------------------------------
-The next block describes a resource named `User`
-with an only one environment named `DEFAULT`.
-
-If the `DEFAULT` block exist, will be apply in every 
-authorization process.
-
------------------------------------------------ */
 resource User {
     env DEFAULT {
         policy {
@@ -30,15 +20,6 @@ resource User {
 }
 
 
-/* -----------------------------------------------
-The next block describes a resource named `User`
-without environments. 
-
-In this case, the code will be parsed equals to 
-previous example but in this case the 
-`DEFAULT` block is implicit.
-
------------------------------------------------ */
 resource User {
     policy {
         allow = ["create", "read", "update", "delete"];
@@ -54,21 +35,6 @@ resource User {
     }
 }
 
-/* -----------------------------------------------
-The next block describes a resource named `User`
-with two environments: `Testing` and `Production`.
-Is important to mention that when exist two or more 
-environment, use the implicit `DEFAULT` isn't possible.
-
-Since in this case the `DEFAULT` block not exists and is
-necessary to indicate the environment's name in the 
-authorization process.
-
-About the rules, we can see, how in the `Testing` environment, a 
-`RootUser` can manipulate the `Users`, but in 
-`Production` only the `User` can manipulate it self.
-
------------------------------------------------ */
 resource User {
     env Testing {
         policy {
@@ -97,18 +63,7 @@ resource User {
     }
 }
 
-/* -----------------------------------------------
-The following block describes a resource called `User`
-with two environments: `DEFAULT` and `Testing`.
 
-This is a new implementation for the previous example,
-but using the `DEFAULT` environment. In this case 
-we know that there is only one "special" environment 
-environment (`Testing`) and since the policies in 
-`DEFAULT` do not contradict the "special" rules in 
-`Testing`; therefore, its possible to reuse the policies.
-
------------------------------------------------ */
 resource User {
     env DEFAULT {
         policy {
@@ -128,6 +83,49 @@ resource User {
             rule {
                 actor.type = RootUser;
             }
+        }
+    }
+}
+
+
+resource File {
+    policy {
+        allow = ["read"];
+
+        rule {
+            actor.type = User;
+        }
+    }
+
+    policy {
+        allow = ["write", "delete"];
+
+        rule {
+            actor.roles *= ["admin"];
+        }
+    }
+}
+
+
+resource File {
+    id = "confidential.john.data.file.id";
+    
+    policy {
+        allow = ["read"];
+
+        rule {
+            actor.id = "john.user.Id";
+        }
+    }
+}
+
+
+resource File {
+    policy {
+        allow = ["read"];
+
+        rule {
+            resource.owner = actor.id;
         }
     }
 }
