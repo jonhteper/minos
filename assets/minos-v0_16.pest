@@ -1,8 +1,12 @@
 file    =  { SOI ~ "syntax" ~ "=" ~ version ~ ";" ~ (resource | attributed_resource)+ ~ EOI }
 version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 
-resource            = { "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}" }
-attributed_resource = { "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}" }
+resource            = {
+    "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}"
+}
+attributed_resource = {
+    "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
+}
 
 named_env            = { "env" ~ identifier ~ "{" ~ policy+ ~ "}" }
 default_env          = { "env" ~ "DEFAULT" ~ "{" ~ policy+ ~ "}" }
@@ -16,23 +20,33 @@ rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
 array = { "[" ~ string ~ ("," ~ string)* ~ "]" }
 
-requirement = { single_value_requirement | list_value_requirement | attribute_comparison_requirement }
+requirement = { (assertion | negation | search) ~ ";" }
 
-single_value_requirement         = { actor_single_value_attribute ~ single_value_operator ~ (identifier | string) ~ ";" }
-list_value_requirement           = { actor_list_value_attribute ~ list_value_operator ~ array ~ ";" }
-attribute_comparison_requirement = { actor_single_value_attribute ~ single_value_operator ~ resource_attribute ~ ";" }
-
-actor_single_value_attribute = { ("actor.type" | "actor.id") }
-single_value_operator        = { ("=" | "!=") }
-
-actor_list_value_attribute = { ("actor.groups" | "actor.roles") }
-list_value_operator        = { ("=" | "*=") }
-
-resource_attribute = { ("resource.id" | "resource.type") }
+assertion = {
+    ("actor.type" ~ "=" ~ "resource.type")
+  | ("resource.type" ~ "=" ~ "actor.type")
+  | ("actor.id" ~ "=" ~ ("resource.id" | "resource.owner"))
+  | (("resource.id" | "resource.owner") ~ "=" ~ "actor.id")
+  | ("actor.type" ~ "=" ~ identifier)
+  | (("actor.id" | "resource.id" | "resource.owner") ~ "=" ~ string)
+  | (("actor.groups" | "actor.roles") ~ "=" ~ array)
+}
+negation  = {
+    ("actor.type" ~ "!=" ~ "resource.type")
+  | ("resource.type" ~ "!=" ~ "actor.type")
+  | ("actor.id" ~ "!=" ~ ("resource.id" | "resource.owner"))
+  | (("resource.id" | "resource.owner") ~ "!=" ~ "actor.id")
+  | ("actor.type" ~ "!=" ~ identifier)
+  | (("actor.id" | "resource.id" | "resource.owner") ~ "!=" ~ string)
+  | (("actor.groups" | "actor.roles") ~ "!=" ~ array)
+}
+search    = { ("actor.roles" | "actor.groups") ~ "*=" ~ (array | string) }
 
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-identifier = @{ (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | ASCII_DIGIT | "_" | "/" | "-")* }
+identifier = @{
+    (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | ASCII_DIGIT | "_" | "/" | "-")*
+}
 
 string       =  { "\"" ~ inner_string ~ "\"" }
 inner_string = @{ char* }
