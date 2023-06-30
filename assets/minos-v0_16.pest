@@ -1,11 +1,11 @@
-file    =  { SOI ~ "syntax" ~ "=" ~ version ~ ";" ~ (resource | attributed_resource)+ ~ EOI }
+file    =  { SOI ~ "syntax" ~ assertion_operator ~ version ~ ";" ~ (resource | attributed_resource)+ ~ EOI }
 version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 
 resource            = {
     "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}"
 }
 attributed_resource = {
-    "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
+    "resource" ~ identifier ~ "{" ~ ("id" ~ assertion_operator ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
 }
 
 named_env            = { "env" ~ identifier ~ "{" ~ policy+ ~ "}" }
@@ -14,7 +14,7 @@ implicit_default_env = { policy+ }
 
 policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
 
-allow = { "allow" ~ "=" ~ array }
+allow = { "allow" ~ assertion_operator ~ array }
 
 rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
@@ -23,24 +23,37 @@ array = { "[" ~ string ~ ("," ~ string)* ~ "]" }
 requirement = { (assertion | negation | search) ~ ";" }
 
 assertion = {
-    ("actor.type" ~ "=" ~ "resource.type")
-  | ("resource.type" ~ "=" ~ "actor.type")
-  | ("actor.id" ~ "=" ~ ("resource.id" | "resource.owner"))
-  | (("resource.id" | "resource.owner") ~ "=" ~ "actor.id")
-  | ("actor.type" ~ "=" ~ identifier)
-  | (("actor.id" | "resource.id" | "resource.owner") ~ "=" ~ string)
-  | (("actor.groups" | "actor.roles") ~ "=" ~ array)
+    (actor_type ~ assertion_operator ~ resource_type)
+  | (resource_type ~ assertion_operator ~ actor_type)
+  | (actor_id ~ assertion_operator ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ assertion_operator ~ actor_id)
+  | (actor_type ~ assertion_operator ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ assertion_operator ~ string)
+  | ((actor_groups | actor_roles) ~ assertion_operator ~ array)
 }
 negation  = {
-    ("actor.type" ~ "!=" ~ "resource.type")
-  | ("resource.type" ~ "!=" ~ "actor.type")
-  | ("actor.id" ~ "!=" ~ ("resource.id" | "resource.owner"))
-  | (("resource.id" | "resource.owner") ~ "!=" ~ "actor.id")
-  | ("actor.type" ~ "!=" ~ identifier)
-  | (("actor.id" | "resource.id" | "resource.owner") ~ "!=" ~ string)
-  | (("actor.groups" | "actor.roles") ~ "!=" ~ array)
+    (actor_type ~ negation_operator ~ resource_type)
+  | (resource_type ~ negation_operator ~ actor_type)
+  | (actor_id ~ negation_operator ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ negation_operator ~ actor_id)
+  | (actor_type ~ negation_operator ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ negation_operator ~ string)
+  | ((actor_groups | actor_roles) ~ negation_operator ~ array)
 }
-search    = { ("actor.roles" | "actor.groups") ~ "*=" ~ (array | string) }
+search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string) }
+
+actor_id     = { "actor.id" }
+actor_type   = { "actor.type" }
+actor_groups = { "actor.groups" }
+actor_roles  = { "actor.roles" }
+
+resource_id    = { "resource.id" }
+resource_type  = { "resource.type" }
+resource_owner = { "resource.owner" }
+
+assertion_operator = { "=" }
+negation_operator  = { "!=" }
+search_operator    = { "*=" }
 
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
