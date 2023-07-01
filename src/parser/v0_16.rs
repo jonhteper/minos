@@ -3,7 +3,7 @@ use std::str::FromStr;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 
-use crate::MinosResult;
+use crate::{language::{storage::Storage, file::File}, MinosResult};
 
 use super::tokens::{
     ActorAttribute, ActorListValueAttribute, ActorSingleValueAttribute, Array, FileVersion,
@@ -63,5 +63,12 @@ impl MinosParserV0_16 {
         };
 
         Ok(token)
+    }
+
+    pub fn parse_file_content(content: &str) -> MinosResult<Storage> {
+        let file_rules = Self::parse(Rule::file, content)?.next().unwrap();
+        let file_token = Self::parse_token(file_rules)?;
+        let storage = File::try_from(file_token)?.storage();
+        Ok(*storage)
     }
 }

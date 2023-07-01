@@ -6,6 +6,7 @@ use thiserror::Error as ThisError;
 use crate::language::policy::Permission;
 use crate::parser::v0_14;
 use crate::parser::v0_15;
+use crate::parser::v0_16;
 
 pub type MinosResult<T> = Result<T, Error>;
 
@@ -47,6 +48,9 @@ pub enum Error {
     RuleV0_15(Box<pest::error::Error<v0_15::Rule>>),
 
     #[error(transparent)]
+    RuleV0_16(Box<pest::error::Error<v0_16::Rule>>),
+
+    #[error(transparent)]
     ParseError(#[from] ParseError),
 }
 
@@ -65,5 +69,11 @@ impl From<pest::error::Error<v0_14::Rule>> for Error {
 impl From<pest::error::Error<v0_15::Rule>> for Error {
     fn from(err: pest::error::Error<v0_15::Rule>) -> Self {
         Self::RuleV0_15(Box::new(err))
+    }
+}
+
+impl From<pest::error::Error<v0_16::Rule>> for Error {
+    fn from(err: pest::error::Error<v0_16::Rule>) -> Self {
+        Self::RuleV0_16(Box::new(err))
     }
 }
