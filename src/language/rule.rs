@@ -33,7 +33,7 @@ impl TryFrom<&Token<'_>> for Rule {
 
     fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
         let inner_tokens = token.inner_rule().ok_or(Error::InvalidToken {
-            expected: Token::Rule(vec![]).to_string(),
+            expected: "Rule",
             found: token.to_string(),
         })?;
         let requirements: MinosResult<Vec<Requirement>> =

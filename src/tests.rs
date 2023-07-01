@@ -153,7 +153,7 @@ fn container_works() -> MinosResult<()> {
     )
     .load()?;
 
-    assert!(container.environments().len() > 0);
+    assert!(container.storage().len() > 0);
 
     Ok(())
 }

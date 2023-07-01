@@ -1,5 +1,4 @@
 use parse_display::{Display, FromStr};
-use pest::iterators::Pair;
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum Token<'a> {
@@ -59,27 +58,6 @@ pub enum Token<'a> {
 
     #[display("StringDefinition")]
     StringDefinition(Vec<Token<'a>>),
-
-    #[display("SingleValueRequirement")]
-    SingleValueRequirement(Vec<Token<'a>>),
-
-    #[display("ListValueRequirement")]
-    ListValueRequirement(Vec<Token<'a>>),
-
-    #[display("AttributeComparisonRequirement")]
-    AttributeComparisonRequirement(Vec<Token<'a>>),
-
-    #[display("ActorSingleValueAttribute")]
-    ActorSingleValueAttribute(ActorSingleValueAttribute),
-
-    #[display("SingleValueOperator")]
-    SingleValueOperator(SingleValueOperator),
-
-    #[display("ActorListValueAttribute")]
-    ActorListValueAttribute(ActorListValueAttribute),
-
-    #[display("ListValueOperator")]
-    ListValueOperator(ListValueOperator),
 
     #[display("Identifier")]
     Identifier(Identifier<'a>),
@@ -164,63 +142,8 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_single_value_requirement(&self) -> Option<&Vec<Token<'a>>> {
-        if let Token::SingleValueRequirement(inner) = self {
-            return Some(inner);
-        }
-
-        None
-    }
-
-    pub fn inner_list_value_requirement(&self) -> Option<&Vec<Token<'a>>> {
-        if let Token::ListValueRequirement(inner) = self {
-            return Some(inner);
-        }
-
-        None
-    }
-
-    pub fn inner_attribute_comparison_requirement(&self) -> Option<&Vec<Token<'a>>> {
-        if let Token::AttributeComparisonRequirement(inner) = self {
-            return Some(inner);
-        }
-
-        None
-    }
     pub fn inner_resource_attribute(&self) -> Option<ResourceAttribute> {
         if let Token::ResourceAttribute(inner) = self {
-            return Some(*inner);
-        }
-
-        None
-    }
-
-    pub fn inner_actor_single_value_attribute(&self) -> Option<ActorSingleValueAttribute> {
-        if let Token::ActorSingleValueAttribute(inner) = self {
-            return Some(*inner);
-        }
-
-        None
-    }
-
-    pub fn inner_single_value_operator(&self) -> Option<SingleValueOperator> {
-        if let Token::SingleValueOperator(inner) = self {
-            return Some(*inner);
-        }
-
-        None
-    }
-
-    pub fn inner_actor_list_value_attribute(&self) -> Option<ActorListValueAttribute> {
-        if let Token::ActorListValueAttribute(inner) = self {
-            return Some(*inner);
-        }
-
-        None
-    }
-
-    pub fn inner_list_value_operator(&self) -> Option<ListValueOperator> {
-        if let Token::ListValueOperator(inner) = self {
             return Some(*inner);
         }
 
@@ -246,10 +169,6 @@ impl<'a> Token<'a> {
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FileVersion {
-    #[display("0.14")]
-    V0_14,
-    #[display("0.15")]
-    V0_15,
     #[display("0.16")]
     V0_16,
 }
@@ -257,7 +176,7 @@ pub enum FileVersion {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Array<'a>(pub Vec<&'a str>);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Identifier<'a>(pub &'a str);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
@@ -273,20 +192,6 @@ pub enum ActorAttribute {
 
     #[display("actor.roles")]
     Roles,
-}
-
-
-
-
-
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum ActorSingleValueAttribute {
-    #[display("actor.type")]
-    Type,
-
-    #[display("actor.id")]
-    Id,
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
@@ -311,33 +216,4 @@ pub enum Operator {
 
     #[display("*=")]
     Search,
-}
-
-
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum ActorListValueAttribute {
-    #[display("actor.groups")]
-    Groups,
-
-    #[display("actor.roles")]
-    Roles,
-}
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum SingleValueOperator {
-    #[display("=")]
-    Equal,
-
-    #[display("!=")]
-    Distinct,
-}
-
-#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
-pub enum ListValueOperator {
-    #[display("=")]
-    Equal,
-
-    #[display("*=")]
-    Contains,
 }

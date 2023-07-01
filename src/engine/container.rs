@@ -2,9 +2,9 @@ use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
 
 use getset::Getters;
 
+use crate::language::storage::Storage;
 use crate::{engine::Engine, errors::MinosResult};
 
-use crate::language::environment::{EnvName, Environment};
 use crate::parser::MinosParser;
 
 #[derive(Debug, Clone)]
@@ -21,19 +21,19 @@ pub struct Container<State = EmptyContainer> {
     paths: Vec<PathBuf>,
 
     #[getset(skip)]
-    environments: HashMap<EnvName, Environment>,
+    storage: Storage,
 
     #[getset(skip)]
     state: PhantomData<State>,
 }
 
 impl Container {
-    pub fn new(id: String, description: String, paths: Vec<PathBuf>) -> Container<EmptyContainer> {
+    pub fn new(id: String, description: String, paths: Vec<PathBuf>) -> Container< EmptyContainer> {
         Container {
             id,
             description,
             paths,
-            environments: HashMap::new(),
+            storage: Storage::default(),
             state: PhantomData,
         }
     }
@@ -43,17 +43,17 @@ impl Container {
             id,
             description,
             paths,
-            environments: _,
+            storage,
             state: _,
         } = self;
-        let mut environments = HashMap::new();
+        let mut storage = storage;
         for path in &paths {
             if path.is_dir() {
-                let envs = MinosParser::parse_dir(path)?;
-                environments.extend(envs);
+                let dir_storage = MinosParser::parse_dir(path)?;
+                storage.extend_with(dir_storage);
             } else if path.is_file() {
-                let envs = MinosParser::parse_file(path)?;
-                environments.extend(envs);
+                let file_storage = MinosParser::parse_file(path)?;
+                storage.extend_with(file_storage);
             }
         }
 
@@ -61,18 +61,18 @@ impl Container {
             id,
             description,
             paths,
-            environments,
+            storage,
             state: PhantomData,
         })
     }
 }
 
 impl Container<StaticContainer> {
-    pub fn environments(&self) -> &HashMap<EnvName, Environment> {
-        &self.environments
+    pub fn storage(&self) -> &Storage {
+        &self.storage
     }
 
     pub fn engine(&self) -> Engine {
-        Engine::new(&self.environments)
+        Engine::new(&self.storage)
     }
 }

@@ -1,20 +1,16 @@
-use std::{collections::HashMap, fs, path::Path, str::FromStr};
+use std::{fs, path::Path, str::FromStr};
 
 use lazy_static::lazy_static;
 use regex::Regex;
 
 use crate::errors::{Error, MinosResult};
 
-use crate::parser::v0_14::MinosParserV0_14;
+use crate::language::storage::Storage;
 
 use self::tokens::FileVersion;
-use self::v0_15::MinosParserV0_15;
 
-use crate::language::environment::{EnvName, Environment};
 
 pub mod tokens;
-pub(crate) mod v0_14;
-pub(crate) mod v0_15;
 pub(crate) mod v0_16;
 
 lazy_static! {
@@ -37,16 +33,16 @@ impl MinosParser {
     }
 
     /// Return the list of [Environment] inside a valid minos file.
-    pub fn parse_file(path: &Path) -> MinosResult<HashMap<EnvName, Environment>> {
+    pub fn parse_file(path: &Path) -> MinosResult<Storage> {
         let file_content = fs::read_to_string(path)?;
         let version = Self::get_file_version(&file_content).ok_or(Error::SintaxisNotSupported)?;
 
         Self::parse_str(version, &file_content)
     }
 
-    pub fn parse_dir(path: &Path) -> MinosResult<HashMap<EnvName, Environment>> {
+    pub fn parse_dir(path: &Path) -> MinosResult<Storage> {
         let dir = fs::read_dir(path)?;
-        let mut environments = HashMap::new();
+        let mut storage = Storage::default();
 
         for entry in dir {
             let path = entry?.path();
@@ -57,20 +53,19 @@ impl MinosParser {
             let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
             if is_minos_file {
                 let file_environments = Self::parse_file(&path)?;
-                environments.extend(file_environments);
+                storage.extend_with(file_environments);
             }
         }
 
-        Ok(environments)
+        Ok(storage)
     }
 
     pub fn parse_str(
         version: FileVersion,
         file_content: &str,
-    ) -> MinosResult<HashMap<EnvName, Environment>> {
+    ) -> MinosResult<Storage> {
         match version {
-            FileVersion::V0_14 => MinosParserV0_14::parse_file_content(file_content),
-            FileVersion::V0_15 => MinosParserV0_15::parse_file_content(file_content),
+            FileVersion::V0_16 => v0_16::MinosParserV0_16::parse_file_content(file_content),
         }
     }
 }

@@ -3,12 +3,12 @@ use std::str::FromStr;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 
-use crate::{language::{storage::Storage, file::File}, MinosResult};
-
-use super::tokens::{
-    ActorAttribute, ActorListValueAttribute, ActorSingleValueAttribute, Array, FileVersion,
-    Identifier, ListValueOperator, Operator, ResourceAttribute, SingleValueOperator, Token,
+use crate::{
+    language::{file::File, storage::Storage},
+    MinosResult,
 };
+
+use super::tokens::{ActorAttribute, Array, FileVersion, Identifier, Token, ResourceAttribute, Operator};
 
 #[derive(Debug, Parser)]
 #[grammar = "../assets/minos-v0_16.pest"]

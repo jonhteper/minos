@@ -6,8 +6,8 @@ use lazy_static::lazy_static;
 use crate::{
     errors::{Error, MinosResult},
     language::{
-        environment::{EnvName, Environment},
-        policy::{Permission, Policy},
+        environment::{Environment},
+        policy::{Permission, Policy}, storage::Storage,
     },
 };
 
@@ -18,15 +18,11 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Ctor)]
-pub struct Engine<'env> {
-    environments: &'env HashMap<EnvName, Environment>,
+pub struct Engine<'s> {
+    storage: &'s Storage,
 }
 
-impl<'env> Engine<'env> {
-    pub fn has_env(&self, env_name: &EnvName) -> bool {
-        self.environments.contains_key(env_name)
-    }
-
+impl<'s> Engine<'s> {
     fn get_policies_from_resource_identified<'a>(
         env: &'a Environment,
         resource: &Resource,
@@ -48,7 +44,8 @@ impl<'env> Engine<'env> {
         resource: &Resource,
     ) -> MinosResult<(&Vec<Policy>, &Vec<Policy>)> {
         let env = self
-            .environments
+            .storage
+            .resources()
             .get(env_name)
             .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
 
