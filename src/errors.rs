@@ -29,11 +29,14 @@ pub enum Error {
     #[error("invalid token found: {found}, expected: {expected}")]
     InvalidToken { expected: &'static str, found: String },
 
+    #[error("expected Token, found nothing")]
+    MissingToken,
+
     #[error("sintaxis not supported")]
     SintaxisNotSupported,
 
     #[error("permission '{0}' not found")]
-    PermissionNotFound(Permission<'static>),
+    PermissionNotFound(String),
 
     // 3-party errors
     #[error("io err: {0}")]
