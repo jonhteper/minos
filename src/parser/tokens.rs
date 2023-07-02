@@ -175,6 +175,11 @@ pub enum FileVersion {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Array<'a>(pub Vec<&'a str>);
+impl<'a> Array<'a> {
+    pub fn as_slice(&self) -> &[&str] {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Identifier<'a>(pub &'a str);
