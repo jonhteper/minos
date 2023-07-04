@@ -58,7 +58,7 @@ impl MinosParserV0_16 {
             Rule::assertion_operator => Token::Operator(Operator::Assertion),
             Rule::negation_operator => Token::Operator(Operator::Negation),
             Rule::search_operator => Token::Operator(Operator::Search),
-            Rule::identifier => Token::Identifier(Identifier(pair.as_str())),
+            Rule::identifier => Token::Identifier(Identifier(Arc::from(pair.as_str().to_string()))),
             Rule::string => {
                 let inner_str = pair
                     .into_inner()
