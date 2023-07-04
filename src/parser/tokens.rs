@@ -176,7 +176,7 @@ impl Array {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Identifier(pub Arc<String>);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
