@@ -212,7 +212,7 @@ impl Search {
                 ComparableValue::Value(Value::Array(value)),
             ) => Some(Self::find_list_in_list(
                 actor.actor_groups(),
-                value.as_slice(),
+                &value.as_refs(),
             )),
             (
                 Attribute::Actor(ActorAttribute::Groups),
@@ -223,7 +223,7 @@ impl Search {
                 ComparableValue::Value(Value::Array(value)),
             ) => Some(Self::find_list_in_list(
                 actor.actor_roles(),
-                value.as_slice(),
+                &value.as_refs(),
             )),
             (
                 Attribute::Actor(ActorAttribute::Roles),

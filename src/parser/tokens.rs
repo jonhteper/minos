@@ -171,8 +171,8 @@ pub enum FileVersion {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Array(pub Vec<Arc<String>>);
 impl Array {
-    pub fn as_slice(&self) -> &[&str] {
-        &self.0
+    pub fn as_refs<'a>(&'a self) -> Vec<&'a str> {
+        self.0.iter().map(|arc| arc.as_str()).collect()
     }
 }
 
