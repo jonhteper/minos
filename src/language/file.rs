@@ -16,7 +16,7 @@ pub struct File {
     storage: Storage,
 }
 
-impl TryFrom<Token<'_>> for File {
+impl TryFrom<Token> for File {
     type Error = Error;
 
     fn try_from(token: Token) -> Result<Self, Self::Error> {

@@ -11,7 +11,7 @@ use super::resource::{Resource, AttributedResource};
 #[derive(Debug, Clone, Ctor, Getters, PartialEq, Default)]
 #[getset(get = "pub")]
 pub struct Storage{
-    resources: HashMap<Identifier<'static>, Resource>,
+    resources: HashMap<Identifier, Resource>,
     attributed_resources: HashMap<&'static str, AttributedResource>
 }
 
