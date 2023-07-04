@@ -1,11 +1,11 @@
-file    =  { SOI ~ "syntax" ~ assertion_operator ~ version ~ ";" ~ (resource | attributed_resource)+ ~ EOI }
+file    =  { SOI ~ "syntax" ~ "=" ~ version ~ ";" ~ (resource | attributed_resource)+ ~ EOI }
 version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 
 resource            = {
     "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}"
 }
 attributed_resource = {
-    "resource" ~ identifier ~ "{" ~ ("id" ~ assertion_operator ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
+    "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
 }
 
 named_env            = { "env" ~ identifier ~ "{" ~ policy+ ~ "}" }
@@ -14,7 +14,7 @@ implicit_default_env = { policy+ }
 
 policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
 
-allow = { "allow" ~ assertion_operator ~ array }
+allow = { "allow" ~ "=" ~ array }
 
 rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
