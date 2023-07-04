@@ -23,7 +23,7 @@ impl Requirement {
         match self {
             Requirement::Assertion(assertion) => assertion.apply(actor, resource),
             Requirement::Negation(negation) => negation.apply(actor, resource),
-            Requirement::Search(search) => search.apply(actor, resource),
+            Requirement::Search(search) => search.apply(actor),
         }
     }
 }
@@ -205,7 +205,7 @@ impl Search {
         true
     }
 
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
+    pub fn apply(&self, actor: &Actor) -> Option<bool> {
         match (&self.left, &self.right) {
             (
                 Attribute::Actor(ActorAttribute::Groups),
