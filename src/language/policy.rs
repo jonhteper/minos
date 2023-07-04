@@ -1,30 +1,50 @@
+use std::{collections::HashMap, sync::Arc};
+
 use derived::Ctor;
 use getset::Getters;
 
 use crate::{
     engine::{Actor, Resource},
-    errors::{Error, MinosResult},
+    errors::Error,
     parser::tokens::{Array, Token},
 };
 
 use super::rule::Rule;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Permission<'a>(pub &'a str);
-
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Permission(pub Arc<String>);
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Policy {
-    allow: Vec<Permission<'static>>,
-    rules: Vec<Rule>,
+    permissions: Vec<Permission>,
+    rules: Vec<Arc<Rule>>,
+    rules_map: HashMap<Permission, Vec<Arc<Rule>>>,
 }
 
 impl Policy {
+    /// Indicates if an [Actor] has a specific [Permission] on a [Resource].
+    pub fn actor_has_permission(
+        &self,
+        actor: &Actor,
+        resource: &Resource,
+        permission: Permission,
+    ) -> bool {
+        if let Some(rules) = self.rules_map.get(&permission) {
+            for rule in rules {
+                if rule.apply(actor, resource) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     /// Returns the [Permission] list if the actor satisfies at least one of the rules.
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<&Vec<Permission>> {
+    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<&[Permission]> {
         for rule in &self.rules {
             if rule.apply(actor, resource) {
-                return Some(&self.allow);
+                return Some(&self.permissions);
             }
         }
 
@@ -32,26 +52,35 @@ impl Policy {
     }
 }
 
-impl TryFrom<&Token<'_>> for Policy {
+impl TryFrom<&Token> for Policy {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
-        // let inner_tokens = token.inner_policy().ok_or(Error::InvalidToken {
-        //     expected: Token::Policy(vec![]).to_string(),
-        //     found: token.to_string(),
-        // })?;
-        // let Array(borrowed_allow) = inner_tokens[0].inner_allow().unwrap()[0]
-        //     .inner_array()
-        //     .unwrap();
-        // let allow = borrowed_allow.iter().map(|p| p.to_string()).collect();
-        // let rules: MinosResult<Vec<Rule>> =
-        //     inner_tokens.iter().skip(1).map(Rule::try_from).collect();
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
+        let inner_tokens = token.inner_policy().ok_or(Error::InvalidToken {
+            expected: "Policy",
+            found: token.to_string(),
+        })?;
 
-        // Ok(Policy {
-        //     allow,
-        //     rules: rules?,
-        // })
+        let Array(permissions) = inner_tokens[0].inner_allow().unwrap()[0]
+            .inner_array()
+            .unwrap();
 
-        todo!()
+        let rules: Vec<Arc<Rule>> = inner_tokens
+            .iter()
+            .skip(1)
+            .map(|token| Rule::try_from(token).map(|rule| Arc::new(rule)))
+            .collect()?;
+
+        let mut rules_map = HashMap::new();
+
+        for raw_permission in permissions {
+            rules_map.insert(Permission(raw_permission.clone()), rules.clone());
+        }
+
+        Ok(Policy {
+            permissions,
+            rules,
+            rules_map,
+        })
     }
 }

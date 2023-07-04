@@ -19,7 +19,7 @@ impl Rule {
     /// Apply all requirements and return true only if actor satisfies all.
     pub fn apply(&self, actor: &Actor, resource: &Resource) -> bool {
         for requirement in &self.requirements {
-            if !requirement.apply(actor, resource) {
+            if !requirement.apply(actor, resource).unwrap_or_default() {
                 return false;
             }
         }
@@ -28,10 +28,10 @@ impl Rule {
     }
 }
 
-impl TryFrom<&Token<'_>> for Rule {
+impl TryFrom<&Token> for Rule {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
         let inner_tokens = token.inner_rule().ok_or(Error::InvalidToken {
             expected: "Rule",
             found: token.to_string(),

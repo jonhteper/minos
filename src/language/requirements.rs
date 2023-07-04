@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use derived::Ctor;
 use getset::{CopyGetters, Getters};
 
@@ -26,10 +28,10 @@ impl Requirement {
     }
 }
 
-impl TryFrom<&Token<'_>> for Requirement {
+impl TryFrom<&Token> for Requirement {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
         let inner_tokens = token.inner_requirement().ok_or(Error::InvalidToken {
             expected: "Requirement",
             found: token.to_string(),
@@ -52,7 +54,7 @@ pub enum Attribute {
     Resource(ResourceAttribute),
 }
 
-impl TryFrom<&Token<'_>> for Attribute {
+impl TryFrom<&Token> for Attribute {
     type Error = Error;
     fn try_from(token: &Token) -> Result<Self, Self::Error> {
         let attribute = match token {
@@ -71,10 +73,10 @@ impl TryFrom<&Token<'_>> for Attribute {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComparableValue {
     Attribute(Attribute),
-    Value(Value<'static>),
+    Value(Value),
 }
 
-impl TryFrom<&Token<'_>> for ComparableValue {
+impl TryFrom<&Token> for ComparableValue {
     type Error = Error;
     fn try_from(token: &Token) -> Result<Self, Self::Error> {
         let value = match token {
@@ -94,10 +96,10 @@ impl TryFrom<&Token<'_>> for ComparableValue {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Value<'v> {
-    String(&'v str),
-    Array(Array<'v>),
-    Identifier(Identifier<'v>),
+pub enum Value {
+    String(Arc<String>),
+    Array(Array),
+    Identifier(Identifier),
 }
 
 #[derive(Debug, Clone, PartialEq, Ctor, Getters, CopyGetters)]
@@ -138,7 +140,7 @@ impl Assertion {
     }
 }
 
-impl TryFrom<&Vec<Token<'_>>> for Assertion {
+impl TryFrom<&Vec<Token>> for Assertion{
     type Error = Error;
     fn try_from(token: &Vec<Token>) -> Result<Self, Self::Error> {
         let left = Attribute::try_from(token.first().ok_or(Error::MissingToken)?)?;
@@ -175,7 +177,7 @@ impl Negation {
     }
 }
 
-impl TryFrom<&Vec<Token<'_>>> for Negation {
+impl TryFrom<&Vec<Token>> for Negation {
     type Error = Error;
     fn try_from(token: &Vec<Token>) -> Result<Self, Self::Error> {
         let left = Attribute::try_from(token.first().ok_or(Error::MissingToken)?)?;
@@ -232,7 +234,7 @@ impl Search {
     }
 }
 
-impl TryFrom<&Vec<Token<'_>>> for Search {
+impl TryFrom<&Vec<Token>> for Search {
     type Error = Error;
     fn try_from(token: &Vec<Token>) -> Result<Self, Self::Error> {
         let left = Attribute::try_from(token.first().ok_or(Error::MissingToken)?)?;

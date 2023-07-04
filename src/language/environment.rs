@@ -19,10 +19,10 @@ pub struct Environment {
     policies: HashMap<Permission<'static>, Vec<Rule>>,
 }
 
-impl TryFrom<&Token<'_>> for Environment {
+impl TryFrom<&Token> for Environment {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
         todo!()
     }
 }

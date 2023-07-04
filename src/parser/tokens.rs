@@ -1,51 +1,53 @@
+use std::sync::Arc;
+
 use parse_display::{Display, FromStr};
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
-pub enum Token<'a> {
+pub enum Token {
     #[display("File")]
-    File(Vec<Token<'a>>),
+    File(Vec<Token>),
 
     #[display("Version")]
     Version(FileVersion),
 
     #[display("Resource")]
-    Resource(Vec<Token<'a>>),
+    Resource(Vec<Token>),
 
     #[display("AttributedResource")]
-    AttributedResource(Vec<Token<'a>>),
+    AttributedResource(Vec<Token>),
 
     #[display("NamedEnv")]
-    NamedEnv(Vec<Token<'a>>),
+    NamedEnv(Vec<Token>),
 
     #[display("DefaultEnv")]
-    DefaultEnv(Vec<Token<'a>>),
+    DefaultEnv(Vec<Token>),
 
     #[display("ImplicitDefaultEnv")]
-    ImplicitDefaultEnv(Vec<Token<'a>>),
+    ImplicitDefaultEnv(Vec<Token>),
 
     #[display("Policy")]
-    Policy(Vec<Token<'a>>),
+    Policy(Vec<Token>),
 
     #[display("Allow")]
-    Allow(Vec<Token<'a>>),
+    Allow(Vec<Token>),
 
     #[display("Rule")]
-    Rule(Vec<Token<'a>>),
+    Rule(Vec<Token>),
 
     #[display("Array")]
-    Array(Array<'a>),
+    Array(Array),
 
     #[display("Requirement")]
-    Requirement(Vec<Token<'a>>),
+    Requirement(Vec<Token>),
 
     #[display("Assertion")]
-    Assertion(Vec<Token<'a>>),
+    Assertion(Vec<Token>),
 
     #[display("Negation")]
-    Negation(Vec<Token<'a>>),
+    Negation(Vec<Token>),
 
     #[display("Search")]
-    Search(Vec<Token<'a>>),
+    Search(Vec<Token>),
 
     #[display("ActorAttribute")]
     ActorAttribute(ActorAttribute),
@@ -57,20 +59,20 @@ pub enum Token<'a> {
     Operator(Operator),
 
     #[display("StringDefinition")]
-    StringDefinition(Vec<Token<'a>>),
+    StringDefinition(Vec<Token>),
 
     #[display("Identifier")]
-    Identifier(Identifier<'a>),
+    Identifier(Identifier),
 
     #[display("String")]
-    String(&'a str),
+    String(Arc<String>),
 
     #[display("Null")]
     Null,
 }
 
-impl<'a> Token<'a> {
-    pub fn inner_file(&self) -> Option<&Vec<Token<'a>>> {
+impl Token {
+    pub fn inner_file(&self) -> Option<&Vec<Token>> {
         if let Token::File(inner) = self {
             return Some(inner);
         }
@@ -86,7 +88,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_env(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_env(&self) -> Option<&Vec<Token>> {
         if let Token::NamedEnv(inner) = self {
             return Some(inner);
         }
@@ -94,7 +96,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_resource(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_resource(&self) -> Option<&Vec<Token>> {
         if let Token::Resource(inner) = self {
             return Some(inner);
         }
@@ -102,7 +104,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_rule(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_rule(&self) -> Option<&Vec<Token>> {
         if let Token::Rule(inner) = self {
             return Some(inner);
         }
@@ -110,7 +112,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_policy(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_policy(&self) -> Option<&Vec<Token>> {
         if let Token::Policy(inner) = self {
             return Some(inner);
         }
@@ -118,7 +120,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_allow(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_allow(&self) -> Option<&Vec<Token>> {
         if let Token::Allow(inner) = self {
             return Some(inner);
         }
@@ -126,7 +128,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_array(&self) -> Option<&Array<'a>> {
+    pub fn inner_array(&self) -> Option<&Array> {
         if let Token::Array(inner) = self {
             return Some(inner);
         }
@@ -134,7 +136,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_requirement(&self) -> Option<&Vec<Token<'a>>> {
+    pub fn inner_requirement(&self) -> Option<&Vec<Token>> {
         if let Token::Requirement(inner) = self {
             return Some(inner);
         }
@@ -150,7 +152,7 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_identifier(&self) -> Option<Identifier<'a>> {
+    pub fn inner_identifier(&self) -> Option<Identifier> {
         if let Token::Identifier(inner) = self {
             return Some(*inner);
         }
@@ -158,13 +160,6 @@ impl<'a> Token<'a> {
         None
     }
 
-    pub fn inner_string(&self) -> Option<&'a str> {
-        if let Token::String(inner) = self {
-            return Some(inner);
-        }
-
-        None
-    }
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq, PartialOrd, Ord)]
@@ -174,15 +169,15 @@ pub enum FileVersion {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Array<'a>(pub Vec<&'a str>);
-impl<'a> Array<'a> {
+pub struct Array(pub Vec<Arc<String>>);
+impl Array {
     pub fn as_slice(&self) -> &[&str] {
         &self.0
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Identifier<'a>(pub &'a str);
+pub struct Identifier(pub Arc<String>);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorAttribute {

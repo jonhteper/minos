@@ -20,10 +20,10 @@ pub struct Resource {
     environments: HashMap<Identifier<'static>, Environment>,
 }
 
-impl TryFrom<&Token<'_>> for Resource {
+impl TryFrom<&Token> for Resource {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
         todo!()
     }
 }
@@ -36,10 +36,10 @@ pub struct AttributedResource {
     environments: HashMap<Identifier<'static>, Environment>,
 }
 
-impl TryFrom<&Token<'_>> for AttributedResource {
+impl TryFrom<&Token> for AttributedResource {
     type Error = Error;
 
-    fn try_from(token: &Token<'_>) -> Result<Self, Self::Error> {
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
         todo!()
     }
 }

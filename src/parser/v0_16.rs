@@ -5,10 +5,12 @@ use pest_derive::Parser;
 
 use crate::{
     language::{file::File, storage::Storage},
-    MinosResult,
+    Error, MinosResult,
 };
 
-use super::tokens::{ActorAttribute, Array, FileVersion, Identifier, Token, ResourceAttribute, Operator};
+use super::tokens::{
+    ActorAttribute, Array, FileVersion, Identifier, Operator, ResourceAttribute, Token,
+};
 
 #[derive(Debug, Parser)]
 #[grammar = "../assets/minos-v0_16.pest"]
@@ -32,7 +34,7 @@ impl MinosParserV0_16 {
             Rule::allow => Token::Allow(Self::parse_tokens(pair)?),
             Rule::rule => Token::Rule(Self::parse_tokens(pair)?),
             Rule::array => {
-                let inner_values: Vec<&str> = pair
+                let inner_values = pair
                     .into_inner()
                     .flat_map(|pair| match Self::parse_token(pair).unwrap() {
                         Token::String(value) => Some(value),
@@ -57,9 +59,15 @@ impl MinosParserV0_16 {
             Rule::negation_operator => Token::Operator(Operator::Negation),
             Rule::search_operator => Token::Operator(Operator::Search),
             Rule::identifier => Token::Identifier(Identifier(pair.as_str())),
-            Rule::string => Token::StringDefinition(Self::parse_tokens(pair)?),
-            Rule::inner_string => Token::String(pair.as_str()),
-            Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
+            Rule::string => {
+                let inner_str = pair
+                    .into_inner()
+                    .next()
+                    .map(|inner_pair| inner_pair.as_str())
+                    .ok_or(Error::MissingToken)?;
+                Token::String(inner_str)
+            }
+            Rule::inner_string | Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
         };
 
         Ok(token)
