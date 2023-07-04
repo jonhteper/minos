@@ -65,7 +65,7 @@ pub enum Token {
     Identifier(Identifier),
 
     #[display("String")]
-    String(Arc<String>),
+    String(Arc<str>),
 
     #[display("Null")]
     Null,
@@ -152,9 +152,9 @@ impl Token {
         None
     }
 
-    pub fn inner_identifier(&self) -> Option<Identifier> {
+    pub fn inner_identifier(&self) -> Option<&Identifier> {
         if let Token::Identifier(inner) = self {
-            return Some(*inner);
+            return Some(inner);
         }
 
         None
@@ -169,15 +169,10 @@ pub enum FileVersion {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Array(pub Vec<Arc<String>>);
-impl Array {
-    pub fn as_refs<'a>(&'a self) -> Vec<&'a str> {
-        self.0.iter().map(|arc| arc.as_str()).collect()
-    }
-}
+pub struct Array(pub Vec<Arc<str>>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Identifier(pub Arc<String>);
+pub struct Identifier(pub Arc<str>);
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorAttribute {

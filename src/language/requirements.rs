@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use derived::Ctor;
 use getset::{CopyGetters, Getters};
@@ -82,9 +82,9 @@ impl TryFrom<&Token> for ComparableValue {
         let value = match token {
             Token::ActorAttribute(attr) => Self::Attribute(Attribute::Actor(*attr)),
             Token::ResourceAttribute(attr) => Self::Attribute(Attribute::Resource(*attr)),
-            Token::String(value) => Self::Value(Value::String(value)),
-            Token::Array(arr) => Self::Value(Value::Array(*arr)),
-            Token::Identifier(ident) => Self::Value(Value::Identifier(*ident)),
+            Token::String(value) => Self::Value(Value::String(value.clone())),
+            Token::Array(arr) => Self::Value(Value::Array(arr.clone())),
+            Token::Identifier(ident) => Self::Value(Value::Identifier(ident.clone())),
             _ => Err(Error::InvalidToken {
                 expected: "ActorAttribute, ResourceAttribute, String, Array or Identifier",
                 found: token.to_string(),
@@ -97,13 +97,13 @@ impl TryFrom<&Token> for ComparableValue {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    String(Arc<String>),
+    String(Arc<str>),
     Array(Array),
     Identifier(Identifier),
 }
 
-#[derive(Debug, Clone, PartialEq, Ctor, Getters, CopyGetters)]
-#[getset(get_copy = "pub")]
+#[derive(Debug, Clone, PartialEq, Ctor, Getters)]
+#[getset(get = "pub")]
 pub struct Assertion {
     left: Attribute,
     right: ComparableValue,
@@ -140,7 +140,7 @@ impl Assertion {
     }
 }
 
-impl TryFrom<&Vec<Token>> for Assertion{
+impl TryFrom<&Vec<Token>> for Assertion {
     type Error = Error;
     fn try_from(token: &Vec<Token>) -> Result<Self, Self::Error> {
         let left = Attribute::try_from(token.first().ok_or(Error::MissingToken)?)?;
@@ -150,8 +150,8 @@ impl TryFrom<&Vec<Token>> for Assertion{
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Ctor, Getters, CopyGetters)]
-#[getset(get_copy = "pub")]
+#[derive(Debug, Clone, PartialEq, Ctor, Getters)]
+#[getset(get = "pub")]
 pub struct Negation {
     left: Attribute,
     right: ComparableValue,
@@ -187,17 +187,17 @@ impl TryFrom<&Vec<Token>> for Negation {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Ctor, Getters, CopyGetters)]
-#[getset(get_copy = "pub")]
+#[derive(Debug, Clone, PartialEq, Ctor, Getters)]
+#[getset(get = "pub")]
 pub struct Search {
     left: Attribute,
     right: ComparableValue,
 }
 
 impl Search {
-    pub fn find_list_in_list(reference: &[&str], to_find_values: &[&str]) -> bool {
-        for value in to_find_values {
-            if !reference.contains(&value) {
+    pub fn find_list_in_list(reference: &Vec<Cow<'_, str>>, to_find_values: &Array) -> bool {
+        for value in &to_find_values.0 {
+            if !reference.contains(&Cow::Borrowed(value.as_ref())) {
                 return false;
             }
         }
@@ -210,25 +210,20 @@ impl Search {
             (
                 Attribute::Actor(ActorAttribute::Groups),
                 ComparableValue::Value(Value::Array(value)),
-            ) => Some(Self::find_list_in_list(
-                actor.actor_groups(),
-                &value.as_refs(),
-            )),
+            ) => Some(Self::find_list_in_list(actor.actor_groups(), value)),
             (
                 Attribute::Actor(ActorAttribute::Groups),
                 ComparableValue::Value(Value::String(value)),
-            ) => Some(actor.actor_groups().contains(value)),
+            ) => Some(actor.actor_groups().contains(&Cow::Borrowed(value.as_ref())),
+            ),
             (
                 Attribute::Actor(ActorAttribute::Roles),
                 ComparableValue::Value(Value::Array(value)),
-            ) => Some(Self::find_list_in_list(
-                actor.actor_roles(),
-                &value.as_refs(),
-            )),
+            ) => Some(Self::find_list_in_list(actor.actor_roles(), value)),
             (
                 Attribute::Actor(ActorAttribute::Roles),
                 ComparableValue::Value(Value::String(value)),
-            ) => Some(actor.actor_roles().contains(value)),
+            ) => Some(actor.actor_roles().contains(&Cow::Borrowed(value.as_ref()))),
             _ => None,
         }
     }

@@ -7,12 +7,13 @@ use crate::{
     engine::{Actor, Resource},
     errors::Error,
     parser::tokens::{Array, Token},
+    MinosResult,
 };
 
 use super::rule::Rule;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Permission(pub Arc<String>);
+pub struct Permission(pub Arc<str>);
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Policy {
@@ -65,17 +66,19 @@ impl TryFrom<&Token> for Policy {
             .inner_array()
             .unwrap();
 
-        let rules: Vec<Arc<Rule>> = inner_tokens
+        let rules = inner_tokens
             .iter()
             .skip(1)
             .map(|token| Rule::try_from(token).map(|rule| Arc::new(rule)))
-            .collect()?;
+            .collect::<MinosResult<Vec<Arc<Rule>>>>()?;
 
         let mut rules_map = HashMap::new();
 
         for raw_permission in permissions {
             rules_map.insert(Permission(raw_permission.clone()), rules.clone());
         }
+
+        let permissions = permissions.iter().map(|v| Permission(v.clone())).collect();
 
         Ok(Policy {
             permissions,

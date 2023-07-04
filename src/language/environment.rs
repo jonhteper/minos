@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use derived::Ctor;
 use getset::Getters;
 
@@ -22,8 +20,9 @@ pub struct Environment {
 
 impl Environment {
     fn from_named_env(tokens: &Vec<Token>) -> MinosResult<Self> {
-        let identifier = tokens[0].inner_identifier().unwrap();
-        let policies = tokens.iter().skip(1).map(Policy::try_from).collect()?;
+        let identifier = tokens[0].inner_identifier().unwrap().clone();
+        let policies =
+            tokens.iter().skip(1).map(Policy::try_from).collect::<MinosResult<Vec<Policy>>>()?;
 
         Ok(Self {
             identifier,
@@ -32,10 +31,10 @@ impl Environment {
     }
 
     fn from_default_env(tokens: &Vec<Token>) -> MinosResult<Self> {
-        let policies = tokens.iter().map(Policy::try_from).collect()?;
+        let policies = tokens.iter().map(Policy::try_from).collect::<MinosResult<Vec<Policy>>>()?;
 
         Ok(Self {
-            identifier: Identifier(Arc::new(DEFAULT_ENV_IDENTIFIER.to_string())),
+            identifier: Identifier(DEFAULT_ENV_IDENTIFIER.into()),
             policies,
         })
     }

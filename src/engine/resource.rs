@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use derived::Ctor;
 use getset::{Getters, MutGetters};
@@ -19,9 +19,17 @@ pub struct Resource<'a> {
 impl<'a> Resource<'a> {
     pub(crate) fn get_attribute(&self, attr: ResourceAttribute) -> Option<Value> {
         match attr {
-            ResourceAttribute::Id => self.resource_id.map(|id| Value::String(&id)),
-            ResourceAttribute::Type => Some(Value::Identifier(Identifier(&self.resource_type))),
-            ResourceAttribute::Owner => self.resource_owner.map(|owner| Value::String(&owner)),
+            ResourceAttribute::Id => self
+                .resource_id
+                .as_ref()
+                .map(|id| Value::String(Arc::from(id.as_ref()))),
+            ResourceAttribute::Type => Some(Value::Identifier(Identifier(
+                self.resource_type.as_ref().into(),
+            ))),
+            ResourceAttribute::Owner => self
+                .resource_owner
+                .as_ref()
+                .map(|owner| Value::String(Arc::from(owner.as_ref()))),
         }
     }
 }

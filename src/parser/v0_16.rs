@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
@@ -65,7 +65,7 @@ impl MinosParserV0_16 {
                     .next()
                     .map(|inner_pair| inner_pair.as_str())
                     .ok_or(Error::MissingToken)?;
-                Token::String(inner_str)
+                Token::String(Arc::from(inner_str))
             }
             Rule::inner_string | Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
         };
@@ -76,7 +76,8 @@ impl MinosParserV0_16 {
     pub fn parse_file_content(content: &str) -> MinosResult<Storage> {
         let file_rules = Self::parse(Rule::file, content)?.next().unwrap();
         let file_token = Self::parse_token(file_rules)?;
-        let storage = File::try_from(file_token)?.storage();
-        Ok(*storage)
+        let storage = File::get_storage(file_token)?;
+
+        Ok(storage)
     }
 }
