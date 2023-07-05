@@ -1,5 +1,5 @@
 use derived::Ctor;
-use getset::Getters;
+use getset::{Getters, MutGetters};
 
 use crate::{
     errors::Error,
@@ -11,10 +11,11 @@ use super::policy::Policy;
 
 pub const DEFAULT_ENV_IDENTIFIER: &str = "DEFAULT";
 
-#[derive(Debug, Clone, Ctor, Getters, PartialEq)]
-#[getset(get = "pub")]
+#[derive(Debug, Clone, Ctor, Getters, MutGetters, PartialEq)]
 pub struct Environment {
+    #[get = "pub"]
     identifier: Identifier,
+    #[getset(get = "pub", get_mut = "pub")]
     policies: Vec<Policy>,
 }
 
@@ -42,6 +43,11 @@ impl Environment {
     pub fn add_policy(&mut self, policy: Policy) {
         self.policies.push(policy);
     }
+
+    pub fn add_policies(&mut self, policies: &mut Vec<Policy>) {
+        self.policies.append(policies);
+    }
+
 }
 
 impl TryFrom<&Token> for Environment {

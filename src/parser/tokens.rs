@@ -104,6 +104,14 @@ impl Token {
         None
     }
 
+    pub fn inner_attributed_resource(&self) -> Option<&Vec<Token>> {
+        if let Token::AttributedResource(inner) = self {
+            return Some(inner);
+        }
+
+        None
+    }
+
     pub fn inner_rule(&self) -> Option<&Vec<Token>> {
         if let Token::Rule(inner) = self {
             return Some(inner);
@@ -160,6 +168,13 @@ impl Token {
         None
     }
 
+    pub fn inner_str(&self) -> Option<&Arc<str>> {
+        if let Token::String(value) = self {
+            return Some(value);
+        }
+
+        None
+    }
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq, PartialOrd, Ord)]
