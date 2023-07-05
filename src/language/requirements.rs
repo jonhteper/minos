@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 use derived::Ctor;
 use getset::Getters;
@@ -185,9 +185,9 @@ pub struct Search {
 }
 
 impl Search {
-    pub fn find_list_in_list(reference: &Vec<Cow<'_, str>>, to_find_values: &Array) -> bool {
+    pub fn find_list_in_list(reference: &Vec<Arc<str>>, to_find_values: &Array) -> bool {
         for value in &to_find_values.0 {
-            if !reference.contains(&Cow::Borrowed(value.as_ref())) {
+            if !reference.contains(value) {
                 return false;
             }
         }
@@ -201,13 +201,13 @@ impl Search {
                 Some(Self::find_list_in_list(actor.actor_groups(), value))
             }
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.actor_groups().contains(&Cow::Borrowed(value.as_ref())))
+                Some(actor.actor_groups().contains(value))
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::Array(value))) => {
                 Some(Self::find_list_in_list(actor.actor_roles(), value))
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.actor_roles().contains(&Cow::Borrowed(value.as_ref())))
+                Some(actor.actor_roles().contains(value))
             }
             _ => None,
         }

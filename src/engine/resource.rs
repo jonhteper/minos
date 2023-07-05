@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 use derived::Ctor;
 use getset::{Getters, MutGetters};
@@ -10,26 +10,26 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
 #[getset(get = "pub")]
-pub struct Resource<'a> {
-    resource_id: Option<Cow<'a, str>>,
-    resource_type: Cow<'a, str>,
-    resource_owner: Option<Cow<'a, str>>,
+pub struct Resource {
+    resource_id: Option<Arc<str>>,
+    resource_type: Arc<str>,
+    resource_owner: Option<Arc<str>>,
 }
 
-impl<'a> Resource<'a> {
+impl Resource {
     pub(crate) fn get_attribute(&self, attr: ResourceAttribute) -> Option<Value> {
         match attr {
             ResourceAttribute::Id => self
                 .resource_id
                 .as_ref()
-                .map(|id| Value::String(Arc::from(id.as_ref()))),
-            ResourceAttribute::Type => Some(Value::Identifier(Identifier(
-                self.resource_type.as_ref().into(),
-            ))),
+                .map(|id| Value::String(id.clone())),
+            ResourceAttribute::Type => {
+                Some(Value::Identifier(Identifier(self.resource_type.clone())))
+            }
             ResourceAttribute::Owner => self
                 .resource_owner
                 .as_ref()
-                .map(|owner| Value::String(Arc::from(owner.as_ref()))),
+                .map(|owner| Value::String(owner.clone())),
         }
     }
 }
@@ -39,10 +39,10 @@ pub trait AsResource {
 }
 
 pub trait IntoResource {
-    fn into_resource<'a>(self) -> Resource<'a>;
+    fn into_resource(self) -> Resource;
 }
 
 pub trait TryIntoResource {
     type Error;
-    fn try_into_resource<'a>(self) -> Result<Resource<'a>, Self::Error>;
+    fn try_into_resource(self) -> Result<Resource, Self::Error>;
 }
