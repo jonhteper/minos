@@ -15,7 +15,7 @@ pub(crate) mod v0_16;
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
-        Regex::new(r"sintaxis\s*=\s*(?P<VERSION>\d+\.+\d+)").expect("regex sintax error");
+        Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+)").expect("regex syntax error");
 }
 
 #[derive(Debug)]
@@ -35,7 +35,7 @@ impl MinosParser {
     /// Return the list of [Environment] inside a valid minos file.
     pub fn parse_file(path: &Path) -> MinosResult<Storage> {
         let file_content = fs::read_to_string(path)?;
-        let version = Self::get_file_version(&file_content).ok_or(Error::SintaxisNotSupported)?;
+        let version = Self::get_file_version(&file_content).ok_or(Error::SyntaxNotSupported)?;
 
         Self::parse_str(version, &file_content)
     }

@@ -31,7 +31,7 @@ pub enum Error {
     MissingToken,
 
     #[error("sintaxis not supported")]
-    SintaxisNotSupported,
+    SyntaxNotSupported,
 
     #[error("permission '{0}' not found")]
     PermissionNotFound(String),
