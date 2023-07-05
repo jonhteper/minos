@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use derived::Ctor;
 use getset::Getters;
 
-use crate::parser::tokens::Identifier;
+use crate::{
+    parser::tokens::{Identifier, Token},
+    Error,
+};
 
 use super::resource::{AttributedResource, Resource};
 
@@ -50,5 +53,31 @@ impl Storage {
 
         self.attributed_resources
             .insert(resource.identifier().clone(), resource);
+    }
+}
+
+impl TryFrom<Token> for Storage {
+    type Error = Error;
+
+    fn try_from(token: Token) -> Result<Self, Self::Error> {
+        let inner_tokens = token.inner_file().ok_or(Error::InvalidToken {
+            expected: "File",
+            found: token.to_string(),
+        })?;
+
+        let mut storage = Storage::default();
+        for inner_token in &inner_tokens[1..inner_tokens.len() - 1] {
+            match inner_token {
+                Token::Resource(_) => {
+                    storage.add_resource(Resource::try_from(inner_token)?);
+                }
+                Token::AttributedResource(_) => {
+                    storage.add_attributed_resource(AttributedResource::try_from(inner_token)?);
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        Ok(storage)
     }
 }

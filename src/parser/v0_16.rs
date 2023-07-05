@@ -3,10 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 
-use crate::{
-    language::{file::File, storage::Storage},
-    Error, MinosResult,
-};
+use crate::{language::storage::Storage, Error, MinosResult};
 
 use super::tokens::{
     ActorAttribute, Array, FileVersion, Identifier, Operator, ResourceAttribute, Token,
@@ -14,7 +11,7 @@ use super::tokens::{
 
 #[derive(Debug, Parser)]
 #[grammar = "../assets/minos-v0_16.pest"]
-pub struct MinosParserV0_16;
+pub(crate) struct MinosParserV0_16;
 
 impl MinosParserV0_16 {
     fn parse_tokens(pair: Pair<Rule>) -> MinosResult<Vec<Token>> {
@@ -67,7 +64,9 @@ impl MinosParserV0_16 {
                     .ok_or(Error::MissingToken)?;
                 Token::String(Arc::from(inner_str))
             }
-            Rule::inner_string | Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => Token::Null,
+            Rule::inner_string | Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => {
+                Token::Null
+            }
         };
 
         Ok(token)
@@ -76,7 +75,7 @@ impl MinosParserV0_16 {
     pub fn parse_file_content(content: &str) -> MinosResult<Storage> {
         let file_rules = Self::parse(Rule::file, content)?.next().unwrap();
         let file_token = Self::parse_token(file_rules)?;
-        let storage = File::get_storage(file_token)?;
+        let storage = Storage::try_from(file_token)?;
 
         Ok(storage)
     }
