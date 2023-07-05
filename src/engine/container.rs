@@ -50,10 +50,10 @@ impl Container {
         for path in &paths {
             if path.is_dir() {
                 let dir_storage = MinosParser::parse_dir(path)?;
-                storage.extend_with(dir_storage);
+                storage.merge(dir_storage);
             } else if path.is_file() {
                 let file_storage = MinosParser::parse_file(path)?;
-                storage.extend_with(file_storage);
+                storage.merge(file_storage);
             }
         }
 

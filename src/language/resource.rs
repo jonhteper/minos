@@ -51,19 +51,12 @@ impl Resource {
         self.environments.insert(env.identifier().clone(), env);
     }
 
-
-    /// Join two [Resource]'s if both have the same [Identifier].
-    /// Returns `true` if the two resources are joined.
-    pub fn join(&mut self, resource: Resource) -> bool {
-        if self.identifier() != resource.identifier() {
-            return false;
-        }
-
+    /// Merge two [Environment]. If exist repeatedly environments,
+    ///  the inner rules will be merged.
+    pub fn merge(&mut self, resource: Resource) {
         for (_, env) in resource.environments {
             self.add_environment(env);
         }
-
-        true
     }
 }
 
@@ -90,6 +83,27 @@ pub struct AttributedResource {
     identifier: Identifier,
     id: Arc<str>,
     environments: HashMap<Identifier, Environment>,
+}
+
+impl AttributedResource {
+    /// Adds an [Environment] into the [AttributedResource].
+    pub fn add_environment(&mut self, environment: Environment) {
+        let mut env = environment;
+        if let Some(environment) = self.environments.get_mut(env.identifier()) {
+            environment.add_policies(env.policies_mut());
+            return;
+        }
+
+        self.environments.insert(env.identifier().clone(), env);
+    }
+
+    /// Merge two [Environment]. If exist repeatedly environments,
+    ///  the inner rules will be merged.
+    pub fn merge(&mut self, resource: AttributedResource) {
+        for (_, env) in resource.environments {
+            self.add_environment(env);
+        }
+    }
 }
 
 impl TryFrom<&Token> for AttributedResource {

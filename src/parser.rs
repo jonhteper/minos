@@ -53,7 +53,7 @@ impl MinosParser {
             let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
             if is_minos_file {
                 let file_environments = Self::parse_file(&path)?;
-                storage.extend_with(file_environments);
+                storage.merge(file_environments);
             }
         }
 
