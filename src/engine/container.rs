@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData, path::PathBuf};
+use std::{marker::PhantomData, path::PathBuf};
 
 use getset::Getters;
 

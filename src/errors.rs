@@ -2,8 +2,6 @@ use std::io;
 
 use parse_display::ParseError;
 use thiserror::Error as ThisError;
-
-use crate::language::policy::Permission;
 use crate::parser::v0_16;
 
 pub type MinosResult<T> = Result<T, Error>;

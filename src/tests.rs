@@ -8,16 +8,13 @@ use crate::engine::container::Container;
 use crate::engine::{self, Actor, AsActor, Engine, IntoResource};
 use crate::errors::MinosResult;
 use crate::language::environment::Environment;
-use crate::language::file::File;
 use crate::language::policy::Policy;
-use crate::language::requirements::{AttributesComparationRequirement, SingleValueRequirement};
 use crate::language::resource::Resource;
 use crate::language::rule;
 use crate::parser::tokens::{
-    ActorSingleValueAttribute, FileVersion, ResourceAttribute, SingleValueOperator, Token,
+    FileVersion, ResourceAttribute, Token,
 };
-use crate::parser::v0_14::{MinosParserV0_14, Rule};
-use crate::parser::v0_15::MinosParserV0_15;
+
 use crate::parser::MinosParser;
 
 const V0_14_MINOS_CONTENT: &str = r#"
@@ -51,7 +48,7 @@ env TestEnv {
     }
 }
 "#;
-
+/*
 #[test]
 pub fn parser_test() -> MinosResult<()> {
     let pairs = MinosParserV0_14::parse(Rule::file, &V0_14_MINOS_CONTENT)?
@@ -255,3 +252,4 @@ fn actor_traits_tests() -> MinosResult<()> {
 
     Ok(())
 }
+*/

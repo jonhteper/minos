@@ -1,7 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
 use derived::Ctor;
-use getset::{CopyGetters, Getters};
+use getset::Getters;
 
 use crate::{
     engine::{Actor, Resource},
@@ -110,16 +110,6 @@ pub struct Assertion {
 }
 
 impl Assertion {
-    fn resource_attr_attr_comparison(
-        resource_attr: &ResourceAttribute,
-        attr: &Attribute,
-    ) -> Option<bool> {
-        match (resource_attr, attr) {
-            (ResourceAttribute::Id, Attribute::Resource(ResourceAttribute::Id)) => todo!(),
-            _ => None,
-        }
-    }
-
     /// Returns an assertion result if the operation are permited.
     pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
         match (&self.left, &self.right) {
@@ -207,23 +197,18 @@ impl Search {
 
     pub fn apply(&self, actor: &Actor) -> Option<bool> {
         match (&self.left, &self.right) {
-            (
-                Attribute::Actor(ActorAttribute::Groups),
-                ComparableValue::Value(Value::Array(value)),
-            ) => Some(Self::find_list_in_list(actor.actor_groups(), value)),
-            (
-                Attribute::Actor(ActorAttribute::Groups),
-                ComparableValue::Value(Value::String(value)),
-            ) => Some(actor.actor_groups().contains(&Cow::Borrowed(value.as_ref())),
-            ),
-            (
-                Attribute::Actor(ActorAttribute::Roles),
-                ComparableValue::Value(Value::Array(value)),
-            ) => Some(Self::find_list_in_list(actor.actor_roles(), value)),
-            (
-                Attribute::Actor(ActorAttribute::Roles),
-                ComparableValue::Value(Value::String(value)),
-            ) => Some(actor.actor_roles().contains(&Cow::Borrowed(value.as_ref()))),
+            (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::Array(value))) => {
+                Some(Self::find_list_in_list(actor.actor_groups(), value))
+            }
+            (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::String(value))) => {
+                Some(actor.actor_groups().contains(&Cow::Borrowed(value.as_ref())))
+            }
+            (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::Array(value))) => {
+                Some(Self::find_list_in_list(actor.actor_roles(), value))
+            }
+            (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
+                Some(actor.actor_roles().contains(&Cow::Borrowed(value.as_ref())))
+            }
             _ => None,
         }
     }
