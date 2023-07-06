@@ -8,7 +8,7 @@ use crate::{
     parser::tokens::{Identifier, Token},
 };
 
-use super::environment::Environment;
+use super::environment::{Environment, DEFAULT_ENV_IDENTIFIER};
 
 pub type ResourceId = String;
 pub type ResourceName = String;
@@ -58,13 +58,24 @@ impl Resource {
             self.add_environment(env);
         }
     }
+
+    pub fn default_environment(&self) -> Option<&Environment> {
+        self.environments.get(&Identifier(DEFAULT_ENV_IDENTIFIER.into()))
+    }
+
+    pub fn get_environment(&self, env: &str) -> Option<&Environment> {
+        self.environments.get(&Identifier::from(env))
+    }
 }
 
 impl TryFrom<&Token> for Resource {
     type Error = Error;
 
     fn try_from(token: &Token) -> Result<Self, Self::Error> {
-        let inner_tokens = token.inner_resource().unwrap();
+        let inner_tokens = token.inner_resource().ok_or(Error::InvalidToken {
+            expected: "Resource",
+            found: token.to_string(),
+        })?;
 
         let identifier = inner_tokens[0].inner_identifier().unwrap().clone();
         let env_list = Self::collect_envs_from_tokens(inner_tokens.iter().skip(1))?;
@@ -104,13 +115,24 @@ impl AttributedResource {
             self.add_environment(env);
         }
     }
+
+    pub fn default_environment(&self) -> Option<&Environment> {
+        self.environments.get(&Identifier(DEFAULT_ENV_IDENTIFIER.into()))
+    }
+
+    pub fn get_environment(&self, env: &str) -> Option<&Environment> {
+        self.environments.get(&Identifier::from(env))
+    }
 }
 
 impl TryFrom<&Token> for AttributedResource {
     type Error = Error;
 
     fn try_from(token: &Token) -> Result<Self, Self::Error> {
-        let inner_tokens = token.inner_resource().unwrap();
+        let inner_tokens = token.inner_attributed_resource().ok_or(Error::InvalidToken {
+            expected: "AttributedResource",
+            found: token.to_string(),
+        })?;
 
         let identifier = inner_tokens[0].inner_identifier().unwrap().clone();
         let id = inner_tokens[1].inner_str().unwrap().clone();

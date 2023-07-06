@@ -14,6 +14,12 @@ use super::rule::Rule;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Permission(pub Arc<str>);
+impl From<&str> for Permission {
+    fn from(value: &str) -> Self {
+        Self(value.into())
+    }
+}
+
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Policy {
@@ -62,9 +68,7 @@ impl TryFrom<&Token> for Policy {
             found: token.to_string(),
         })?;
 
-        let Array(permissions) = inner_tokens[0].inner_allow().unwrap()[0]
-            .inner_array()
-            .unwrap();
+        let Array(permissions) = inner_tokens[0].inner_allow().unwrap()[0].inner_array().unwrap();
 
         let rules = inner_tokens
             .iter()

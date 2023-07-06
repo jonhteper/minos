@@ -189,6 +189,18 @@ pub struct Array(pub Vec<Arc<str>>);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Identifier(pub Arc<str>);
 
+impl From<&str> for Identifier {
+    fn from(value: &str) -> Self {
+        Self(value.into())
+    }
+}
+
+impl From<&Arc<str>> for Identifier {
+    fn from(value: &Arc<str>) -> Self {
+        Self(value.clone())
+    }
+}
+
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorAttribute {
     #[display("actor.type")]

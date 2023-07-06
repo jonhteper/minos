@@ -1,8 +1,10 @@
 use std::env;
 
 use crate::{
-    language::environment::DEFAULT_ENV_IDENTIFIER, parser::tokens::FileVersion, Container, MinosParser,
-    MinosResult,
+    engine::{Actor, AuthorizeRequest, Engine, Resource},
+    language::{environment::DEFAULT_ENV_IDENTIFIER, policy::Permission},
+    parser::tokens::FileVersion,
+    Container, MinosParser, MinosResult,
 };
 
 const MINOS_V0_16_FILE_CONTENT: &str = r#"
@@ -20,6 +22,10 @@ resource User {
             rule {
                 actor.type = resource.type;
                 actor.id = resource.id;
+            }
+
+            rule {
+                resource.owner = actor.id;
             }
         }
     }
@@ -41,8 +47,8 @@ fn parse_file_content_works() -> MinosResult<()> {
         .policies();
     assert_eq!(policies.len(), 1);
     let rules = policies.first().unwrap().rules();
-    assert_eq!(rules.len(), 2);
-    
+    assert_eq!(rules.len(), 3);
+
     Ok(())
 }
 
@@ -54,6 +60,32 @@ fn build_container_works() -> MinosResult<()> {
     let container = Container::new("1".to_string(), "Test Container".to_string(), vec![path]).load()?;
 
     assert!(container.storage().resources().len() > 0);
+
+    Ok(())
+}
+
+/// Test to verify that the authorization works correctly.
+#[test]
+fn simple_authorize_works() -> MinosResult<()> {
+    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
+    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let engine = Engine::new(&storage);
+    let permissions = engine.authorize(AuthorizeRequest {
+        env_name: None,
+        resource,
+        actor: user,
+    })?;
+
+    assert_eq!(
+        permissions,
+        vec![
+            Permission::from("create"),
+            Permission::from("read"),
+            Permission::from("update"),
+            Permission::from("delete")
+        ]
+    );
 
     Ok(())
 }

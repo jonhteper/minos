@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use derived::Ctor;
 use getset::Getters;
@@ -15,7 +15,7 @@ use super::resource::{AttributedResource, Resource};
 #[getset(get = "pub")]
 pub struct Storage {
     resources: HashMap<Identifier, Resource>,
-    attributed_resources: HashMap<Identifier, AttributedResource>,
+    attributed_resources: HashMap<(Identifier, Arc<str>), AttributedResource>,
 }
 
 impl Storage {
@@ -44,16 +44,18 @@ impl Storage {
     /// Add a [AttributedResource] into [Storage]. if the resource's [Identifier] already exists,
     /// the two resources will be merged.
     pub fn add_attributed_resource(&mut self, resource: AttributedResource) {
-        if let Some(inner_resource) = self.attributed_resources.get_mut(resource.identifier()) {
-            if inner_resource.id() == resource.id() {
-                inner_resource.merge(resource);
-                return;
-            }
+        if let Some(inner_resource) = self.attributed_resources.get_mut(&(resource.identifier().clone(), resource.id().clone())) {
+            inner_resource.merge(resource);
+            return;
         }
 
         self.attributed_resources
-            .insert(resource.identifier().clone(), resource);
+            .insert((resource.identifier().clone(), resource.id().clone()), resource);
     }
+
+    //pub fn find_permissions(&self)
+
+
 }
 
 impl TryFrom<Token> for Storage {
