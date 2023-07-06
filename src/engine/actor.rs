@@ -23,11 +23,11 @@ impl Actor {
             ActorAttribute::Type => Value::Identifier(Identifier(self.actor_type.clone())),
             ActorAttribute::Id => Value::String(self.actor_id.clone()),
             ActorAttribute::Groups => {
-                let arr = self.actor_groups.iter().map(|v| v.clone()).collect();
+                let arr = self.actor_groups.to_vec();
                 Value::Array(Array(arr))
             }
             ActorAttribute::Roles => {
-                let arr = self.actor_roles.iter().map(|v| v.clone()).collect();
+                let arr = self.actor_roles.to_vec();
                 Value::Array(Array(arr))
             }
         }

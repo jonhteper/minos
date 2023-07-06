@@ -73,7 +73,7 @@ impl TryFrom<&Token> for Policy {
         let rules = inner_tokens
             .iter()
             .skip(1)
-            .map(|token| Rule::try_from(token).map(|rule| Arc::new(rule)))
+            .map(|token| Rule::try_from(token).map(Arc::new))
             .collect::<MinosResult<Vec<Arc<Rule>>>>()?;
 
         let mut rules_map = HashMap::new();

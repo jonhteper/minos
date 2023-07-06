@@ -105,7 +105,7 @@ impl<'s> Engine<'s> {
             return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
         }
 
-        return Ok(permissions);
+        Ok(permissions)
     }
 
     fn authorize_resource(&self, request: InternalAuthorizeRequest) -> MinosResult<Vec<Permission>> {
@@ -274,14 +274,13 @@ impl<'s> Engine<'s> {
         } = request;
 
         for permission in permissions {
-            if !self
+            if self
                 .find_permission(FindPermissionRequest {
-                    env_name: env_name.clone(),
+                    env_name,
                     actor: actor.clone(),
                     resource: resource.clone(),
                     permission: permission.clone(),
-                })
-                .is_ok()
+                }).is_err()
             {
                 return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
             }
