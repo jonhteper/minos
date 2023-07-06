@@ -185,7 +185,7 @@ pub struct Search {
 }
 
 impl Search {
-    pub fn find_list_in_list(reference: &Vec<Arc<str>>, to_find_values: &Array) -> bool {
+    pub fn find_list_in_list(reference: &[Arc<str>], to_find_values: &Array) -> bool {
         for value in &to_find_values.0 {
             if !reference.contains(value) {
                 return false;
