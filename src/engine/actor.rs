@@ -32,6 +32,10 @@ impl Actor {
             }
         }
     }
+
+    pub fn to_vec_arc(list: &[String]) -> Vec<Arc<str>> {
+        list.iter().map(|s| Arc::from(s.as_str())).collect()
+    }
 }
 
 pub trait AsActor {
