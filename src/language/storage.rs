@@ -37,14 +37,16 @@ impl Storage {
             return;
         }
 
-        self.resources
-            .insert(resource.identifier().clone(), resource);
+        self.resources.insert(resource.identifier().clone(), resource);
     }
 
     /// Add a [AttributedResource] into [Storage]. if the resource's [Identifier] already exists,
     /// the two resources will be merged.
     pub fn add_attributed_resource(&mut self, resource: AttributedResource) {
-        if let Some(inner_resource) = self.attributed_resources.get_mut(&(resource.identifier().clone(), resource.id().clone())) {
+        if let Some(inner_resource) = self
+            .attributed_resources
+            .get_mut(&(resource.identifier().clone(), resource.id().clone()))
+        {
             inner_resource.merge(resource);
             return;
         }
@@ -54,8 +56,6 @@ impl Storage {
     }
 
     //pub fn find_permissions(&self)
-
-
 }
 
 impl TryFrom<Token> for Storage {

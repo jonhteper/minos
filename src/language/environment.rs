@@ -22,17 +22,20 @@ pub struct Environment {
 impl Environment {
     fn from_named_env(tokens: &Vec<Token>) -> MinosResult<Self> {
         let identifier = tokens[0].inner_identifier().unwrap().clone();
-        let policies =
-            tokens.iter().skip(1).map(Policy::try_from).collect::<MinosResult<Vec<Policy>>>()?;
+        let policies = tokens
+            .iter()
+            .skip(1)
+            .map(Policy::try_from)
+            .collect::<MinosResult<Vec<Policy>>>()?;
 
-        Ok(Self {
-            identifier,
-            policies,
-        })
+        Ok(Self { identifier, policies })
     }
 
     fn from_default_env(tokens: &Vec<Token>) -> MinosResult<Self> {
-        let policies = tokens.iter().map(Policy::try_from).collect::<MinosResult<Vec<Policy>>>()?;
+        let policies = tokens
+            .iter()
+            .map(Policy::try_from)
+            .collect::<MinosResult<Vec<Policy>>>()?;
 
         Ok(Self {
             identifier: Identifier(DEFAULT_ENV_IDENTIFIER.into()),
@@ -47,7 +50,6 @@ impl Environment {
     pub fn add_policies(&mut self, policies: &mut Vec<Policy>) {
         self.policies.append(policies);
     }
-
 }
 
 impl TryFrom<&Token> for Environment {

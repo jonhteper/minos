@@ -1,7 +1,7 @@
 use std::env;
 
 use crate::{
-    engine::{Actor, AuthorizeRequest, Engine, Resource, FindPermissionRequest, FindPermissionsRequest},
+    engine::{Actor, AuthorizeRequest, Engine, FindPermissionRequest, FindPermissionsRequest, Resource},
     language::{environment::DEFAULT_ENV_IDENTIFIER, policy::Permission},
     parser::tokens::FileVersion,
     Container, MinosParser, MinosResult,

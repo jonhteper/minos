@@ -9,7 +9,6 @@ use crate::language::storage::Storage;
 
 use self::tokens::FileVersion;
 
-
 pub mod tokens;
 pub(crate) mod v0_16;
 
@@ -60,10 +59,7 @@ impl MinosParser {
         Ok(storage)
     }
 
-    pub fn parse_str(
-        version: FileVersion,
-        file_content: &str,
-    ) -> MinosResult<Storage> {
+    pub fn parse_str(version: FileVersion, file_content: &str) -> MinosResult<Storage> {
         match version {
             FileVersion::V0_16 => v0_16::MinosParserV0_16::parse_file_content(file_content),
         }

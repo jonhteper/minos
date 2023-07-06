@@ -28,7 +28,7 @@ pub struct Container<State = EmptyContainer> {
 }
 
 impl Container {
-    pub fn new(id: String, description: String, paths: Vec<PathBuf>) -> Container< EmptyContainer> {
+    pub fn new(id: String, description: String, paths: Vec<PathBuf>) -> Container<EmptyContainer> {
         Container {
             id,
             description,

@@ -1,8 +1,8 @@
 use std::io;
 
+use crate::parser::v0_16;
 use parse_display::ParseError;
 use thiserror::Error as ThisError;
-use crate::parser::v0_16;
 
 pub type MinosResult<T> = Result<T, Error>;
 
@@ -39,7 +39,6 @@ pub enum Error {
     // 3-party errors
     #[error("io err: {0}")]
     Io(String),
-
 
     #[error(transparent)]
     RuleV0_16(Box<pest::error::Error<v0_16::Rule>>),

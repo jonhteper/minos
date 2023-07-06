@@ -19,13 +19,8 @@ pub struct Resource {
 impl Resource {
     pub(crate) fn get_attribute(&self, attr: ResourceAttribute) -> Option<Value> {
         match attr {
-            ResourceAttribute::Id => self
-                .resource_id
-                .as_ref()
-                .map(|id| Value::String(id.clone())),
-            ResourceAttribute::Type => {
-                Some(Value::Identifier(Identifier(self.resource_type.clone())))
-            }
+            ResourceAttribute::Id => self.resource_id.as_ref().map(|id| Value::String(id.clone())),
+            ResourceAttribute::Type => Some(Value::Identifier(Identifier(self.resource_type.clone()))),
             ResourceAttribute::Owner => self
                 .resource_owner
                 .as_ref()
