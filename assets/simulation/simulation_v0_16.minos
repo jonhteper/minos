@@ -1,0 +1,94 @@
+syntax = 0.16;
+
+resource File {
+    env DEFAULT {
+        policy  {
+            allow = ["read", "write"];
+            
+            rule {
+                actor.type = User;
+                resource.owner = actor.id;
+            }
+
+            rule {
+                actor.type = User;
+                actor.groups *= resource.owner;
+            }
+        }
+
+        policy {
+            allow = ["read"];
+
+            rule {
+                actor.type = User;
+                actor.groups *= resource.type;
+            }
+        }
+
+        policy {
+            allow = ["delete"];
+
+            rule  {
+                actor.type = User;
+                actor.roles *= "admin";
+            }
+        }
+    }
+    
+    env TEST {
+        policy {
+            allow = ["create", "read", "write", "delete"];
+
+            rule {
+                actor.type = User;
+            }
+        }
+    }
+}
+
+resource Application {
+    env STD {
+        policy {
+            allow = ["install", "upgrade", "uninstall"];
+
+            rule {
+                actor.type = SuperUser;
+            }
+
+            rule {
+                actor.type = User;
+                actor.roles *= "application manager";
+            }
+        }
+
+        policy {
+            allow = ["execute"];
+
+            rule {
+                actor.type = User;
+            }
+        }
+    }
+
+    env ROOT {
+        policy {
+            allow = ["install", "upgrade", "uninstall", "execute"];
+
+            rule {
+                actor.type = SuperUser;
+            }
+        }
+    }
+}
+
+resource Application {
+    id = "app.application-store";
+
+    policy {
+        allow = ["upgrade"];
+
+        rule {
+            actor.type = SuperUser;
+        }
+    }
+}
