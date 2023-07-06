@@ -49,11 +49,7 @@ resource File {
 resource Application {
     env STD {
         policy {
-            allow = ["install", "upgrade", "uninstall"];
-
-            rule {
-                actor.type = SuperUser;
-            }
+            allow = ["install", "update", "uninstall"];
 
             rule {
                 actor.type = User;
@@ -72,7 +68,7 @@ resource Application {
 
     env ROOT {
         policy {
-            allow = ["install", "upgrade", "uninstall", "execute"];
+            allow = ["install", "update", "uninstall", "execute"];
 
             rule {
                 actor.type = SuperUser;
@@ -85,10 +81,18 @@ resource Application {
     id = "app.application-store";
 
     policy {
-        allow = ["upgrade"];
+        allow = ["update"];
 
         rule {
             actor.type = SuperUser;
+        }
+    }
+
+    policy {
+        allow = ["execute"];
+
+        rule {
+            actor.type = User;
         }
     }
 }
