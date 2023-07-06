@@ -208,23 +208,29 @@ impl Search {
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
                 Some(actor.actor_roles().contains(value))
-            },
-            (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Attribute(Attribute::Resource(attr)) )=> {
+            }
+            (
+                Attribute::Actor(ActorAttribute::Groups),
+                ComparableValue::Attribute(Attribute::Resource(attr)),
+            ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
                     Some(Value::String(value)) => Some(actor.actor_groups().contains(&value)),
                     Some(Value::Identifier(value)) => Some(actor.actor_groups().contains(&value.0)),
                     _ => None,
                 }
-            },
-            (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Attribute(Attribute::Resource(attr)) )=> {
+            }
+            (
+                Attribute::Actor(ActorAttribute::Roles),
+                ComparableValue::Attribute(Attribute::Resource(attr)),
+            ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
                     Some(Value::String(value)) => Some(actor.actor_roles().contains(&value)),
                     Some(Value::Identifier(value)) => Some(actor.actor_roles().contains(&value.0)),
                     _ => None,
                 }
-            },
+            }
             _ => None,
         }
     }
