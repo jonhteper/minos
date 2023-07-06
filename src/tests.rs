@@ -323,7 +323,7 @@ fn application_simulation_works() {
         is_sudoer: false,
         roles: vec!["application manager".to_string()],
     };
-    
+
     let mut chromium = Application {
         id: "app.chromium".to_string(),
         name: "Chromium".to_string(),
@@ -346,13 +346,11 @@ fn application_simulation_works() {
     let operation_result = firefox.execute(&ENGINE_V0_16, &jane_user.as_actor());
     assert!(operation_result.is_ok());
 
-    
     chromium.executing_environment = "ROOT".to_string();
     let john_sudo = john_user.sudo().unwrap();
     let operation_result = chromium.uninstall(&ENGINE_V0_16, &john_sudo.try_into_actor().unwrap());
     dbg!(&operation_result);
     assert!(operation_result.is_ok());
-
 
     let application_store = Application {
         id: "app.application-store".to_string(),
