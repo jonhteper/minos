@@ -34,9 +34,9 @@ impl Policy {
         &self,
         actor: &Actor,
         resource: &Resource,
-        permission: Permission,
+        permission: &Permission,
     ) -> bool {
-        if let Some(rules) = self.rules_map.get(&permission) {
+        if let Some(rules) = self.rules_map.get(permission) {
             for rule in rules {
                 if rule.apply(actor, resource) {
                     return true;

@@ -1,7 +1,7 @@
 use std::env;
 
 use crate::{
-    engine::{Actor, AuthorizeRequest, Engine, Resource},
+    engine::{Actor, AuthorizeRequest, Engine, Resource, FindPermissionRequest, FindPermissionsRequest},
     language::{environment::DEFAULT_ENV_IDENTIFIER, policy::Permission},
     parser::tokens::FileVersion,
     Container, MinosParser, MinosResult,
@@ -88,4 +88,36 @@ fn simple_authorize_works() -> MinosResult<()> {
     );
 
     Ok(())
+}
+
+#[test]
+fn simple_find_permission_works() {
+    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
+    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let engine = Engine::new(&storage);
+    let result = engine.find_permission(FindPermissionRequest {
+        env_name: None,
+        resource,
+        actor: user,
+        permission: Permission::from("create"),
+    });
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn simple_find_permissions_works() {
+    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
+    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let engine = Engine::new(&storage);
+    let result = engine.find_permissions(FindPermissionsRequest {
+        env_name: None,
+        resource,
+        actor: user,
+        permissions: &[Permission::from("create"), Permission::from("read")],
+    });
+
+    assert!(result.is_ok());
 }
