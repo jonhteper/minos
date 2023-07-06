@@ -213,6 +213,7 @@ impl Search {
                 let value = resource.get_attribute(*attr);
                 match value {
                     Some(Value::String(value)) => Some(actor.actor_groups().contains(&value)),
+                    Some(Value::Identifier(value)) => Some(actor.actor_groups().contains(&value.0)),
                     _ => None,
                 }
             },
@@ -220,6 +221,7 @@ impl Search {
                 let value = resource.get_attribute(*attr);
                 match value {
                     Some(Value::String(value)) => Some(actor.actor_roles().contains(&value)),
+                    Some(Value::Identifier(value)) => Some(actor.actor_roles().contains(&value.0)),
                     _ => None,
                 }
             },
