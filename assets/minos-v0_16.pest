@@ -40,7 +40,7 @@ negation  = {
   | ((actor_id | resource_id | resource_owner) ~ negation_operator ~ string)
   | ((actor_groups | actor_roles) ~ negation_operator ~ array)
 }
-search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string) }
+search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
 
 actor_id     = { "actor.id" }
 actor_type   = { "actor.type" }

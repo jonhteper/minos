@@ -23,7 +23,7 @@ impl Requirement {
         match self {
             Requirement::Assertion(assertion) => assertion.apply(actor, resource),
             Requirement::Negation(negation) => negation.apply(actor, resource),
-            Requirement::Search(search) => search.apply(actor),
+            Requirement::Search(search) => search.apply(actor, resource),
         }
     }
 }
@@ -195,7 +195,7 @@ impl Search {
         true
     }
 
-    pub fn apply(&self, actor: &Actor) -> Option<bool> {
+    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::Array(value))) => {
                 Some(Self::find_list_in_list(actor.actor_groups(), value))
@@ -208,7 +208,21 @@ impl Search {
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
                 Some(actor.actor_roles().contains(value))
-            }
+            },
+            (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Attribute(Attribute::Resource(attr)) )=> {
+                let value = resource.get_attribute(*attr);
+                match value {
+                    Some(Value::String(value)) => Some(actor.actor_groups().contains(&value)),
+                    _ => None,
+                }
+            },
+            (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Attribute(Attribute::Resource(attr)) )=> {
+                let value = resource.get_attribute(*attr);
+                match value {
+                    Some(Value::String(value)) => Some(actor.actor_roles().contains(&value)),
+                    _ => None,
+                }
+            },
             _ => None,
         }
     }
