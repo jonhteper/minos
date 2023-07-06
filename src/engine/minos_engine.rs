@@ -16,28 +16,28 @@ use super::{Actor, Resource};
 #[derive(Debug)]
 pub struct AuthorizeRequest<'a> {
     pub env_name: Option<&'a str>,
-    pub actor: Actor,
-    pub resource: Resource,
+    pub actor: &'a Actor,
+    pub resource: &'a Resource,
 }
 
 #[derive(Debug)]
 pub struct FindPermissionRequest<'a> {
     pub env_name: Option<&'a str>,
-    pub actor: Actor,
-    pub resource: Resource,
+    pub actor: &'a Actor,
+    pub resource: &'a Resource,
     pub permission: Permission,
 }
 
 #[derive(Debug)]
 pub struct FindPermissionsRequest<'a> {
     pub env_name: Option<&'a str>,
-    pub actor: Actor,
-    pub resource: Resource,
+    pub actor: &'a Actor,
+    pub resource: &'a Resource,
     pub permissions: &'a [Permission],
 }
 
 struct InternalAuthorizeRequest<'a> {
-    pub env_name: &'a Option<&'a str>,
+    pub env_name: Option<&'a str>,
     pub actor: &'a Actor,
     pub resource: &'a Resource,
     pub minos_resource: Either<&'a InternalResource, &'a AttributedResource>,
@@ -135,7 +135,7 @@ impl<'s> Engine<'s> {
             env_name,
             actor,
             resource,
-        } = &request;
+        } = request;
         let mut permissions = vec![];
 
         if let Some(resource_id) = resource.resource_id() {
@@ -277,10 +277,11 @@ impl<'s> Engine<'s> {
             if self
                 .find_permission(FindPermissionRequest {
                     env_name,
-                    actor: actor.clone(),
-                    resource: resource.clone(),
+                    actor,
+                    resource,
                     permission: permission.clone(),
-                }).is_err()
+                })
+                .is_err()
             {
                 return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
             }
