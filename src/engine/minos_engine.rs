@@ -44,7 +44,7 @@ struct InternalAuthorizeRequest<'a> {
 }
 
 struct InternalFindPermissionRequest<'a> {
-    pub env_name: &'a Option<&'a str>,
+    pub env_name: Option<&'a str>,
     pub actor: &'a Actor,
     pub resource: &'a Resource,
     pub minos_resource: Either<&'a InternalResource, &'a AttributedResource>,
@@ -236,7 +236,7 @@ impl<'s> Engine<'s> {
             actor,
             resource,
             permission,
-        } = &request;
+        } = request;
 
         if let Some(resource_id) = resource.resource_id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
@@ -245,7 +245,7 @@ impl<'s> Engine<'s> {
                     actor,
                     resource,
                     minos_resource: Either::Right(attr_resource),
-                    permission,
+                    permission: &permission,
                 });
             }
         }
@@ -256,7 +256,7 @@ impl<'s> Engine<'s> {
                 actor,
                 resource,
                 minos_resource: Either::Left(inner_resource),
-                permission,
+                permission: &permission,
             });
         }
 
