@@ -201,6 +201,12 @@ impl From<&Arc<str>> for Identifier {
     }
 }
 
+impl From<String> for Identifier {
+    fn from(value: String) -> Self {
+        Self(value.into())
+    }
+}
+
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum ActorAttribute {
     #[display("actor.type")]

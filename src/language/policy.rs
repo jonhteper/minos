@@ -20,6 +20,12 @@ impl From<&str> for Permission {
     }
 }
 
+impl From<String> for Permission {
+    fn from(value: String) -> Self {
+        Self(value.into())
+    }
+}
+
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Policy {
