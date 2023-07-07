@@ -10,9 +10,6 @@ use crate::{
 
 use super::environment::{Environment, DEFAULT_ENV_IDENTIFIER};
 
-pub type ResourceId = String;
-pub type ResourceName = String;
-
 #[derive(Debug, Clone, Ctor, Getters, PartialEq)]
 #[getset(get = "pub")]
 pub struct Resource {
