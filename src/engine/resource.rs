@@ -9,22 +9,19 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
-#[getset(get = "pub")]
+#[get = "pub"]
 pub struct Resource {
-    resource_id: Option<Arc<str>>,
-    resource_type: Arc<str>,
-    resource_owner: Option<Arc<str>>,
+    pub id: Option<Arc<str>>,
+    pub type_: Arc<str>,
+    pub owner: Option<Arc<str>>,
 }
 
 impl Resource {
     pub(crate) fn get_attribute(&self, attr: ResourceAttribute) -> Option<Value> {
         match attr {
-            ResourceAttribute::Id => self.resource_id.as_ref().map(|id| Value::String(id.clone())),
-            ResourceAttribute::Type => Some(Value::Identifier(Identifier(self.resource_type.clone()))),
-            ResourceAttribute::Owner => self
-                .resource_owner
-                .as_ref()
-                .map(|owner| Value::String(owner.clone())),
+            ResourceAttribute::Id => self.id.as_ref().map(|id| Value::String(id.clone())),
+            ResourceAttribute::Type => Some(Value::Identifier(Identifier(self.type_.clone()))),
+            ResourceAttribute::Owner => self.owner.as_ref().map(|owner| Value::String(owner.clone())),
         }
     }
 }

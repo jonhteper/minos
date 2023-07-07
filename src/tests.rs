@@ -74,7 +74,7 @@ fn build_container_works() -> MinosResult<()> {
 #[test]
 fn simple_authorize_works() -> MinosResult<()> {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
-    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
     let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
     let engine = Engine::new(&storage);
     let permissions = engine.authorize(AuthorizeRequest {
@@ -99,7 +99,7 @@ fn simple_authorize_works() -> MinosResult<()> {
 #[test]
 fn simple_find_permission_works() {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
-    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
     let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
     let engine = Engine::new(&storage);
     let result = engine.find_permission(FindPermissionRequest {
@@ -115,7 +115,7 @@ fn simple_find_permission_works() {
 #[test]
 fn simple_find_permissions_works() {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
-    let user = Actor::new("User".into(), "Example.user.id".into(), vec![], vec![]);
+    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
     let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
     let engine = Engine::new(&storage);
     let result = engine.find_permissions(FindPermissionsRequest {
@@ -137,7 +137,7 @@ lazy_static! {
 
 #[test]
 fn file_simulation_works() -> MinosResult<()> {
-    let user2 = Actor::new("User".into(), "user2".into(), vec!["File".into()], vec![]);
+    let user2 = Actor::new("user2".into(), "User".into(), vec!["File".into()], vec![]);
     let config_file = Resource::new(Some("app.conf".into()), "File".into(), Some("user1".into()));
 
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
@@ -148,7 +148,7 @@ fn file_simulation_works() -> MinosResult<()> {
     });
     assert!(operation_result.is_ok());
 
-    let user1 = Actor::new("User".into(), "user1".into(), vec![], vec!["admin".into()]);
+    let user1 = Actor::new("user1".into(), "User".into(), vec![], vec!["admin".into()]);
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
         env_name: None,
         actor: &user1,
@@ -157,7 +157,7 @@ fn file_simulation_works() -> MinosResult<()> {
     });
     assert!(operation_result.is_ok());
 
-    let guest_user = Actor::new("User".into(), "GUEST.USER".into(), vec![], vec!["guest".into()]);
+    let guest_user = Actor::new("GUEST.USER".into(), "User".into(), vec![], vec!["guest".into()]);
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
         env_name: None,
         actor: &guest_user,
@@ -205,12 +205,12 @@ impl User {
 
 impl AsActor for User {
     fn as_actor(&self) -> Actor {
-        Actor::new(
-            "User".into(),
-            Arc::from(self.id.as_str()),
-            vec![],
-            Actor::to_vec_arc(&self.roles),
-        )
+        Actor {
+            id: Arc::from(self.id.as_str()),
+            type_: Arc::from("User"),
+            groups: vec![],
+            roles: Actor::to_vec_arc(&self.roles),
+        }
     }
 }
 
@@ -226,12 +226,12 @@ impl TryIntoActor for SuperUser {
             Err("the superuser has expired")?;
         }
 
-        Ok(Actor::new(
-            "SuperUser".into(),
-            Arc::from(self.id.as_str()),
-            vec![],
-            vec![],
-        ))
+        Ok(Actor {
+            id: Arc::from(self.id.as_str()),
+            type_: Arc::from("SuperUser"),
+            groups: vec![],
+            roles: vec![],
+        })
     }
 }
 

@@ -9,25 +9,25 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
-#[getset(get = "pub")]
+#[get = "pub"]
 pub struct Actor {
-    actor_type: Arc<str>,
-    actor_id: Arc<str>,
-    actor_groups: Vec<Arc<str>>,
-    actor_roles: Vec<Arc<str>>,
+    pub id: Arc<str>,
+    pub type_: Arc<str>,
+    pub groups: Vec<Arc<str>>,
+    pub roles: Vec<Arc<str>>,
 }
 
 impl Actor {
     pub(crate) fn get_attribute(&self, attr: ActorAttribute) -> Value {
         match attr {
-            ActorAttribute::Type => Value::Identifier(Identifier(self.actor_type.clone())),
-            ActorAttribute::Id => Value::String(self.actor_id.clone()),
+            ActorAttribute::Type => Value::Identifier(Identifier(self.type_.clone())),
+            ActorAttribute::Id => Value::String(self.id.clone()),
             ActorAttribute::Groups => {
-                let arr = self.actor_groups.to_vec();
+                let arr = self.groups.to_vec();
                 Value::Array(Array(arr))
             }
             ActorAttribute::Roles => {
-                let arr = self.actor_roles.to_vec();
+                let arr = self.roles.to_vec();
                 Value::Array(Array(arr))
             }
         }
@@ -35,6 +35,10 @@ impl Actor {
 
     pub fn to_vec_arc(list: &[String]) -> Vec<Arc<str>> {
         list.iter().map(|s| Arc::from(s.as_str())).collect()
+    }
+
+    pub fn from_generic_list<T: AsRef<str>>(list: &[T]) -> Vec<Arc<str>> {
+        list.iter().map(|s| Arc::from(s.as_ref())).collect()
     }
 }
 

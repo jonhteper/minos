@@ -198,16 +198,16 @@ impl Search {
     pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::Array(value))) => {
-                Some(Self::find_list_in_list(actor.actor_groups(), value))
+                Some(Self::find_list_in_list(actor.groups(), value))
             }
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.actor_groups().contains(value))
+                Some(actor.groups().contains(value))
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::Array(value))) => {
-                Some(Self::find_list_in_list(actor.actor_roles(), value))
+                Some(Self::find_list_in_list(actor.roles(), value))
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.actor_roles().contains(value))
+                Some(actor.roles().contains(value))
             }
             (
                 Attribute::Actor(ActorAttribute::Groups),
@@ -215,8 +215,8 @@ impl Search {
             ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
-                    Some(Value::String(value)) => Some(actor.actor_groups().contains(&value)),
-                    Some(Value::Identifier(value)) => Some(actor.actor_groups().contains(&value.0)),
+                    Some(Value::String(value)) => Some(actor.groups().contains(&value)),
+                    Some(Value::Identifier(value)) => Some(actor.groups().contains(&value.0)),
                     _ => None,
                 }
             }
@@ -226,8 +226,8 @@ impl Search {
             ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
-                    Some(Value::String(value)) => Some(actor.actor_roles().contains(&value)),
-                    Some(Value::Identifier(value)) => Some(actor.actor_roles().contains(&value.0)),
+                    Some(Value::String(value)) => Some(actor.roles().contains(&value)),
+                    Some(Value::Identifier(value)) => Some(actor.roles().contains(&value.0)),
                     _ => None,
                 }
             }

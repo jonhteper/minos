@@ -78,7 +78,7 @@ impl<'s> Engine<'s> {
     ) -> Option<&AttributedResource> {
         self.storage
             .attributed_resources()
-            .get(&(resource.resource_type().into(), resource_id))
+            .get(&(resource.type_().into(), resource_id))
     }
 
     fn authorize_attributed_resource(
@@ -102,7 +102,7 @@ impl<'s> Engine<'s> {
         }
 
         if permissions.is_empty() {
-            return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
+            return Err(Error::ActorNotAuthorized(actor.id().to_string()));
         }
 
         Ok(permissions)
@@ -138,7 +138,7 @@ impl<'s> Engine<'s> {
         } = request;
         let mut permissions = vec![];
 
-        if let Some(resource_id) = resource.resource_id() {
+        if let Some(resource_id) = resource.id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
                 return self.authorize_attributed_resource(InternalAuthorizeRequest {
                     env_name,
@@ -149,7 +149,7 @@ impl<'s> Engine<'s> {
             }
         }
 
-        if let Some(inner_resource) = self.storage.resources().get(&resource.resource_type().into()) {
+        if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
             permissions = self.authorize_resource(InternalAuthorizeRequest {
                 env_name,
                 actor,
@@ -159,7 +159,7 @@ impl<'s> Engine<'s> {
         }
 
         if permissions.is_empty() {
-            return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
+            return Err(Error::ActorNotAuthorized(actor.id().to_string()));
         }
 
         Ok(permissions)
@@ -203,7 +203,7 @@ impl<'s> Engine<'s> {
             }
         }
 
-        Err(Error::ActorNotAuthorized(actor.actor_id().to_string()))
+        Err(Error::ActorNotAuthorized(actor.id().to_string()))
     }
 
     fn find_permission_in_resource(&self, request: InternalFindPermissionRequest) -> MinosResult<()> {
@@ -227,7 +227,7 @@ impl<'s> Engine<'s> {
             }
         }
 
-        Err(Error::ActorNotAuthorized(actor.actor_id().to_string()))
+        Err(Error::ActorNotAuthorized(actor.id().to_string()))
     }
 
     pub fn find_permission(&self, request: FindPermissionRequest) -> MinosResult<()> {
@@ -238,7 +238,7 @@ impl<'s> Engine<'s> {
             permission,
         } = request;
 
-        if let Some(resource_id) = resource.resource_id() {
+        if let Some(resource_id) = resource.id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
                 return self.find_permission_in_attributed_resource(InternalFindPermissionRequest {
                     env_name,
@@ -250,7 +250,7 @@ impl<'s> Engine<'s> {
             }
         }
 
-        if let Some(inner_resource) = self.storage.resources().get(&resource.resource_type().into()) {
+        if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
             return self.find_permission_in_resource(InternalFindPermissionRequest {
                 env_name,
                 actor,
@@ -260,7 +260,7 @@ impl<'s> Engine<'s> {
             });
         }
 
-        Err(Error::ActorNotAuthorized(actor.actor_id().to_string()))
+        Err(Error::ActorNotAuthorized(actor.id().to_string()))
     }
 
     /// WARNING: this function implements [Engine::find_permission] inside, so
@@ -283,7 +283,7 @@ impl<'s> Engine<'s> {
                 })
                 .is_err()
             {
-                return Err(Error::ActorNotAuthorized(actor.actor_id().to_string()));
+                return Err(Error::ActorNotAuthorized(actor.id().to_string()));
             }
         }
 
