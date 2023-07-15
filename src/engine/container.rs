@@ -13,6 +13,7 @@ pub struct EmptyContainer;
 #[derive(Debug, Clone)]
 pub struct StaticContainer;
 
+/// Container is an high-level structure to load minos files.
 #[derive(Debug, Clone, Getters)]
 #[getset(get = "pub")]
 pub struct Container<State = EmptyContainer> {
@@ -28,6 +29,9 @@ pub struct Container<State = EmptyContainer> {
 }
 
 impl Container {
+    /// Container constructor.
+    /// 
+    /// WARNING: is important to provide only absolute paths.
     pub fn new(id: String, description: String, paths: Vec<PathBuf>) -> Container<EmptyContainer> {
         Container {
             id,
@@ -38,6 +42,10 @@ impl Container {
         }
     }
 
+    /// Load all files from the provided paths. This function not scan recursively.
+    /// 
+    /// WARNING: This function not fail if the paths are not absolutes, but the files 
+    /// will not be readed.
     pub fn load(self) -> MinosResult<Container<StaticContainer>> {
         let Container {
             id,
