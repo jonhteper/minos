@@ -63,6 +63,15 @@ impl Resource {
     pub fn get_environment(&self, env: &str) -> Option<&Environment> {
         self.environments.get(&Identifier::from(env))
     }
+
+    pub fn policies_len(&self) -> usize {
+        let mut len = 0;
+        for (_, env) in self.environments() {
+            len += env.policies().len();
+        }
+
+        len
+    }
 }
 
 impl TryFrom<&Token> for Resource {
@@ -119,6 +128,15 @@ impl AttributedResource {
 
     pub fn get_environment(&self, env: &str) -> Option<&Environment> {
         self.environments.get(&Identifier::from(env))
+    }
+
+    pub fn policies_len(&self) -> usize {
+        let mut len = 0;
+        for (_, env) in self.environments() {
+            len += env.policies().len();
+        }
+
+        len
     }
 }
 

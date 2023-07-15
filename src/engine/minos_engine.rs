@@ -289,4 +289,8 @@ impl<'s> Engine<'s> {
 
         Ok(())
     }
+
+    pub fn policies_len(&self) -> usize {
+        self.storage.policies_len()
+    }
 }

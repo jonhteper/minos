@@ -55,7 +55,18 @@ impl Storage {
             .insert((resource.identifier().clone(), resource.id().clone()), resource);
     }
 
-    //pub fn find_permissions(&self)
+    pub fn policies_len(&self) -> usize {
+        let mut len = 0;
+        for (_, resource) in self.resources() {
+            len += resource.policies_len();
+        }
+
+        for (_, attr_resource) in self.attributed_resources() {
+            len += attr_resource.policies_len();
+        }
+
+        len
+    }
 }
 
 impl TryFrom<Token> for Storage {
