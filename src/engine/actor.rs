@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use derived::Ctor;
 use getset::{Getters, MutGetters};
 
 use crate::{
@@ -8,28 +7,33 @@ use crate::{
     parser::tokens::{ActorAttribute, Array, Identifier},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, MutGetters)]
 #[get = "pub"]
 pub struct Actor {
     pub id: Arc<str>,
     pub type_: Arc<str>,
+    pub status: Option<Arc<str>>,
     pub groups: Vec<Arc<str>>,
     pub roles: Vec<Arc<str>>,
 }
 
 impl Actor {
-    pub(crate) fn get_attribute(&self, attr: ActorAttribute) -> Value {
+    pub(crate) fn get_attribute(&self, attr: ActorAttribute) -> Option<Value> {
         match attr {
-            ActorAttribute::Type => Value::Identifier(Identifier(self.type_.clone())),
-            ActorAttribute::Id => Value::String(self.id.clone()),
+            ActorAttribute::Type => Some(Value::Identifier(Identifier(self.type_.clone()))),
+            ActorAttribute::Id => Some(Value::String(self.id.clone())),
             ActorAttribute::Groups => {
                 let arr = self.groups.to_vec();
-                Value::Array(Array(arr))
+                Some(Value::Array(Array(arr)))
             }
             ActorAttribute::Roles => {
                 let arr = self.roles.to_vec();
-                Value::Array(Array(arr))
+                Some(Value::Array(Array(arr)))
             }
+            ActorAttribute::Status => self
+                .status
+                .as_ref()
+                .map(|status| Value::Identifier(Identifier(status.clone()))),
         }
     }
 

@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use derived::Ctor;
 use getset::{Getters, MutGetters};
 
 use crate::{
@@ -8,12 +7,13 @@ use crate::{
     parser::tokens::{Identifier, ResourceAttribute},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Ctor, Getters, MutGetters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, MutGetters)]
 #[get = "pub"]
 pub struct Resource {
     pub id: Option<Arc<str>>,
     pub type_: Arc<str>,
     pub owner: Option<Arc<str>>,
+    pub status: Option<Arc<str>>,
 }
 
 impl Resource {
@@ -22,6 +22,10 @@ impl Resource {
             ResourceAttribute::Id => self.id.as_ref().map(|id| Value::String(id.clone())),
             ResourceAttribute::Type => Some(Value::Identifier(Identifier(self.type_.clone()))),
             ResourceAttribute::Owner => self.owner.as_ref().map(|owner| Value::String(owner.clone())),
+            ResourceAttribute::Status => self
+                .status
+                .as_ref()
+                .map(|status| Value::Identifier(Identifier(status.clone()))),
         }
     }
 }

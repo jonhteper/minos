@@ -94,6 +94,7 @@ resource File {
 
         rule {
             actor.type = User;
+            actor.status = active;
         }
     }
 
@@ -102,6 +103,7 @@ resource File {
 
         rule {
             actor.roles *= ["admin"];
+            actor.status = active;
         }
     }
 }

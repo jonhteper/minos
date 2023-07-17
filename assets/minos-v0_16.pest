@@ -27,29 +27,33 @@ assertion = {
   | (resource_type ~ assertion_operator ~ actor_type)
   | (actor_id ~ assertion_operator ~ (resource_id | resource_owner))
   | ((resource_id | resource_owner) ~ assertion_operator ~ actor_id)
-  | (actor_type ~ assertion_operator ~ identifier)
+  | ((actor_type | actor_status) ~ assertion_operator ~ identifier)
   | ((actor_id | resource_id | resource_owner) ~ assertion_operator ~ string)
   | ((actor_groups | actor_roles) ~ assertion_operator ~ array)
+  | (resource_status ~ assertion_operator ~ identifier)
 }
 negation  = {
     (actor_type ~ negation_operator ~ resource_type)
   | (resource_type ~ negation_operator ~ actor_type)
   | (actor_id ~ negation_operator ~ (resource_id | resource_owner))
   | ((resource_id | resource_owner) ~ negation_operator ~ actor_id)
-  | (actor_type ~ negation_operator ~ identifier)
+  | ((actor_type | actor_status) ~ negation_operator ~ identifier)
   | ((actor_id | resource_id | resource_owner) ~ negation_operator ~ string)
   | ((actor_groups | actor_roles) ~ negation_operator ~ array)
+  | (resource_status ~ negation_operator ~ identifier)
 }
 search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
 
 actor_id     = { "actor.id" }
 actor_type   = { "actor.type" }
+actor_status = { "actor.status" }
 actor_groups = { "actor.groups" }
 actor_roles  = { "actor.roles" }
 
-resource_id    = { "resource.id" }
-resource_type  = { "resource.type" }
-resource_owner = { "resource.owner" }
+resource_id     = { "resource.id" }
+resource_type   = { "resource.type" }
+resource_owner  = { "resource.owner" }
+resource_status = { "resource.status" }
 
 assertion_operator = { "=" }
 negation_operator  = { "!=" }

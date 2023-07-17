@@ -62,16 +62,26 @@ resource Application {
 
             rule {
                 actor.type = User;
+                resource.status = installed;
             }
         }
     }
 
     env ROOT {
         policy {
-            allow = ["install", "update", "uninstall", "execute"];
+            allow = ["install", "update", "uninstall"];
 
             rule {
                 actor.type = SuperUser;
+            }
+        }
+
+        policy {
+            allow = ["execute"];
+
+            rule {
+                actor.type = SuperUser;
+                resource.status = installed;
             }
         }
     }

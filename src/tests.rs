@@ -74,8 +74,19 @@ fn build_container_works() -> MinosResult<()> {
 #[test]
 fn simple_authorize_works() -> MinosResult<()> {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
-    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
-    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let user = Actor {
+        id: "Example.user.id".into(),
+        type_: "User".into(),
+        groups: vec![],
+        roles: vec![],
+        status: None,
+    };
+    let resource = Resource {
+        id: Some("Example.user.id".into()),
+        type_: "User".into(),
+        owner: None,
+        status: None,
+    };
     let engine = Engine::new(&storage);
     let permissions = engine.authorize(AuthorizeRequest {
         env_name: None,
@@ -99,8 +110,19 @@ fn simple_authorize_works() -> MinosResult<()> {
 #[test]
 fn simple_find_permission_works() {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
-    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
-    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let user = Actor {
+        id: "Example.user.id".into(),
+        type_: "User".into(),
+        groups: vec![],
+        roles: vec![],
+        status: None,
+    };
+    let resource = Resource {
+        id: Some("Example.user.id".into()),
+        type_: "User".into(),
+        owner: None,
+        status: None,
+    };
     let engine = Engine::new(&storage);
     let result = engine.find_permission(FindPermissionRequest {
         env_name: None,
@@ -115,8 +137,19 @@ fn simple_find_permission_works() {
 #[test]
 fn simple_find_permissions_works() {
     let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
-    let user = Actor::new("Example.user.id".into(), "User".into(), vec![], vec![]);
-    let resource = Resource::new(Some("Example.user.id".into()), "User".into(), None);
+    let user = Actor {
+        id: "Example.user.id".into(),
+        type_: "User".into(),
+        groups: vec![],
+        roles: vec![],
+        status: None,
+    };
+    let resource = Resource {
+        id: Some("Example.user.id".into()),
+        type_: "User".into(),
+        owner: None,
+        status: None,
+    };
     let engine = Engine::new(&storage);
     let result = engine.find_permissions(FindPermissionsRequest {
         env_name: None,
@@ -137,8 +170,19 @@ lazy_static! {
 
 #[test]
 fn file_simulation_works() -> MinosResult<()> {
-    let user2 = Actor::new("user2".into(), "User".into(), vec!["File".into()], vec![]);
-    let config_file = Resource::new(Some("app.conf".into()), "File".into(), Some("user1".into()));
+    let user2 = Actor {
+        id: "user2".into(),
+        type_: "User".into(),
+        groups: vec!["File".into()],
+        roles: vec![],
+        status: None,
+    };
+    let config_file = Resource {
+        id: Some("app.conf".into()),
+        type_: "File".into(),
+        owner: Some("user1".into()),
+        status: None,
+    };
 
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
         env_name: None,
@@ -148,7 +192,13 @@ fn file_simulation_works() -> MinosResult<()> {
     });
     assert!(operation_result.is_ok());
 
-    let user1 = Actor::new("user1".into(), "User".into(), vec![], vec!["admin".into()]);
+    let user1 = Actor {
+        id: "user1".into(),
+        type_: "User".into(),
+        groups: vec![],
+        roles: vec!["admin".into()],
+        status: None,
+    };
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
         env_name: None,
         actor: &user1,
@@ -157,7 +207,13 @@ fn file_simulation_works() -> MinosResult<()> {
     });
     assert!(operation_result.is_ok());
 
-    let guest_user = Actor::new("GUEST.USER".into(), "User".into(), vec![], vec!["guest".into()]);
+    let guest_user = Actor {
+        id: "GUEST.USER".into(),
+        type_: "User".into(),
+        groups: vec![],
+        roles: vec!["guest".into()],
+        status: None,
+    };
     let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
         env_name: None,
         actor: &guest_user,
@@ -210,6 +266,7 @@ impl AsActor for User {
             type_: Arc::from("User"),
             groups: vec![],
             roles: Actor::to_vec_arc(&self.roles),
+            status: None,
         }
     }
 }
@@ -231,6 +288,7 @@ impl TryIntoActor for SuperUser {
             type_: Arc::from("SuperUser"),
             groups: vec![],
             roles: vec![],
+            status: None,
         })
     }
 }
@@ -240,10 +298,11 @@ struct Application {
     pub name: String,
     pub path: String,
     pub executing_environment: String,
+    pub is_installed: bool,
 }
 
 impl Application {
-    fn install(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
+    fn install(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
             .find_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
@@ -253,6 +312,7 @@ impl Application {
             })
             .map_err(|err| err.to_string())?;
         println!("Installing application {} in {}...", &self.name, &self.path);
+        self.is_installed = true;
 
         Ok(())
     }
@@ -271,7 +331,7 @@ impl Application {
         Ok(())
     }
 
-    fn uninstall(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
+    fn uninstall(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
             .find_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
@@ -281,6 +341,7 @@ impl Application {
             })
             .map_err(|err| err.to_string())?;
         println!("Uninstalling application {} from {}...", &self.name, &self.path);
+        self.is_installed = false;
 
         Ok(())
     }
@@ -302,11 +363,15 @@ impl Application {
 
 impl AsResource for Application {
     fn as_resource(&self) -> Resource {
-        Resource::new(
-            Some(self.id.as_str().into()),
-            "Application".into(),
-            Some("OS".into()),
-        )
+        Resource {
+            id: Some(self.id.as_str().into()),
+            type_: "Application".into(),
+            owner: Some("OS".into()),
+            status: match self.is_installed {
+                true => Some("installed".into()),
+                false => Some("no-installed".into()),
+            },
+        }
     }
 }
 
@@ -329,16 +394,18 @@ fn application_simulation_works() {
         name: "Chromium".to_string(),
         path: "/usr/bin/chromium".to_string(),
         executing_environment: "STD".to_string(),
+        is_installed: true,
     };
 
     let operation_result = chromium.execute(&ENGINE_V0_16, &john_user.as_actor());
     assert!(operation_result.is_ok());
 
-    let firefox = Application {
+    let mut firefox = Application {
         id: "app.firefox".to_string(),
         name: "Firefox".to_string(),
         path: "/usr/bin/firefox".to_string(),
         executing_environment: "STD".to_string(),
+        is_installed: false,
     };
 
     let operation_result = firefox.install(&ENGINE_V0_16, &jane_user.as_actor());
@@ -352,11 +419,12 @@ fn application_simulation_works() {
     dbg!(&operation_result);
     assert!(operation_result.is_ok());
 
-    let application_store = Application {
+    let mut application_store = Application {
         id: "app.application-store".to_string(),
         name: "Market".to_string(),
         path: "/usr/bin/store".to_string(),
         executing_environment: "STD".to_string(),
+        is_installed: true,
     };
 
     let operation_result = application_store.uninstall(&ENGINE_V0_16, &jane_user.as_actor());

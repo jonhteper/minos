@@ -114,13 +114,13 @@ impl Assertion {
     pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(left), ComparableValue::Attribute(Attribute::Resource(rigth))) => {
-                Some(Some(actor.get_attribute(*left)) == resource.get_attribute(*rigth))
+                Some(actor.get_attribute(*left) == resource.get_attribute(*rigth))
             }
             (Attribute::Resource(left), ComparableValue::Attribute(Attribute::Actor(rigth))) => {
-                Some(Some(actor.get_attribute(*rigth)) == resource.get_attribute(*left))
+                Some(actor.get_attribute(*rigth) == resource.get_attribute(*left))
             }
             (Attribute::Actor(attr), ComparableValue::Value(value)) => {
-                Some(&actor.get_attribute(*attr) == value)
+                Some(actor.get_attribute(*attr).as_ref() == Some(value))
             }
             (Attribute::Resource(attr), ComparableValue::Value(value)) => {
                 Some(resource.get_attribute(*attr).as_ref() == Some(value))
@@ -151,13 +151,13 @@ impl Negation {
     pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(left), ComparableValue::Attribute(Attribute::Resource(rigth))) => {
-                Some(Some(actor.get_attribute(*left)) != resource.get_attribute(*rigth))
+                Some(actor.get_attribute(*left) != resource.get_attribute(*rigth))
             }
             (Attribute::Resource(left), ComparableValue::Attribute(Attribute::Actor(rigth))) => {
-                Some(Some(actor.get_attribute(*rigth)) != resource.get_attribute(*left))
+                Some(actor.get_attribute(*rigth) != resource.get_attribute(*left))
             }
             (Attribute::Actor(attr), ComparableValue::Value(value)) => {
-                Some(&actor.get_attribute(*attr) != value)
+                Some(actor.get_attribute(*attr).as_ref() != Some(value))
             }
             (Attribute::Resource(attr), ComparableValue::Value(value)) => {
                 Some(resource.get_attribute(*attr).as_ref() != Some(value))

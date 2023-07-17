@@ -220,6 +220,9 @@ pub enum ActorAttribute {
 
     #[display("actor.roles")]
     Roles,
+
+    #[display("actor.status")]
+    Status,
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
@@ -232,6 +235,9 @@ pub enum ResourceAttribute {
 
     #[display("resource.owner")]
     Owner,
+
+    #[display("resource.status")]
+    Status,
 }
 
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
