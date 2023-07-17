@@ -66,7 +66,7 @@ impl Resource {
 
     pub fn policies_len(&self) -> usize {
         let mut len = 0;
-        for (_, env) in self.environments() {
+        for env in self.environments().values() {
             len += env.policies().len();
         }
 
@@ -132,7 +132,7 @@ impl AttributedResource {
 
     pub fn policies_len(&self) -> usize {
         let mut len = 0;
-        for (_, env) in self.environments() {
+        for env in self.environments().values() {
             len += env.policies().len();
         }
 

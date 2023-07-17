@@ -57,11 +57,11 @@ impl Storage {
 
     pub fn policies_len(&self) -> usize {
         let mut len = 0;
-        for (_, resource) in self.resources() {
+        for resource in self.resources().values() {
             len += resource.policies_len();
         }
 
-        for (_, attr_resource) in self.attributed_resources() {
+        for attr_resource in self.attributed_resources().values() {
             len += attr_resource.policies_len();
         }
 
