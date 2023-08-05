@@ -1,0 +1,79 @@
+syntax = 0.17;
+
+/*
+    pre-processing macro syntax
+
+*/
+
+#NotBannedNotDeleted {
+    actor.status != Banned;
+    actor.status != Deleted;
+}
+
+
+#ByOwner {
+    actor.type = resource.type;
+    actor.id = resource.id;
+}
+
+#BasicPermissions {
+    "create",
+    "read",
+    "update",
+    "delete"
+}
+
+#[AdminPermissions] {
+    "update_data",
+    "delete"
+
+}
+
+resource User {
+    env DEFAULT {
+        policy {
+            allow = [
+                #[BasicPermissions]
+            ];
+
+            rule {
+                /*
+                    The next macros must be substituted for the code:
+                    `
+                    actor.type = resource.type;
+                    actor.id = resource.id;
+                    actor.status != Banned;
+                    actor.status != Deleted;
+                    `
+                */
+                #[ByOwner]
+                #[NotBannedNotDeleted]
+            }
+        }
+
+        policy {
+            allow = [
+                #[AdminPermissions]
+            ];
+
+            rule {
+                actor.groups *= "admin";
+                #[NotBannedNotDeleted]
+            }
+        }
+    }
+
+    env TEST {
+        policy {
+            allow = [
+                #[BasicPermissions],
+                #[AdminPermissions]
+            ];
+
+            rule {
+                actor.type = Root;
+            }
+
+        }
+    }
+}
