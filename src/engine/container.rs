@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{marker::PhantomData, path::PathBuf};
 
 use getset::Getters;
@@ -55,12 +56,13 @@ impl Container {
             state: _,
         } = self;
         let mut storage = storage;
+        let mut values_map = HashMap::new();
         for path in &paths {
             if path.is_dir() {
-                let dir_storage = MinosParser::parse_dir(path)?;
+                let dir_storage = MinosParser::parse_dir(path, &mut values_map)?;
                 storage.merge(dir_storage);
             } else if path.is_file() {
-                let file_storage = MinosParser::parse_file(path)?;
+                let file_storage = MinosParser::parse_file(path, &mut values_map)?;
                 storage.merge(file_storage);
             }
         }

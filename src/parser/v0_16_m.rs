@@ -17,25 +17,52 @@ impl MinosParserV0_16M {
     fn parse_tokens(
         pair: Pair<Rule>,
         macro_tokens: &mut HashMap<Identifier, Vec<Token>>,
+        values_map: &mut HashMap<String, Arc<str>>,
     ) -> MinosResult<Vec<Token>> {
         pair.into_inner()
-            .map(|p| Self::parse_token(p, macro_tokens))
+            .map(|p| Self::parse_token(p, macro_tokens, values_map))
             .collect()
     }
 
-    fn extract_next_identifier(pair: Pair<Rule>) -> Option<Identifier> {
+    fn get_optimized_pointer(
+        values_map: &mut HashMap<String, Arc<str>>,
+        value: &str,
+    ) -> Arc<str> {
+        match values_map.get(value) {
+            Some(val) => val.clone(),
+            None => {
+                let arc: Arc<str> = Arc::from(value);
+                values_map.insert(value.to_string(), arc.clone());
+
+                arc
+            }
+        }
+    }
+
+    fn extract_next_str(pair: Pair<Rule>) -> Option<&str> {
+        pair.into_inner().next().map(|inner_pair| inner_pair.as_str())
+    }
+
+    fn extract_next_identifier(
+        pair: Pair<Rule>,
+        values_map: &mut HashMap<String, Arc<str>>,
+    ) -> Option<Identifier> {
         pair.into_inner()
             .next()
-            .map(|rule| Identifier::from(rule.as_str()))
+            .map(|rule| {
+                let arc_val = Self::get_optimized_pointer(values_map, rule.as_str());
+                Identifier(arc_val)
+            })
     }
 
     fn parse_array(
         pair: Pair<Rule>,
         macro_tokens: &mut HashMap<Identifier, Vec<Token>>,
+        values_map: &mut HashMap<String, Arc<str>>,
     ) -> MinosResult<Vec<Arc<str>>> {
         let mut permissions = vec![];
         for pair in pair.into_inner() {
-            let parsed_token = Self::parse_token(pair, macro_tokens)?;
+            let parsed_token = Self::parse_token(pair, macro_tokens, values_map)?;
             match parsed_token {
                 Token::String(permission) => permissions.push(permission),
                 Token::MacroCall(tokens) => {
@@ -55,11 +82,12 @@ impl MinosParserV0_16M {
         Ok(permissions)
     }
 
-    fn add_tokens_inner_macro(
+    fn extract_macro_tokens(
         pair: Pair<Rule>,
         macro_tokens: &mut HashMap<Identifier, Vec<Token>>,
+        values_map: &mut HashMap<String, Arc<str>>,
     ) -> MinosResult<()> {
-        let mut inner_tokens = Self::parse_tokens(pair, macro_tokens)?;
+        let mut inner_tokens = Self::parse_tokens(pair, macro_tokens, values_map)?;
         let first_token = inner_tokens[0].clone();
         let ident = match first_token {
             Token::Identifier(ident) => ident,
@@ -77,10 +105,11 @@ impl MinosParserV0_16M {
     fn extract_requirements(
         pair: Pair<Rule>,
         macro_tokens: &mut HashMap<Identifier, Vec<Token>>,
+        values_map: &mut HashMap<String, Arc<str>>,
     ) -> MinosResult<Vec<Token>> {
         let mut requirements = vec![];
         for p in pair.into_inner() {
-            let parsed_token = Self::parse_token(p, macro_tokens)?;
+            let parsed_token = Self::parse_token(p, macro_tokens, values_map)?;
             match parsed_token {
                 Token::MacroCall(mut tokens) => requirements.append(&mut tokens),
                 Token::Requirement(_) => requirements.push(parsed_token),
@@ -97,45 +126,47 @@ impl MinosParserV0_16M {
     pub(crate) fn parse_token(
         pair: Pair<Rule>,
         macro_tokens: &mut HashMap<Identifier, Vec<Token>>,
+        values_map: &mut HashMap<String, Arc<str>>,
     ) -> MinosResult<Token> {
         let token = match pair.as_rule() {
-            Rule::file => Token::File(Self::parse_tokens(pair, macro_tokens)?),
+            Rule::file => Token::File(Self::parse_tokens(pair, macro_tokens, values_map)?),
             Rule::version => Token::Version(FileVersion::from_str(pair.as_str())?),
             Rule::macro_definition => {
-                Self::add_tokens_inner_macro(pair, macro_tokens)?;
+                Self::extract_macro_tokens(pair, macro_tokens, values_map)?;
                 Token::MacroDefinition
             }
             Rule::macro_call => {
-                let inner_identifier = Self::extract_next_identifier(pair).ok_or(Error::MissingToken)?;
-                let refered_tokens = macro_tokens
-                    .get(&inner_identifier)
-                    .ok_or(Error::MacroNotExist(inner_identifier.0.to_string()))?;
-                Token::MacroCall(refered_tokens.clone())
+                let macro_ident =
+                    Self::extract_next_identifier(pair, values_map).ok_or(Error::MissingToken)?;
+                let macro_tokens = macro_tokens
+                    .get(&macro_ident)
+                    .ok_or(Error::MacroNotExist(macro_ident.0.to_string()))?;
+                Token::MacroCall(macro_tokens.clone())
             }
-            Rule::resource => Token::Resource(Self::parse_tokens(pair, macro_tokens)?),
+            Rule::resource => Token::Resource(Self::parse_tokens(pair, macro_tokens, values_map)?),
             Rule::attributed_resource => {
-                Token::AttributedResource(Self::parse_tokens(pair, macro_tokens)?)
+                Token::AttributedResource(Self::parse_tokens(pair, macro_tokens, values_map)?)
             }
-            Rule::named_env => Token::NamedEnv(Self::parse_tokens(pair, macro_tokens)?),
-            Rule::default_env => Token::DefaultEnv(Self::parse_tokens(pair, macro_tokens)?),
+            Rule::named_env => Token::NamedEnv(Self::parse_tokens(pair, macro_tokens, values_map)?),
+            Rule::default_env => Token::DefaultEnv(Self::parse_tokens(pair, macro_tokens, values_map)?),
             Rule::implicit_default_env => {
-                Token::ImplicitDefaultEnv(Self::parse_tokens(pair, macro_tokens)?)
+                Token::ImplicitDefaultEnv(Self::parse_tokens(pair, macro_tokens, values_map)?)
             }
-            Rule::policy => Token::Policy(Self::parse_tokens(pair, macro_tokens)?),
-            Rule::allow => Token::Allow(Self::parse_tokens(pair, macro_tokens)?),
+            Rule::policy => Token::Policy(Self::parse_tokens(pair, macro_tokens, values_map)?),
+            Rule::allow => Token::Allow(Self::parse_tokens(pair, macro_tokens, values_map)?),
             Rule::rule => {
-                let requirements = Self::extract_requirements(pair, macro_tokens)?;
+                let requirements = Self::extract_requirements(pair, macro_tokens, values_map)?;
 
                 Token::Rule(requirements)
             }
             Rule::array => {
-                let permissions = Self::parse_array(pair, macro_tokens)?;
+                let permissions = Self::parse_array(pair, macro_tokens, values_map)?;
                 Token::Array(Array(permissions))
             }
-            Rule::requirement => Token::Requirement(Self::parse_tokens(pair, macro_tokens)?),
-            Rule::assertion => Token::Assertion(Self::parse_tokens(pair, macro_tokens)?),
-            Rule::negation => Token::Negation(Self::parse_tokens(pair, macro_tokens)?),
-            Rule::search => Token::Search(Self::parse_tokens(pair, macro_tokens)?),
+            Rule::requirement => Token::Requirement(Self::parse_tokens(pair, macro_tokens, values_map)?),
+            Rule::assertion => Token::Assertion(Self::parse_tokens(pair, macro_tokens, values_map)?),
+            Rule::negation => Token::Negation(Self::parse_tokens(pair, macro_tokens, values_map)?),
+            Rule::search => Token::Search(Self::parse_tokens(pair, macro_tokens, values_map)?),
             Rule::actor_id => Token::ActorAttribute(ActorAttribute::Id),
             Rule::actor_type => Token::ActorAttribute(ActorAttribute::Type),
             Rule::actor_groups => Token::ActorAttribute(ActorAttribute::Groups),
@@ -148,14 +179,14 @@ impl MinosParserV0_16M {
             Rule::assertion_operator => Token::Operator(Operator::Assertion),
             Rule::negation_operator => Token::Operator(Operator::Negation),
             Rule::search_operator => Token::Operator(Operator::Search),
-            Rule::identifier => Token::Identifier(Identifier(Arc::from(pair.as_str().to_string()))),
+            Rule::identifier => {
+                let arc_val = Self::get_optimized_pointer(values_map, pair.as_str());
+                Token::Identifier(Identifier(arc_val))
+            }
             Rule::string => {
-                let inner_str = pair
-                    .into_inner()
-                    .next()
-                    .map(|inner_pair| inner_pair.as_str())
-                    .ok_or(Error::MissingToken)?;
-                Token::String(Arc::from(inner_str))
+                let inner_str = Self::extract_next_str(pair).ok_or(Error::MissingToken)?;
+                let arc_val = Self::get_optimized_pointer(values_map, inner_str);
+                Token::String(arc_val)
             }
             Rule::inner_string | Rule::COMMENT | Rule::char | Rule::WHITESPACE | Rule::EOI => {
                 Token::Null
@@ -165,10 +196,13 @@ impl MinosParserV0_16M {
         Ok(token)
     }
 
-    pub fn parse_file_content(content: &str) -> MinosResult<Storage> {
+    pub fn parse_file_content(
+        content: &str,
+        values_map: &mut HashMap<String, Arc<str>>,
+    ) -> MinosResult<Storage> {
         let file_rules = Self::parse(Rule::file, content)?.next().unwrap();
         let mut macro_tokens: HashMap<Identifier, Vec<Token>> = HashMap::new();
-        let file_token = Self::parse_token(file_rules, &mut macro_tokens)?;
+        let file_token = Self::parse_token(file_rules, &mut macro_tokens, values_map)?;
         let storage = Storage::try_from(file_token)?;
 
         Ok(storage)
