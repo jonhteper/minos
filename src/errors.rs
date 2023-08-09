@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::parser::v0_16;
+use crate::parser::{v0_16, v0_16_m};
 use parse_display::ParseError;
 use thiserror::Error as ThisError;
 
@@ -36,12 +36,18 @@ pub enum Error {
     #[error("permission '{0}' not found")]
     PermissionNotFound(String),
 
+    #[error("macro '{0}' not found")]
+    MacroNotExist(String),
+
     // 3-party errors
     #[error("io err: {0}")]
     Io(String),
 
     #[error(transparent)]
     RuleV0_16(Box<pest::error::Error<v0_16::Rule>>),
+
+    #[error(transparent)]
+    RuleV0_16M(Box<pest::error::Error<v0_16_m::Rule>>),
 
     #[error(transparent)]
     ParseError(#[from] ParseError),
@@ -56,5 +62,11 @@ impl From<io::Error> for Error {
 impl From<pest::error::Error<v0_16::Rule>> for Error {
     fn from(err: pest::error::Error<v0_16::Rule>) -> Self {
         Self::RuleV0_16(Box::new(err))
+    }
+}
+
+impl From<pest::error::Error<v0_16_m::Rule>> for Error {
+    fn from(err: pest::error::Error<v0_16_m::Rule>) -> Self {
+        Self::RuleV0_16M(Box::new(err))
     }
 }

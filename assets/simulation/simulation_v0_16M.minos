@@ -1,0 +1,64 @@
+syntax = 0.16M;
+
+#BASIC_USER_PERMISSIONS {
+    "read_status",
+    "update_status"
+}
+
+#ADVANCED_USER_PERMISSIONS {
+    "create",
+    "delete",
+    "sudo"
+}
+
+#BY_SELF_AUTH {
+    actor.id = resource.id;
+    actor.type = resource.type;
+    actor.status = Active;
+}
+
+#BY_ADMIN_AUTH {
+    actor.roles *= "admin";
+    actor.status = Active;
+}
+
+resource User {
+    env STD {
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS]
+            ];
+
+            rule {
+                #[BY_SELF_AUTH]
+            }
+        }
+
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS],
+                #[ADVANCED_USER_PERMISSIONS]
+            ];
+
+            rule {
+                #[BY_ADMIN_AUTH]
+            }
+        }
+    }
+
+    env ROOT {
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS],
+                #[ADVANCED_USER_PERMISSIONS],
+            ];
+
+            rule {
+                actor.type = SuperUser;
+            }
+
+        }
+
+    }
+}
+

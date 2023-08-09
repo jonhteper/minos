@@ -10,6 +10,12 @@ pub enum Token {
     #[display("Version")]
     Version(FileVersion),
 
+    #[display("MacroDefinition")]
+    MacroDefinition,
+
+    #[display("MacroCall")]
+    MacroCall(Vec<Token>),
+
     #[display("Resource")]
     Resource(Vec<Token>),
 
@@ -181,6 +187,8 @@ impl Token {
 pub enum FileVersion {
     #[display("0.16")]
     V0_16,
+    #[display("0.16M")]
+    V0_16M,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

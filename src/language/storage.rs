@@ -87,7 +87,7 @@ impl TryFrom<Token> for Storage {
                 Token::AttributedResource(_) => {
                     storage.add_attributed_resource(AttributedResource::try_from(inner_token)?);
                 }
-                _ => unreachable!(),
+                _ => {},
             }
         }
 

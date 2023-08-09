@@ -1,4 +1,4 @@
-syntax = 0.17;
+syntax = 0.16M;
 
 /*
     pre-processing macro syntax
@@ -23,7 +23,7 @@ syntax = 0.17;
     "delete"
 }
 
-#[AdminPermissions] {
+#AdminPermissions {
     "update_data",
     "delete"
 

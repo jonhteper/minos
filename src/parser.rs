@@ -11,10 +11,11 @@ use self::tokens::FileVersion;
 
 pub mod tokens;
 pub(crate) mod v0_16;
+pub(crate) mod v0_16_m;
 
 lazy_static! {
     static ref VERSION_REGEX: Regex =
-        Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+)").expect("regex syntax error");
+        Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+M*)").expect("regex syntax error");
 }
 
 #[derive(Debug)]
@@ -62,6 +63,7 @@ impl MinosParser {
     pub fn parse_str(version: FileVersion, file_content: &str) -> MinosResult<Storage> {
         match version {
             FileVersion::V0_16 => v0_16::MinosParserV0_16::parse_file_content(file_content),
+            FileVersion::V0_16M => v0_16_m::MinosParserV0_16M::parse_file_content(file_content),
         }
     }
 }

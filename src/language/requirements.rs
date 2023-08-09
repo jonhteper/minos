@@ -37,11 +37,15 @@ impl TryFrom<&Token> for Requirement {
             found: token.to_string(),
         })?;
 
-        let requirement = match &inner_tokens[0] {
+        let token = &inner_tokens[0];
+        let requirement = match token {
             Token::Assertion(inner) => Self::Assertion(Assertion::try_from(inner)?),
             Token::Negation(inner) => Self::Negation(Negation::try_from(inner)?),
             Token::Search(inner) => Self::Search(Search::try_from(inner)?),
-            _ => unreachable!(),
+            _ => Err(Error::InvalidToken {
+                expected: "Assertion, Negation or Search",
+                found: token.to_string(),
+            })?,
         };
 
         Ok(requirement)

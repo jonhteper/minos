@@ -1,0 +1,79 @@
+file    =  { SOI ~ "syntax" ~ "=" ~ version ~ ";" ~ macro_definition+ ~ (resource | attributed_resource)+ ~ EOI }
+version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ "M"?}
+
+macro_definition = { "#" ~ identifier ~ "{" ~ ((string ~ ("," ~ string)*) | requirement+) ~ "}" }
+
+macro_call = { "#" ~ "[" ~ identifier ~ "]" }
+
+resource            = {
+    "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}"
+}
+attributed_resource = {
+    "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
+}
+
+named_env            = { "env" ~ identifier ~ "{" ~ policy+ ~ "}" }
+default_env          = { "env" ~ "DEFAULT" ~ "{" ~ policy+ ~ "}" }
+implicit_default_env = { policy+ }
+
+policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
+
+allow = { "allow" ~ "=" ~ array }
+
+rule = { "rule" ~ "{" ~ (requirement | macro_call)+ ~ "}" }
+
+array = { "[" ~ (string | macro_call) ~ ("," ~ (string | macro_call))* ~ ","{1}? ~ "]" }
+
+requirement = { (assertion | negation | search) ~ ";" }
+
+assertion = {
+    (actor_type ~ assertion_operator ~ resource_type)
+  | (resource_type ~ assertion_operator ~ actor_type)
+  | (actor_id ~ assertion_operator ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ assertion_operator ~ actor_id)
+  | ((actor_type | actor_status) ~ assertion_operator ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ assertion_operator ~ string)
+  | ((actor_groups | actor_roles) ~ assertion_operator ~ array)
+  | (resource_status ~ assertion_operator ~ identifier)
+}
+negation  = {
+    (actor_type ~ negation_operator ~ resource_type)
+  | (resource_type ~ negation_operator ~ actor_type)
+  | (actor_id ~ negation_operator ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ negation_operator ~ actor_id)
+  | ((actor_type | actor_status) ~ negation_operator ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ negation_operator ~ string)
+  | ((actor_groups | actor_roles) ~ negation_operator ~ array)
+  | (resource_status ~ negation_operator ~ identifier)
+}
+search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
+
+actor_id     = { "actor.id" }
+actor_type   = { "actor.type" }
+actor_status = { "actor.status" }
+actor_groups = { "actor.groups" }
+actor_roles  = { "actor.roles" }
+
+resource_id     = { "resource.id" }
+resource_type   = { "resource.type" }
+resource_owner  = { "resource.owner" }
+resource_status = { "resource.status" }
+
+assertion_operator = { "=" }
+negation_operator  = { "!=" }
+search_operator    = { "*=" }
+
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+identifier = @{
+    (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | ASCII_DIGIT | "_" | "/" | "-")*
+}
+
+string       =  { "\"" ~ inner_string ~ "\"" }
+inner_string = @{ char* }
+char         =  {
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+WHITESPACE   = _{ " " | "\t" | "\r" | "\n" }
