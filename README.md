@@ -389,7 +389,253 @@ resource File {
 
 The final parsing, will be exactly the same that the first example in this section.
 
+### Macros
 
+Macros behave like abbreviations. And are zero cost in runtime, because are "expanded" during parsing.
 
+*WARNING*: The macro syntax are only available in versions its ends with `M` character. For example: `version = 0.16M;` can use macros, but `version = 0.16;` can't. Why? Because the files with macros needs special algorithms to expand its during parsing time and we can avoid this operations if us are sure that the files not use its.
 
+For example, the next files will are equals, after parsed: 
+
+```minos
+syntax = 0.16M;
+
+#BASIC_USER_PERMISSIONS {
+    "read_status",
+    "update_status"
+}
+
+#ADVANCED_USER_PERMISSIONS {
+    "create",
+    "delete",
+    "sudo"
+}
+
+#BY_SELF_AUTH {
+    actor.id = resource.id;
+    actor.type = resource.type;
+    actor.status = Active;
+}
+
+#BY_ADMIN_AUTH {
+    actor.roles *= "admin";
+    actor.status = Active;
+}
+
+resource User {
+    env STD {
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS]
+            ];
+
+            rule {
+                #[BY_SELF_AUTH]
+            }
+        }
+
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS],
+                #[ADVANCED_USER_PERMISSIONS]
+            ];
+
+            rule {
+                #[BY_ADMIN_AUTH]
+            }
+        }
+    }
+
+    env ROOT {
+        policy {
+            allow = [
+                #[BASIC_USER_PERMISSIONS],
+                #[ADVANCED_USER_PERMISSIONS]
+            ];
+
+            rule {
+                actor.type = SuperUser;
+            }
+        }
+    }
+}
+```
+```minos
+syntax = 0.16;
+
+resource User {
+    env STD {
+        policy {
+            allow = [
+                "read_status",
+    			"update_status"
+            ];
+
+            rule {
+                actor.id = resource.id;
+    			actor.type = resource.type;
+    			actor.status = Active;
+            }
+        }
+
+        policy {
+            allow = [
+                "read_status",
+    			"update_status",
+                "create",
+                "delete",
+                "sudo"
+            ];
+
+            rule {
+                actor.roles *= "admin";
+    			actor.status = Active;
+            }
+        }
+    }
+
+    env ROOT {
+        policy {
+            allow = [
+                "read_status",
+    			"update_status",
+                "create",
+                "delete",
+                "sudo"
+            ];
+
+            rule {
+                actor.type = SuperUser;
+            }
+        }
+    }
+}
+```
+
+Interestingly, the first file is larger than the file not using macros. So why use macros, anyway? For the same reasons we divide our code into small functions: code reuse and ease of functionality extension.
+
+#### Rules for macros
+
+Currently only be two macro types: macros with permissions, and macros with requirements. It's have specific rules to write its.
+
+##### Macro definition
+
+1. The last permission within a macro cannot end in a comma (`,`).
+   ```minos
+   #BAD_MACRO_DEFINITION {
+       "create",
+       "delete",
+       "sudo", /* ❌ */
+   }
+   
+   #CORRECT_MACRO_DEFINITION {
+       "create",
+       "delete",
+       "sudo" /* ✅ */
+   }
+   ```
+
+   
+
+2. Every requirement within a macro must end with a colon (`;`).
+   ```minos
+   #BAD_MACRO_DEFINITION {
+       actor.status = Active /* ❌ */
+   }
+   
+   #CORRECT_MACRO_DEFINITION { /* ✅ */
+       actor.id = resource.id;
+       actor.type = resource.type;
+       actor.status = Active;
+   }
+   ```
+
+3. No macro can mix permissions and requirements nor add another minos structure inside it.
+   ```minos
+   #INVALID_MACRO {
+   	actor.status = active; /* <----- requirement ❌ */
+   	"create"/* <--- permisssion ❌ */
+   }
+   
+   #INVALID_MACRO_2 {
+   	resource User { <--- resource block ❌ */
+   		policy {
+   			/*...*/
+   		}
+   	}
+   }
+   
+   #INVALID_MACRO_3 {
+   	#[INVALID_MACRO] /* <--- macro call ❌ */
+   }
+   ```
+
+##### Macro call
+
+1. The macros only be called inside allow blocks or inside rule blocks.
+   ```minos
+   resource User {
+   	#[DEFAULT_ENV_MACRO] /* <---- bad macro calling ❌ */
+   	env TEST {
+   		policy {
+   			allow = ["read"];
+   			rule {
+   				actor.type = SuperUser;
+   			}
+   		}
+   		
+   		#[POLICY_MACRO] /* <---- bad macro calling ❌ */
+   	}
+   }
+   ```
+
+2. Never use semicolon after macro call; but inside allow blocks is possible to use comma.
+   ```minos
+   policy {
+       allow = [
+           #[DEFAULT_PERMISSIONS]; /* <---- Don't use semicolon! ❌ */
+       ];
+       
+       rule {
+       	#[FOO] /* ✅ */
+       	#[BAZZ] /* ✅ */
+       }
+   }
+   
+   policy {
+   	allow = [
+   		#[DEFAULT_PERMISSIONS], /* <---- Valid macro call ✅ */
+   		"lock_data",
+   		#[ADVANCED_PERMISSIONS], /* <---- Valid macro call ✅ */
+   	]
+   }
+   
+   ```
+
+3. Never call macros with incompatible content.
+   ```minos
+   #[ALLOW_MACRO] {
+   	"read",
+   	"update",
+   }
+   
+   #[BY_SELF_AUTH] {
+   	actor.type = resource.type;
+   	actor.id = resource.id;
+   }
+   
+   resource File {
+   	policy {
+   		allow = [
+   			#[BY_SELF_AUTH] /*<--- InvalidToken {expectd: "String", found: "Requirement"} ❌ */
+   		]
+   		
+   		rule {
+   			#[ALLOW_MACRO] /*<--- InvalidToken {expectd: "Requirement", found: "String"} ❌ */
+   		}
+   	}
+   }
+   ```
+
+   
 
