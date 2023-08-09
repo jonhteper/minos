@@ -627,11 +627,11 @@ Currently only be two macro types: macros with permissions, and macros with requ
    resource File {
    	policy {
    		allow = [
-   			#[BY_SELF_AUTH] /*<--- InvalidToken {expectd: "String", found: "Requirement"} ❌ */
+           #[BY_SELF_AUTH] /*<--- invalid token found: "Requirement", expected: "String" ❌ */
    		]
    		
    		rule {
-   			#[ALLOW_MACRO] /*<--- InvalidToken {expectd: "Requirement", found: "String"} ❌ */
+   		    #[ALLOW_MACRO] /*<--- invalid token found: "String", expected: "Requirement" ❌ */
    		}
    	}
    }
