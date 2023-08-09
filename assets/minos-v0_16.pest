@@ -18,7 +18,7 @@ allow = { "allow" ~ "=" ~ array }
 
 rule = { "rule" ~ "{" ~ (requirement)+ ~ "}" }
 
-array = { "[" ~ string ~ ("," ~ string)* ~ "]" }
+array = { "[" ~ string ~ ("," ~ string)*~ ","{1}? ~ "]" }
 
 requirement = { (assertion | negation | search) ~ ";" }
 
