@@ -43,7 +43,7 @@ impl Container {
         }
     }
 
-    /// Load all files from the provided paths. This function not scan recursively.
+    /// Load all files from the provided paths. This function scan recursively.
     ///
     /// WARNING: This function not fail if the paths are not absolutes, but the files
     /// will not be readed.

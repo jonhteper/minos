@@ -45,14 +45,22 @@ impl MinosParser {
         Self::optimized_parse_str(version, &file_content, values_map)
     }
 
-    pub fn parse_dir(path: &Path) -> MinosResult<Storage> {
+    /// Read the directory and parse the files recursively. Build a [Storage] with the files content.
+    pub(crate) fn parse_dir(
+        path: &Path,
+        values_map: &mut HashMap<String, Arc<str>>,
+    ) -> MinosResult<Storage> {
         let dir = fs::read_dir(path)?;
         let mut storage = Storage::default();
 
         for entry in dir {
             let path = entry?.path();
-            if !path.is_file() {
+            if !path.is_file() && !path.is_dir() {
                 continue;
+            }
+
+            if path.is_dir() {
+                return Self::parse_dir(&path, values_map);
             }
 
             let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
