@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{Actor, Resource};
+use super::{Actor, Permissions, Resource};
 
 #[derive(Debug)]
 pub struct AuthorizeRequest<'a> {
@@ -58,15 +58,14 @@ pub struct Engine<'s> {
 
 impl<'s> Engine<'s> {
     fn append_permissions(
-        permissions: &mut Vec<Permission>,
+        permissions: &mut Permissions,
         environment: &Environment,
         actor: &Actor,
         resource: &Resource,
     ) {
         for policy in environment.policies() {
             if let Some(inner_permissions) = policy.apply(actor, resource) {
-                let mut perms = inner_permissions.to_vec();
-                permissions.append(&mut perms);
+                permissions.append_permissions(inner_permissions);
             }
         }
     }
@@ -84,12 +83,12 @@ impl<'s> Engine<'s> {
     fn authorize_attributed_resource(
         &self,
         request: InternalAuthorizeRequest,
-    ) -> MinosResult<Vec<Permission>> {
+    ) -> MinosResult<Permissions> {
         let actor = request.actor;
         let resource = request.resource;
         let attr_resource = request.minos_resource.unwrap_right();
 
-        let mut permissions = vec![];
+        let mut permissions = Permissions::new();
         if let Some(default_env) = attr_resource.default_environment() {
             Self::append_permissions(&mut permissions, default_env, actor, resource);
         }
@@ -108,35 +107,38 @@ impl<'s> Engine<'s> {
         Ok(permissions)
     }
 
-    fn authorize_resource(&self, request: InternalAuthorizeRequest) -> MinosResult<Vec<Permission>> {
+    fn authorize_resource(
+        &self,
+        request: InternalAuthorizeRequest,
+        permissions: &mut Permissions,
+    ) -> MinosResult<()> {
         let inner_resource = request.minos_resource.unwrap_left();
 
-        let mut permissions = vec![];
         if let Some(default_env) = inner_resource.default_environment() {
-            Self::append_permissions(&mut permissions, default_env, request.actor, request.resource);
+            Self::append_permissions(permissions, default_env, request.actor, request.resource);
         }
 
         if let Some(env_name) = request.env_name {
             let env = inner_resource
                 .get_environment(env_name)
                 .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
-            Self::append_permissions(&mut permissions, env, request.actor, request.resource);
+            Self::append_permissions(permissions, env, request.actor, request.resource);
         }
 
-        Ok(permissions)
+        Ok(())
     }
 
-    /// Return a list of [Permission] if the [Actor] is authorized.
+    /// Return the granted [Permissions] if the [Actor] is authorized.
     /// This method fails if:
     /// * The [Actor] is not authorized.
     /// * The environment's name not exist into the [Storage].
-    pub fn authorize(&self, request: AuthorizeRequest) -> MinosResult<Vec<Permission>> {
+    pub fn authorize(&self, request: AuthorizeRequest) -> MinosResult<Permissions> {
         let AuthorizeRequest {
             env_name,
             actor,
             resource,
         } = request;
-        let mut permissions = vec![];
+        let mut permissions = Permissions::new();
 
         if let Some(resource_id) = resource.id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
@@ -150,12 +152,15 @@ impl<'s> Engine<'s> {
         }
 
         if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
-            permissions = self.authorize_resource(InternalAuthorizeRequest {
-                env_name,
-                actor,
-                resource,
-                minos_resource: Either::Left(inner_resource),
-            })?;
+            self.authorize_resource(
+                InternalAuthorizeRequest {
+                    env_name,
+                    actor,
+                    resource,
+                    minos_resource: Either::Left(inner_resource),
+                },
+                &mut permissions,
+            )?;
         }
 
         if permissions.is_empty() {

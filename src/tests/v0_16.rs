@@ -95,12 +95,12 @@ fn simple_authorize_works() -> MinosResult<()> {
     })?;
 
     assert_eq!(
-        permissions,
-        vec![
-            Permission::from("create"),
-            Permission::from("read"),
-            Permission::from("update"),
-            Permission::from("delete")
+        permissions.as_ref(),
+        &[
+            String::from("create"),
+            String::from("read"),
+            String::from("update"),
+            String::from("delete")
         ]
     );
 
