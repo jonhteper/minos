@@ -2,7 +2,7 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    engine::{Actor, Resource},
+    engine::{ActorRepr, ResourceRepr},
     errors::{Error, MinosResult},
     parser::tokens::Token,
 };
@@ -17,7 +17,7 @@ pub struct Rule {
 
 impl Rule {
     /// Apply all requirements and return true only if actor satisfies all.
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> bool {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> bool {
         for requirement in &self.requirements {
             if !requirement.apply(actor, resource).unwrap_or_default() {
                 return false;

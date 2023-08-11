@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{Actor, Permissions, Resource};
+use super::{Actor, ActorRepr, Permissions, Resource, ResourceRepr};
 
 #[derive(Debug)]
 pub struct AuthorizeRequest<'a> {
@@ -25,7 +25,7 @@ pub struct FindPermissionRequest<'a> {
     pub env_name: Option<&'a str>,
     pub actor: &'a Actor,
     pub resource: &'a Resource,
-    pub permission: Permission,
+    pub permission: String,
 }
 
 #[derive(Debug)]
@@ -33,22 +33,22 @@ pub struct FindPermissionsRequest<'a> {
     pub env_name: Option<&'a str>,
     pub actor: &'a Actor,
     pub resource: &'a Resource,
-    pub permissions: &'a [Permission],
+    pub permissions: Vec<String>,
 }
 
 struct InternalAuthorizeRequest<'a> {
     pub env_name: Option<&'a str>,
-    pub actor: &'a Actor,
-    pub resource: &'a Resource,
+    pub actor: &'a ActorRepr,
+    pub resource: &'a ResourceRepr,
     pub minos_resource: Either<&'a InternalResource, &'a AttributedResource>,
 }
 
 struct InternalFindPermissionRequest<'a> {
     pub env_name: Option<&'a str>,
-    pub actor: &'a Actor,
-    pub resource: &'a Resource,
+    pub actor: &'a ActorRepr,
+    pub resource: &'a ResourceRepr,
     pub minos_resource: Either<&'a InternalResource, &'a AttributedResource>,
-    pub permission: &'a Permission,
+    pub permission: &'a str,
 }
 
 #[derive(Debug, Clone, Ctor)]
@@ -60,8 +60,8 @@ impl<'s> Engine<'s> {
     fn append_permissions(
         permissions: &mut Permissions,
         environment: &Environment,
-        actor: &Actor,
-        resource: &Resource,
+        actor: &ActorRepr,
+        resource: &ResourceRepr,
     ) {
         for policy in environment.policies() {
             if let Some(inner_permissions) = policy.apply(actor, resource) {
@@ -73,7 +73,7 @@ impl<'s> Engine<'s> {
     fn find_attributed_resource(
         &self,
         resource_id: Arc<str>,
-        resource: &Resource,
+        resource: &ResourceRepr,
     ) -> Option<&AttributedResource> {
         self.storage
             .attributed_resources()
@@ -133,11 +133,9 @@ impl<'s> Engine<'s> {
     /// * The [Actor] is not authorized.
     /// * The environment's name not exist into the [Storage].
     pub fn authorize(&self, request: AuthorizeRequest) -> MinosResult<Permissions> {
-        let AuthorizeRequest {
-            env_name,
-            actor,
-            resource,
-        } = request;
+        let env_name = request.env_name;
+        let actor = &ActorRepr::from(request.actor);
+        let resource = &ResourceRepr::from(request.resource);
         let mut permissions = Permissions::new();
 
         if let Some(resource_id) = resource.id() {
@@ -172,8 +170,8 @@ impl<'s> Engine<'s> {
 
     fn is_permission_in_env(
         environment: &Environment,
-        actor: &Actor,
-        resource: &Resource,
+        actor: &ActorRepr,
+        resource: &ResourceRepr,
         permission: &Permission,
     ) -> bool {
         for policy in environment.policies() {
@@ -192,7 +190,7 @@ impl<'s> Engine<'s> {
         let actor = request.actor;
         let resource = request.resource;
         let attr_resource = request.minos_resource.unwrap_right();
-        let permission = request.permission;
+        let permission = &Permission::from(request.permission);
         if let Some(default_env) = attr_resource.default_environment() {
             if Self::is_permission_in_env(default_env, actor, resource, permission) {
                 return Ok(());
@@ -213,9 +211,9 @@ impl<'s> Engine<'s> {
 
     fn find_permission_in_resource(&self, request: InternalFindPermissionRequest) -> MinosResult<()> {
         let inner_resource = request.minos_resource.unwrap_left();
-        let permission = request.permission;
         let actor = request.actor;
         let resource = request.resource;
+        let permission = &Permission::from(request.permission);
 
         if let Some(default_env) = inner_resource.default_environment() {
             if Self::is_permission_in_env(default_env, actor, resource, permission) {
@@ -235,13 +233,11 @@ impl<'s> Engine<'s> {
         Err(Error::ActorNotAuthorized(actor.id().to_string()))
     }
 
-    pub fn find_permission(&self, request: FindPermissionRequest) -> MinosResult<()> {
-        let FindPermissionRequest {
-            env_name,
-            actor,
-            resource,
-            permission,
-        } = request;
+    pub fn has_permission(&self, request: FindPermissionRequest) -> MinosResult<()> {
+        let env_name = request.env_name;
+        let actor = &ActorRepr::from(request.actor);
+        let resource = &ResourceRepr::from(request.resource);
+        let permission = request.permission;
 
         if let Some(resource_id) = resource.id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
@@ -270,7 +266,7 @@ impl<'s> Engine<'s> {
 
     /// WARNING: this function implements [Engine::find_permission] inside, so
     /// the performance is not the best.
-    pub fn find_permissions(&self, request: FindPermissionsRequest) -> MinosResult<()> {
+    pub fn has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<()> {
         let FindPermissionsRequest {
             env_name,
             actor,
@@ -280,7 +276,7 @@ impl<'s> Engine<'s> {
 
         for permission in permissions {
             if self
-                .find_permission(FindPermissionRequest {
+                .has_permission(FindPermissionRequest {
                     env_name,
                     actor,
                     resource,

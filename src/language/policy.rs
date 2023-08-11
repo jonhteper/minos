@@ -4,7 +4,7 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    engine::{Actor, Resource},
+    engine::{ActorRepr, ResourceRepr},
     errors::Error,
     parser::tokens::{Array, Token},
     MinosResult,
@@ -36,10 +36,10 @@ pub struct Policy {
 
 impl Policy {
     /// Indicates if an [Actor] has a specific [Permission] on a [Resource].
-    pub fn actor_has_permission(
+    pub(crate) fn actor_has_permission(
         &self,
-        actor: &Actor,
-        resource: &Resource,
+        actor: &ActorRepr,
+        resource: &ResourceRepr,
         permission: &Permission,
     ) -> bool {
         if let Some(rules) = self.rules_map.get(permission) {
@@ -54,7 +54,7 @@ impl Policy {
     }
 
     /// Returns the [Permission] list if the actor satisfies at least one of the rules.
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<&[Permission]> {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<&[Permission]> {
         for rule in &self.rules {
             if rule.apply(actor, resource) {
                 return Some(&self.permissions);

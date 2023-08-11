@@ -4,7 +4,7 @@ use derived::Ctor;
 use getset::Getters;
 
 use crate::{
-    engine::{Actor, Resource},
+    engine::{ActorRepr, ResourceRepr},
     errors::Error,
     parser::tokens::{ActorAttribute, Array},
 };
@@ -19,7 +19,7 @@ pub enum Requirement {
 }
 
 impl Requirement {
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<bool> {
         match self {
             Requirement::Assertion(assertion) => assertion.apply(actor, resource),
             Requirement::Negation(negation) => negation.apply(actor, resource),
@@ -115,7 +115,7 @@ pub struct Assertion {
 
 impl Assertion {
     /// Returns an assertion result if the operation are permited.
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(left), ComparableValue::Attribute(Attribute::Resource(rigth))) => {
                 Some(actor.get_attribute(*left) == resource.get_attribute(*rigth))
@@ -152,7 +152,7 @@ pub struct Negation {
 }
 
 impl Negation {
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(left), ComparableValue::Attribute(Attribute::Resource(rigth))) => {
                 Some(actor.get_attribute(*left) != resource.get_attribute(*rigth))
@@ -199,7 +199,7 @@ impl Search {
         true
     }
 
-    pub fn apply(&self, actor: &Actor, resource: &Resource) -> Option<bool> {
+    pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::Array(value))) => {
                 Some(Self::find_list_in_list(actor.groups(), value))
