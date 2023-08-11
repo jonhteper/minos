@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use lazy_static::lazy_static;
 
 use crate::{
@@ -32,7 +30,7 @@ impl<'a> AsActor for User<'a> {
             type_: "User".into(),
             status: Some(self.status.into()),
             groups: vec![],
-            roles: self.roles.iter().map(|r| Arc::from(*r)).collect(),
+            roles: self.roles.iter().map(|r| r.to_string()).collect(),
         }
     }
 }
@@ -69,7 +67,7 @@ impl<'a> User<'a> {
         };
 
         engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(env),
                 actor,
                 resource: &user.as_resource(),
@@ -82,7 +80,7 @@ impl<'a> User<'a> {
 
     fn read_status(&self, engine: &Engine, actor: &Actor, env: &str) -> Result<&str, String> {
         engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(env),
                 actor,
                 resource: &self.as_resource(),
@@ -101,7 +99,7 @@ impl<'a> User<'a> {
         status: &'a str,
     ) -> Result<(), String> {
         engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(env),
                 actor,
                 resource: &self.as_resource(),
@@ -116,7 +114,7 @@ impl<'a> User<'a> {
 
     fn delete(&mut self, engine: &Engine, actor: &Actor, env: &str) -> Result<(), String> {
         engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(env),
                 actor,
                 resource: &self.as_resource(),
@@ -134,7 +132,7 @@ impl<'a> User<'a> {
 
     fn sudo(&self, engine: &Engine, env: &str) -> Result<SuperUser, String> {
         engine
-          .find_permission(FindPermissionRequest {
+          .has_permission(FindPermissionRequest {
                 env_name: Some(env),
                 actor: &self.as_actor(),
                 resource: &self.as_resource(),

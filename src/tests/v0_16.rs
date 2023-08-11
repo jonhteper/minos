@@ -1,14 +1,15 @@
-use std::{env, sync::Arc};
+use std::env;
 
 use chrono::Utc;
 use lazy_static::lazy_static;
+use parse_display_derive::{Display, FromStr};
 
 use crate::{
     engine::{
         Actor, AsActor, AsResource, AuthorizeRequest, Engine, FindPermissionRequest,
         FindPermissionsRequest, Resource, TryIntoActor,
     },
-    language::{environment::DEFAULT_ENV_IDENTIFIER, policy::Permission, storage::Storage},
+    language::{environment::DEFAULT_ENV_IDENTIFIER, storage::Storage},
     parser::tokens::FileVersion,
     Container, MinosParser, MinosResult,
 };
@@ -70,6 +71,30 @@ fn build_container_works() -> MinosResult<()> {
     Ok(())
 }
 
+#[derive(Debug, Display, FromStr, Clone, Copy)]
+enum SimplePermissions {
+    #[display("create")]
+    Create,
+
+    #[display("read")]
+    Read,
+
+    #[display("update")]
+    Update,
+
+    #[display("delete")]
+    Delete,
+
+    #[display("install")]
+    Install,
+
+    #[display("uninstall")]
+    Uninstall,
+
+    #[display("execute")]
+    Execute,
+}
+
 /// Test to verify that the authorization works correctly.
 #[test]
 fn simple_authorize_works() -> MinosResult<()> {
@@ -97,10 +122,10 @@ fn simple_authorize_works() -> MinosResult<()> {
     assert_eq!(
         permissions.as_ref(),
         &[
-            String::from("create"),
-            String::from("read"),
-            String::from("update"),
-            String::from("delete")
+            SimplePermissions::Create.to_string(),
+            SimplePermissions::Read.to_string(),
+            SimplePermissions::Update.to_string(),
+            SimplePermissions::Delete.to_string(),
         ]
     );
 
@@ -124,11 +149,11 @@ fn simple_find_permission_works() {
         status: None,
     };
     let engine = Engine::new(&storage);
-    let result = engine.find_permission(FindPermissionRequest {
+    let result = engine.has_permission(FindPermissionRequest {
         env_name: None,
         resource: &resource,
         actor: &user,
-        permission: Permission::from("create"),
+        permission: SimplePermissions::Create.to_string(),
     });
 
     assert!(result.is_ok());
@@ -151,11 +176,14 @@ fn simple_find_permissions_works() {
         status: None,
     };
     let engine = Engine::new(&storage);
-    let result = engine.find_permissions(FindPermissionsRequest {
+    let result = engine.has_permissions(FindPermissionsRequest {
         env_name: None,
         resource: &resource,
         actor: &user,
-        permissions: &[Permission::from("create"), Permission::from("read")],
+        permissions: vec![
+            SimplePermissions::Create.to_string(),
+            SimplePermissions::Read.to_string(),
+        ],
     });
 
     assert!(result.is_ok());
@@ -184,11 +212,11 @@ fn file_simulation_works() -> MinosResult<()> {
         status: None,
     };
 
-    let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
+    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
         env_name: None,
         actor: &user2,
         resource: &config_file,
-        permission: Permission::from("read"),
+        permission: SimplePermissions::Read.to_string(),
     });
     assert!(operation_result.is_ok());
 
@@ -199,11 +227,11 @@ fn file_simulation_works() -> MinosResult<()> {
         roles: vec!["admin".into()],
         status: None,
     };
-    let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
+    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
         env_name: None,
         actor: &user1,
         resource: &config_file,
-        permission: Permission::from("delete"),
+        permission: SimplePermissions::Delete.to_string(),
     });
     assert!(operation_result.is_ok());
 
@@ -214,19 +242,19 @@ fn file_simulation_works() -> MinosResult<()> {
         roles: vec!["guest".into()],
         status: None,
     };
-    let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
+    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
         env_name: None,
         actor: &guest_user,
         resource: &config_file,
-        permission: Permission::from("read"),
+        permission: SimplePermissions::Read.to_string(),
     });
     assert!(operation_result.is_err());
 
-    let operation_result = &ENGINE_V0_16.find_permission(FindPermissionRequest {
+    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
         env_name: Some("TEST"),
         actor: &guest_user,
         resource: &config_file,
-        permission: Permission::from("delete"),
+        permission: SimplePermissions::Delete.to_string(),
     });
     assert!(operation_result.is_ok());
 
@@ -262,10 +290,10 @@ impl User {
 impl AsActor for User {
     fn as_actor(&self) -> Actor {
         Actor {
-            id: Arc::from(self.id.as_str()),
-            type_: Arc::from("User"),
+            id: self.id.clone(),
+            type_: "User".to_string(),
             groups: vec![],
-            roles: Actor::to_vec_arc(&self.roles),
+            roles: self.roles.clone(),
             status: None,
         }
     }
@@ -284,8 +312,8 @@ impl TryIntoActor for SuperUser {
         }
 
         Ok(Actor {
-            id: Arc::from(self.id.as_str()),
-            type_: Arc::from("SuperUser"),
+            id: self.id.to_string(),
+            type_: "SuperUser".to_string(),
             groups: vec![],
             roles: vec![],
             status: None,
@@ -304,11 +332,11 @@ struct Application {
 impl Application {
     fn install(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
                 actor,
                 resource: &self.as_resource(),
-                permission: Permission::from("install"),
+                permission: SimplePermissions::Install.to_string(),
             })
             .map_err(|err| err.to_string())?;
         println!("Installing application {} in {}...", &self.name, &self.path);
@@ -319,11 +347,11 @@ impl Application {
 
     fn execute(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
                 actor,
                 resource: &self.as_resource(),
-                permission: Permission::from("execute"),
+                permission: SimplePermissions::Execute.to_string(),
             })
             .map_err(|err| err.to_string())?;
         println!("Executing application {}...", &self.name);
@@ -333,11 +361,11 @@ impl Application {
 
     fn uninstall(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
                 actor,
                 resource: &self.as_resource(),
-                permission: Permission::from("uninstall"),
+                permission: SimplePermissions::Uninstall.to_string(),
             })
             .map_err(|err| err.to_string())?;
         println!("Uninstalling application {} from {}...", &self.name, &self.path);
@@ -348,11 +376,11 @@ impl Application {
 
     fn update(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
         minos_engine
-            .find_permission(FindPermissionRequest {
+            .has_permission(FindPermissionRequest {
                 env_name: Some(&self.executing_environment),
                 actor,
                 resource: &self.as_resource(),
-                permission: Permission::from("update"),
+                permission: SimplePermissions::Update.to_string(),
             })
             .map_err(|err| err.to_string())?;
         println!("Updating application {}...", &self.name);
@@ -438,4 +466,3 @@ fn application_simulation_works() {
     let operation_result = application_store.execute(&ENGINE_V0_16, &john_user.as_actor());
     assert!(operation_result.is_ok());
 }
-
