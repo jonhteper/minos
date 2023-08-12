@@ -186,54 +186,67 @@ impl<'s> Engine<'s> {
     fn find_permission_in_attributed_resource(
         &self,
         request: InternalFindPermissionRequest,
-    ) -> MinosResult<()> {
+    ) -> MinosResult<bool> {
         let actor = request.actor;
         let resource = request.resource;
         let attr_resource = request.minos_resource.unwrap_right();
         let permission = &Permission::from(request.permission);
         if let Some(default_env) = attr_resource.default_environment() {
-            if Self::is_permission_in_env(default_env, actor, resource, permission) {
-                return Ok(());
-            }
+            return Ok(Self::is_permission_in_env(
+                default_env,
+                actor,
+                resource,
+                permission,
+            ));
         }
 
         if let Some(env_name) = request.env_name {
             let env = attr_resource
                 .get_environment(env_name)
                 .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
-            if Self::is_permission_in_env(env, actor, resource, permission) {
-                return Ok(());
-            }
+            return Ok(Self::is_permission_in_env(env, actor, resource, permission));
         }
 
-        Err(Error::ActorNotAuthorized(actor.id().to_string()))
+        Ok(false)
     }
 
-    fn find_permission_in_resource(&self, request: InternalFindPermissionRequest) -> MinosResult<()> {
+    fn find_permission_in_resource(&self, request: InternalFindPermissionRequest) -> MinosResult<bool> {
         let inner_resource = request.minos_resource.unwrap_left();
         let actor = request.actor;
         let resource = request.resource;
         let permission = &Permission::from(request.permission);
 
         if let Some(default_env) = inner_resource.default_environment() {
-            if Self::is_permission_in_env(default_env, actor, resource, permission) {
-                return Ok(());
-            }
+            return Ok(Self::is_permission_in_env(
+                default_env,
+                actor,
+                resource,
+                permission,
+            ));
         }
 
         if let Some(env_name) = request.env_name {
             let env = inner_resource
                 .get_environment(env_name)
                 .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
-            if Self::is_permission_in_env(env, request.actor, request.resource, permission) {
-                return Ok(());
-            }
+
+            return Ok(Self::is_permission_in_env(
+                env,
+                request.actor,
+                request.resource,
+                permission,
+            ));
         }
 
-        Err(Error::ActorNotAuthorized(actor.id().to_string()))
+        Ok(false)
     }
 
-    pub fn has_permission(&self, request: FindPermissionRequest) -> MinosResult<()> {
+    /// Check if the actor has the selected permission over the resource.
+    ///
+    /// This function can fail if:
+    /// * not found the resource
+    /// * the environment not exist
+    pub fn actor_has_permission(&self, request: FindPermissionRequest) -> MinosResult<bool> {
         let env_name = request.env_name;
         let actor = &ActorRepr::from(request.actor);
         let resource = &ResourceRepr::from(request.resource);
@@ -261,12 +274,13 @@ impl<'s> Engine<'s> {
             });
         }
 
-        Err(Error::ActorNotAuthorized(actor.id().to_string()))
+        Err(Error::ResourceNotFound(resource.type_.to_string()))
     }
 
+    ///
     /// WARNING: this function implements [Engine::find_permission] inside, so
     /// the performance is not the best.
-    pub fn has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<()> {
+    pub fn actor_has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<bool> {
         let FindPermissionsRequest {
             env_name,
             actor,
@@ -275,20 +289,17 @@ impl<'s> Engine<'s> {
         } = request;
 
         for permission in permissions {
-            if self
-                .has_permission(FindPermissionRequest {
-                    env_name,
-                    actor,
-                    resource,
-                    permission: permission.clone(),
-                })
-                .is_err()
-            {
-                return Err(Error::ActorNotAuthorized(actor.id().to_string()));
+            if !self.actor_has_permission(FindPermissionRequest {
+                env_name,
+                actor,
+                resource,
+                permission: permission.clone(),
+            })? {
+                return Ok(false);
             }
         }
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn policies_len(&self) -> usize {
