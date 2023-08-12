@@ -109,9 +109,8 @@ impl<'s> Engine<'s> {
 
     fn authorize_resource(
         &self,
-        request: InternalAuthorizeRequest,
-        permissions: &mut Permissions,
-    ) -> MinosResult<()> {
+        request: InternalAuthorizeRequest
+    ) -> MinosResult<Permissions> {
         let inner_resource = request.minos_resource.unwrap_left();
 
         if let Some(default_env) = inner_resource.default_environment() {
@@ -136,7 +135,6 @@ impl<'s> Engine<'s> {
         let env_name = request.env_name;
         let actor = &ActorRepr::from(request.actor);
         let resource = &ResourceRepr::from(request.resource);
-        let mut permissions = Permissions::new();
 
         if let Some(resource_id) = resource.id() {
             if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
@@ -150,22 +148,17 @@ impl<'s> Engine<'s> {
         }
 
         if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
-            self.authorize_resource(
+            return self.authorize_resource(
                 InternalAuthorizeRequest {
                     env_name,
                     actor,
                     resource,
                     minos_resource: Either::Left(inner_resource),
-                },
-                &mut permissions,
-            )?;
+                }
+            );
         }
 
-        if permissions.is_empty() {
-            return Err(Error::ActorNotAuthorized(actor.id().to_string()));
-        }
-
-        Ok(permissions)
+        Err(Error::ResourceNotFound(resource.type_.to_string()))
     }
 
     fn is_permission_in_env(
