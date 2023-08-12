@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use lazy_static::lazy_static;
 
 use crate::{
@@ -58,7 +59,7 @@ impl<'a> User<'a> {
         actor: &Actor,
         env: &str,
         values: UserValues<'a>,
-    ) -> Result<Self, String> {
+    ) -> anyhow::Result<Self> {
         let user = User {
             id: values.id,
             name: values.name,
@@ -66,27 +67,27 @@ impl<'a> User<'a> {
             roles: values.roles,
         };
 
-        engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(env),
-                actor,
-                resource: &user.as_resource(),
-                permission: "create".into(),
-            })
-            .map_err(|e| e.to_string())?;
+        if !engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(env),
+            actor,
+            resource: &user.as_resource(),
+            permission: "create".into(),
+        })? {
+            Err(anyhow!("actor does not have create permission"))?
+        }
 
         Ok(user)
     }
 
-    fn read_status(&self, engine: &Engine, actor: &Actor, env: &str) -> Result<&str, String> {
-        engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(env),
-                actor,
-                resource: &self.as_resource(),
-                permission: "read_status".into(),
-            })
-            .map_err(|e| e.to_string())?;
+    fn read_status(&self, engine: &Engine, actor: &Actor, env: &str) -> anyhow::Result<&str> {
+        if !engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(env),
+            actor,
+            resource: &self.as_resource(),
+            permission: "read_status".into(),
+        })? {
+            Err(anyhow!("actor does not have read_status permission"))?
+        }
 
         Ok(&self.status)
     }
@@ -97,30 +98,30 @@ impl<'a> User<'a> {
         actor: &Actor,
         env: &str,
         status: &'a str,
-    ) -> Result<(), String> {
-        engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(env),
-                actor,
-                resource: &self.as_resource(),
-                permission: "update_status".into(),
-            })
-            .map_err(|e| e.to_string())?;
+    ) -> anyhow::Result<()> {
+        if !engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(env),
+            actor,
+            resource: &self.as_resource(),
+            permission: "update_status".into(),
+        })? {
+            Err(anyhow!("actor does not have update_status permission"))?
+        }
 
         self.status = status;
 
         Ok(())
     }
 
-    fn delete(&mut self, engine: &Engine, actor: &Actor, env: &str) -> Result<(), String> {
-        engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(env),
-                actor,
-                resource: &self.as_resource(),
-                permission: "delete".into(),
-            })
-            .map_err(|e| e.to_string())?;
+    fn delete(&mut self, engine: &Engine, actor: &Actor, env: &str) -> anyhow::Result<()> {
+        if !engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(env),
+            actor,
+            resource: &self.as_resource(),
+            permission: "delete".into(),
+        })? {
+            Err(anyhow!("actor does not have delete permission"))?
+        }
 
         self.id = "";
         self.name = "";
@@ -130,19 +131,17 @@ impl<'a> User<'a> {
         Ok(())
     }
 
-    fn sudo(&self, engine: &Engine, env: &str) -> Result<SuperUser, String> {
-        engine
-          .has_permission(FindPermissionRequest {
-                env_name: Some(env),
-                actor: &self.as_actor(),
-                resource: &self.as_resource(),
-                permission: "sudo".into(),
-            })
-          .map_err(|e| e.to_string())?;
+    fn sudo(&self, engine: &Engine, env: &str) -> anyhow::Result<SuperUser> {
+        if !engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(env),
+            actor: &self.as_actor(),
+            resource: &self.as_resource(),
+            permission: "sudo".into(),
+        })? {
+            Err(anyhow!("actor cannot be superuser"))?
+        }
 
-        Ok(SuperUser {
-            id: self.id,
-        })
+        Ok(SuperUser { id: self.id })
     }
 }
 
@@ -150,7 +149,7 @@ struct SuperUser<'a> {
     id: &'a str,
 }
 
-impl <'a> AsActor for SuperUser<'a> {
+impl<'a> AsActor for SuperUser<'a> {
     fn as_actor(&self) -> Actor {
         Actor {
             id: self.id.into(),
@@ -162,9 +161,8 @@ impl <'a> AsActor for SuperUser<'a> {
     }
 }
 
-
 #[test]
-fn user_simulation_works() {
+fn user_simulation_works() -> anyhow::Result<()> {
     let mut jonh_user = User {
         id: "1",
         name: "John Doe",
@@ -185,8 +183,8 @@ fn user_simulation_works() {
     let operation_result = jonh_user.update_status(&ENGINE, &jane_user.as_actor(), "STD", "Active");
     assert!(operation_result.is_ok());
 
-    let operation_result = jonh_user.read_status(&ENGINE, &jonh_user.as_actor(), "STD");
-    assert_eq!(operation_result, Ok("Active"));
+    let user_status = jonh_user.read_status(&ENGINE, &jonh_user.as_actor(), "STD")?;
+    assert_eq!(user_status, "Active");
 
     let operation_result = User::create(
         &ENGINE,
@@ -200,10 +198,11 @@ fn user_simulation_works() {
     );
     assert!(operation_result.is_ok());
 
-    let mut mary_user = operation_result.unwrap();
-    let super_user = jane_user.sudo(&ENGINE, "STD").expect("jane must be a super user");
+    let mut mary_user = operation_result?;
+    let super_user = jane_user.sudo(&ENGINE, "STD")?;
     let operation_result = mary_user.delete(&ENGINE, &super_user.as_actor(), "ROOT");
     assert!(operation_result.is_ok());
     assert!(mary_user.id.is_empty());
 
+    Ok(())
 }

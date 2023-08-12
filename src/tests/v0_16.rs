@@ -1,5 +1,6 @@
 use std::env;
 
+use anyhow::anyhow;
 use chrono::Utc;
 use lazy_static::lazy_static;
 use parse_display_derive::{Display, FromStr};
@@ -149,7 +150,7 @@ fn simple_find_permission_works() {
         status: None,
     };
     let engine = Engine::new(&storage);
-    let result = engine.has_permission(FindPermissionRequest {
+    let result = engine.actor_has_permission(FindPermissionRequest {
         env_name: None,
         resource: &resource,
         actor: &user,
@@ -176,7 +177,7 @@ fn simple_find_permissions_works() {
         status: None,
     };
     let engine = Engine::new(&storage);
-    let result = engine.has_permissions(FindPermissionsRequest {
+    let result = engine.actor_has_permissions(FindPermissionsRequest {
         env_name: None,
         resource: &resource,
         actor: &user,
@@ -212,13 +213,13 @@ fn file_simulation_works() -> MinosResult<()> {
         status: None,
     };
 
-    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
+    let operation_result = ENGINE_V0_16.actor_has_permission(FindPermissionRequest {
         env_name: None,
         actor: &user2,
         resource: &config_file,
         permission: SimplePermissions::Read.to_string(),
     });
-    assert!(operation_result.is_ok());
+    assert_eq!(operation_result, Ok(true));
 
     let user1 = Actor {
         id: "user1".into(),
@@ -227,13 +228,13 @@ fn file_simulation_works() -> MinosResult<()> {
         roles: vec!["admin".into()],
         status: None,
     };
-    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
+    let operation_result = ENGINE_V0_16.actor_has_permission(FindPermissionRequest {
         env_name: None,
         actor: &user1,
         resource: &config_file,
         permission: SimplePermissions::Delete.to_string(),
     });
-    assert!(operation_result.is_ok());
+    assert_eq!(operation_result, Ok(true));
 
     let guest_user = Actor {
         id: "GUEST.USER".into(),
@@ -242,21 +243,21 @@ fn file_simulation_works() -> MinosResult<()> {
         roles: vec!["guest".into()],
         status: None,
     };
-    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
+    let operation_result = ENGINE_V0_16.actor_has_permission(FindPermissionRequest {
         env_name: None,
         actor: &guest_user,
         resource: &config_file,
         permission: SimplePermissions::Read.to_string(),
     });
-    assert!(operation_result.is_err());
+    assert_eq!(operation_result, Ok(false));
 
-    let operation_result = &ENGINE_V0_16.has_permission(FindPermissionRequest {
+    let operation_result = ENGINE_V0_16.actor_has_permission(FindPermissionRequest {
         env_name: Some("TEST"),
         actor: &guest_user,
         resource: &config_file,
         permission: SimplePermissions::Delete.to_string(),
     });
-    assert!(operation_result.is_ok());
+    assert_eq!(operation_result, Ok(true));
 
     let permissions = &ENGINE_V0_16.authorize(AuthorizeRequest {
         env_name: Some("TEST"),
@@ -330,59 +331,71 @@ struct Application {
 }
 
 impl Application {
-    fn install(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
-        minos_engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(&self.executing_environment),
-                actor,
-                resource: &self.as_resource(),
-                permission: SimplePermissions::Install.to_string(),
-            })
-            .map_err(|err| err.to_string())?;
+    fn install(&mut self, minos_engine: &Engine, actor: &Actor) -> anyhow::Result<()> {
+        if !minos_engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(&self.executing_environment),
+            actor,
+            resource: &self.as_resource(),
+            permission: SimplePermissions::Install.to_string(),
+        })? {
+            Err(anyhow!(
+                "the actor does not have the permission to install {}",
+                &self.name
+            ))?
+        }
         println!("Installing application {} in {}...", &self.name, &self.path);
         self.is_installed = true;
 
         Ok(())
     }
 
-    fn execute(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
-        minos_engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(&self.executing_environment),
-                actor,
-                resource: &self.as_resource(),
-                permission: SimplePermissions::Execute.to_string(),
-            })
-            .map_err(|err| err.to_string())?;
+    fn execute(&self, minos_engine: &Engine, actor: &Actor) -> anyhow::Result<()> {
+        if !minos_engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(&self.executing_environment),
+            actor,
+            resource: &self.as_resource(),
+            permission: SimplePermissions::Execute.to_string(),
+        })? {
+            Err(anyhow!(
+                "the actor does not have permission to execute {}",
+                &self.name
+            ))?
+        }
         println!("Executing application {}...", &self.name);
 
         Ok(())
     }
 
-    fn uninstall(&mut self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
-        minos_engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(&self.executing_environment),
-                actor,
-                resource: &self.as_resource(),
-                permission: SimplePermissions::Uninstall.to_string(),
-            })
-            .map_err(|err| err.to_string())?;
+    fn uninstall(&mut self, minos_engine: &Engine, actor: &Actor) -> anyhow::Result<()> {
+        if !minos_engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(&self.executing_environment),
+            actor,
+            resource: &self.as_resource(),
+            permission: SimplePermissions::Uninstall.to_string(),
+        })? {
+            Err(anyhow!(
+                "the actor does not have permission to uninstall {}",
+                &self.name
+            ))?
+        }
         println!("Uninstalling application {} from {}...", &self.name, &self.path);
         self.is_installed = false;
 
         Ok(())
     }
 
-    fn update(&self, minos_engine: &Engine, actor: &Actor) -> Result<(), String> {
-        minos_engine
-            .has_permission(FindPermissionRequest {
-                env_name: Some(&self.executing_environment),
-                actor,
-                resource: &self.as_resource(),
-                permission: SimplePermissions::Update.to_string(),
-            })
-            .map_err(|err| err.to_string())?;
+    fn update(&self, minos_engine: &Engine, actor: &Actor) -> anyhow::Result<()> {
+        if !minos_engine.actor_has_permission(FindPermissionRequest {
+            env_name: Some(&self.executing_environment),
+            actor,
+            resource: &self.as_resource(),
+            permission: SimplePermissions::Update.to_string(),
+        })? {
+            Err(anyhow!(
+                "the actor does not have permission to update {}",
+                &self.name
+            ))?
+        }
         println!("Updating application {}...", &self.name);
 
         Ok(())
