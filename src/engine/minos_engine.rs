@@ -80,6 +80,7 @@ impl<'s> Engine<'s> {
             .get(&(resource.type_().into(), resource_id))
     }
 
+    /// Returns [Permissions] for attributed resource
     fn authorize_attributed_resource(
         &self,
         request: InternalAuthorizeRequest,
@@ -107,10 +108,7 @@ impl<'s> Engine<'s> {
         Ok(permissions)
     }
 
-    fn authorize_resource(
-        &self,
-        request: InternalAuthorizeRequest
-    ) -> MinosResult<Permissions> {
+    fn authorize_resource(&self, request: InternalAuthorizeRequest) -> MinosResult<Permissions> {
         let inner_resource = request.minos_resource.unwrap_left();
         let mut permissions = Permissions::new();
 
@@ -154,14 +152,12 @@ impl<'s> Engine<'s> {
         }
 
         if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
-            return self.authorize_resource(
-                InternalAuthorizeRequest {
-                    env_name,
-                    actor,
-                    resource,
-                    minos_resource: Either::Left(inner_resource),
-                }
-            );
+            return self.authorize_resource(InternalAuthorizeRequest {
+                env_name,
+                actor,
+                resource,
+                minos_resource: Either::Left(inner_resource),
+            });
         }
 
         Err(Error::ResourceNotFound(resource.type_.to_string()))
@@ -216,12 +212,9 @@ impl<'s> Engine<'s> {
         let permission = &Permission::from(request.permission);
 
         if let Some(default_env) = inner_resource.default_environment() {
-            return Ok(Self::is_permission_in_env(
-                default_env,
-                actor,
-                resource,
-                permission,
-            ));
+            if Self::is_permission_in_env(default_env, actor, resource, permission) {
+                return Ok(true);
+            }
         }
 
         if let Some(env_name) = request.env_name {
@@ -276,13 +269,13 @@ impl<'s> Engine<'s> {
         Err(Error::ResourceNotFound(resource.type_.to_string()))
     }
 
-    /// Check if the user has the selected permissions over the resource. 
+    /// Check if the user has the selected permissions over the resource.
     /// If not all permissions granted, this functions returns false.
-    /// 
+    ///
     /// This method fails if:
     /// * Tha resource not exist into the [Storage].
     /// * The environment's name not exist into the [Storage].
-    /// 
+    ///
     /// WARNING: this function search permissions individually, with performance penalties for
     /// long permissions list. In this case use [`Engine::authorize`]
     pub fn actor_has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<bool> {
@@ -300,12 +293,11 @@ impl<'s> Engine<'s> {
                         actor,
                         resource,
                         minos_resource: Either::Right(attr_resource),
-                        permission: &permission,
+                        permission,
                     })? {
                         n_permissions_granted += 1;
                     }
                 }
-
                 return Ok(n_permissions_granted == permissions.len());
             }
         }
@@ -317,16 +309,16 @@ impl<'s> Engine<'s> {
                     actor,
                     resource,
                     minos_resource: Either::Left(inner_resource),
-                    permission: &permission,
+                    permission,
                 })? {
                     n_permissions_granted += 1;
                 }
-
-                return Ok(n_permissions_granted == permissions.len());
             }
+        } else {
+            Err(Error::ResourceNotFound(resource.type_.to_string()))?
         }
 
-        Err(Error::ResourceNotFound(resource.type_.to_string()))
+        Ok(n_permissions_granted == permissions.len())
     }
 
     pub fn policies_len(&self) -> usize {
