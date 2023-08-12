@@ -112,24 +112,30 @@ impl<'s> Engine<'s> {
         request: InternalAuthorizeRequest
     ) -> MinosResult<Permissions> {
         let inner_resource = request.minos_resource.unwrap_left();
+        let mut permissions = Permissions::new();
 
         if let Some(default_env) = inner_resource.default_environment() {
-            Self::append_permissions(permissions, default_env, request.actor, request.resource);
+            Self::append_permissions(&mut permissions, default_env, request.actor, request.resource);
         }
 
         if let Some(env_name) = request.env_name {
             let env = inner_resource
                 .get_environment(env_name)
                 .ok_or(Error::EnvironmentNotFound(env_name.to_string()))?;
-            Self::append_permissions(permissions, env, request.actor, request.resource);
+            Self::append_permissions(&mut permissions, env, request.actor, request.resource);
         }
 
-        Ok(())
+        if permissions.is_empty() {
+            return Err(Error::ActorNotAuthorized(request.actor.id().to_string()));
+        }
+
+        Ok(permissions)
     }
 
     /// Return the granted [Permissions] if the [Actor] is authorized.
-    /// This method fails if:
+    /// This function fails if:
     /// * The [Actor] is not authorized.
+    /// * Tha resource not exist into the [Storage].
     /// * The environment's name not exist into the [Storage].
     pub fn authorize(&self, request: AuthorizeRequest) -> MinosResult<Permissions> {
         let env_name = request.env_name;
@@ -236,9 +242,9 @@ impl<'s> Engine<'s> {
 
     /// Check if the actor has the selected permission over the resource.
     ///
-    /// This function can fail if:
-    /// * not found the resource
-    /// * the environment not exist
+    /// This method fails if:    
+    /// * Tha resource not exist into the [Storage].
+    /// * The environment's name not exist into the [Storage].
     pub fn actor_has_permission(&self, request: FindPermissionRequest) -> MinosResult<bool> {
         let env_name = request.env_name;
         let actor = &ActorRepr::from(request.actor);
@@ -270,9 +276,15 @@ impl<'s> Engine<'s> {
         Err(Error::ResourceNotFound(resource.type_.to_string()))
     }
 
-    ///
-    /// WARNING: this function implements [Engine::find_permission] inside, so
-    /// the performance is not the best.
+    /// Check if the user has the selected permissions over the resource. 
+    /// If not all permissions granted, this functions returns false.
+    /// 
+    /// This method fails if:
+    /// * Tha resource not exist into the [Storage].
+    /// * The environment's name not exist into the [Storage].
+    /// 
+    /// WARNING: this function search permissions individually, with performance penalties for
+    /// long permissions list. In this case use [`Engine::authorize`]
     pub fn actor_has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<bool> {
         let env_name = request.env_name;
         let actor = &ActorRepr::from(request.actor);
@@ -294,18 +306,27 @@ impl<'s> Engine<'s> {
                     }
                 }
 
-        for permission in permissions {
-            if !self.actor_has_permission(FindPermissionRequest {
-                env_name,
-                actor,
-                resource,
-                permission: permission.clone(),
-            })? {
-                return Ok(false);
+                return Ok(n_permissions_granted == permissions.len());
             }
         }
 
-        Ok(true)
+        if let Some(inner_resource) = self.storage.resources().get(&resource.type_().into()) {
+            for permission in &permissions {
+                if self.find_permission_in_resource(InternalFindPermissionRequest {
+                    env_name,
+                    actor,
+                    resource,
+                    minos_resource: Either::Left(inner_resource),
+                    permission: &permission,
+                })? {
+                    n_permissions_granted += 1;
+                }
+
+                return Ok(n_permissions_granted == permissions.len());
+            }
+        }
+
+        Err(Error::ResourceNotFound(resource.type_.to_string()))
     }
 
     pub fn policies_len(&self) -> usize {
