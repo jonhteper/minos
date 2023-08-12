@@ -281,12 +281,25 @@ impl<'s> Engine<'s> {
     /// WARNING: this function implements [Engine::find_permission] inside, so
     /// the performance is not the best.
     pub fn actor_has_permissions(&self, request: FindPermissionsRequest) -> MinosResult<bool> {
-        let FindPermissionsRequest {
-            env_name,
-            actor,
-            resource,
-            permissions,
-        } = request;
+        let env_name = request.env_name;
+        let actor = &ActorRepr::from(request.actor);
+        let resource = &ResourceRepr::from(request.resource);
+        let permissions = request.permissions;
+        let mut n_permissions_granted = 0;
+
+        if let Some(resource_id) = resource.id() {
+            if let Some(attr_resource) = self.find_attributed_resource(resource_id.clone(), resource) {
+                for permission in &permissions {
+                    if self.find_permission_in_attributed_resource(InternalFindPermissionRequest {
+                        env_name,
+                        actor,
+                        resource,
+                        minos_resource: Either::Right(attr_resource),
+                        permission: &permission,
+                    })? {
+                        n_permissions_granted += 1;
+                    }
+                }
 
         for permission in permissions {
             if !self.actor_has_permission(FindPermissionRequest {
