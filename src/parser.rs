@@ -60,13 +60,14 @@ impl MinosParser {
             }
 
             if path.is_dir() {
-                return Self::parse_dir(&path, values_map);
+                let dir_storage = Self::parse_dir(&path, values_map)?;
+                storage.merge(dir_storage);
             }
 
             let is_minos_file = path.extension().map(|p| p == "minos").unwrap_or_default();
             if is_minos_file {
-                let file_environments = Self::parse_file(&path, values_map)?;
-                storage.merge(file_environments);
+                let file_storage = Self::parse_file(&path, values_map)?;
+                storage.merge(file_storage);
             }
         }
 
