@@ -49,41 +49,23 @@ impl<'a> EngineInfo<'a> {
         resource_policies
     }
 
-    pub fn policies(&self, criteria: Option<Criteria>) -> HashMap<Identifier, Vec<&Policy>> {
-        if criteria.is_none() {
-            let mut policies = HashMap::new();
-            for resource in self.storage.resources().values() {
-                policies.insert(
-                    resource.identifier().clone(),
-                    Self::collect_policies(resource.environments()),
-                );
-            }
-        }
-
-        match criteria.unwrap() {
+    pub fn policies(&self, criteria: Criteria) -> Vec<&Policy> {
+        match criteria {
             Criteria::ResourceType(ty) => {
                 let r_type = Identifier::from(ty);
                 match self.storage.resources().get(&r_type) {
-                    Some(resource) => {
-                        let mut policies = HashMap::new();
-                        policies.insert(r_type.clone(), Self::collect_policies(resource.environments()));
-                        policies
-                    }
-                    None => HashMap::new(),
+                    Some(resource) => Self::collect_policies(resource.environments()),
+                    None => vec![],
                 }
             }
             Criteria::ResourceId(id) => {
-                let mut policies = HashMap::new();
                 for attr_resource in self.storage.attributed_resources().values() {
                     if attr_resource.id().deref() == id {
-                        policies.insert(
-                            attr_resource.identifier().clone(),
-                            Self::collect_policies(attr_resource.environments()),
-                        );
+                        return Self::collect_policies(attr_resource.environments());
                     }
                 }
 
-                policies
+                vec![]
             }
         }
     }
