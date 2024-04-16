@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{Actor, ActorRepr, Permissions, Resource, ResourceRepr};
+use super::{Actor, ActorRepr, EngineInfo, Permissions, Resource, ResourceRepr};
 
 #[derive(Debug)]
 pub struct AuthorizeRequest<'a> {
@@ -323,5 +323,9 @@ impl<'s> Engine<'s> {
 
     pub fn policies_len(&self) -> usize {
         self.storage.policies_len()
+    }
+
+    pub fn info(&self) -> EngineInfo {
+        EngineInfo::new(&self.storage)
     }
 }
