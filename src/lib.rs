@@ -5,6 +5,8 @@ pub mod engine;
 pub mod errors;
 pub mod language;
 pub mod parser;
+pub mod text_repr;
+
 #[cfg(test)]
 mod tests;
 
