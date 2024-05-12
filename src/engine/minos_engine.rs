@@ -51,7 +51,7 @@ struct InternalFindPermissionRequest<'a> {
     pub permission: &'a str,
 }
 
-#[derive(Debug, Clone, Ctor)]
+#[derive(Debug, Copy, Clone, Ctor)]
 pub struct Engine<'s> {
     storage: &'s Storage,
 }
