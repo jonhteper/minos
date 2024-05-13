@@ -1,0 +1,23 @@
+syntax = 0.16;
+
+
+resource User {
+    env DEFAULT {
+        policy {
+            allow = ["create", "read", "update", "delete"];
+
+            rule {
+                actor.type = RootUser;
+            }
+
+            rule {
+                actor.type = resource.type;
+                actor.id = resource.id;
+            }
+
+            rule {
+                resource.owner = actor.id;
+            }
+        }
+    }
+}

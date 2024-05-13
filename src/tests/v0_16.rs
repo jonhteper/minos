@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, fs::File, io::Write};
 
 use anyhow::anyhow;
 use chrono::Utc;
@@ -12,6 +12,7 @@ use crate::{
     },
     language::{environment::DEFAULT_ENV_IDENTIFIER, storage::Storage},
     parser::tokens::FileVersion,
+    text_repr::to_text_repr::ToTextRepr,
     Container, MinosParser, MinosResult,
 };
 
@@ -478,4 +479,16 @@ fn application_simulation_works() {
 
     let operation_result = application_store.execute(&ENGINE_V0_16, &john_user.as_actor());
     assert!(operation_result.is_ok());
+}
+
+const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v0_16.formatted.minos");
+
+#[test]
+fn text_repr_works() -> MinosResult<()> {
+    let storage = MinosParser::parse_str(FileVersion::V0_16, FORMATTED_MINOS_FILE)?;
+    let text_repr = storage.to_text_repr();
+
+    assert_eq!(FORMATTED_MINOS_FILE, &text_repr);
+
+    Ok(())
 }
