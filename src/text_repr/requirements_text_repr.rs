@@ -19,7 +19,8 @@ impl ToTextRepr for Vec<Requirement> {
 }
 
 impl ToTextRepr for Requirement {
-    const INDENTATION: &'static str = "\t\t\t\t";
+    /// 4 tabs of indentation
+    const INDENTATION: &'static str = "                ";
 
     fn to_text_repr(&self) -> String {
         let requirement = match self {

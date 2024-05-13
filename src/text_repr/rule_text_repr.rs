@@ -10,8 +10,12 @@ impl ToTextRepr for Vec<Arc<Rule>> {
     fn to_text_repr(&self) -> String {
         let mut rules_str = String::new();
 
-        for rule in self {
+        for (index, rule) in self.iter().enumerate() {
             rules_str.push_str(&rule.to_text_repr());
+
+            if index < self.len() - 1 {
+                rules_str.push_str("\n");
+            }
         }
 
         rules_str
@@ -19,12 +23,13 @@ impl ToTextRepr for Vec<Arc<Rule>> {
 }
 
 impl ToTextRepr for Rule {
-    const INDENTATION: &'static str = "\t\t\t";
+    /// 3 tabs of indentation
+    const INDENTATION: &'static str = "            ";
 
     fn to_text_repr(&self) -> String {
         let ind = Self::INDENTATION;
         let requirements = self.requirements().to_text_repr();
 
-        format!("{ind}rule {{\n{requirements}{ind}}}\n\n")
+        format!("{ind}rule {{\n{requirements}{ind}}}\n")
     }
 }

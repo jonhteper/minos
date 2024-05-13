@@ -12,8 +12,12 @@ impl ToTextRepr for HashMap<Identifier, Resource> {
 
     fn to_text_repr(&self) -> String {
         let mut resources_str = String::new();
-        for resource in self.values() {
+        for (index, resource) in self.values().enumerate() {
             resources_str.push_str(&resource.to_text_repr());
+
+            if index < self.len() - 1 {
+                resources_str.push_str("\n");
+            }
         }
 
         resources_str
@@ -27,7 +31,7 @@ impl ToTextRepr for Resource {
         let identifier = &self.identifier().0;
         let envs = self.environments().to_text_repr();
 
-        format!("resource {identifier} {{\n{envs}}}\n\n")
+        format!("resource {identifier} {{\n{envs}}}\n")
     }
 }
 
@@ -36,8 +40,12 @@ impl ToTextRepr for HashMap<(Identifier, Arc<str>), AttributedResource> {
 
     fn to_text_repr(&self) -> String {
         let mut attr_resources_str = String::new();
-        for attr_resource in self.values() {
+        for (index, attr_resource) in self.values().enumerate() {
             attr_resources_str.push_str(&attr_resource.to_text_repr());
+
+            if index < self.len() - 1 {
+                attr_resources_str.push_str("\n");
+            }
         }
 
         attr_resources_str
@@ -52,6 +60,6 @@ impl ToTextRepr for AttributedResource {
         let resource_id = format!("{:?}", self.id());
         let envs = self.environments().to_text_repr();
 
-        format!("resource {identifier} {{\nid = {resource_id};\n\n {envs}}}\n\n")
+        format!("resource {identifier} {{\nid = {resource_id};\n\n {envs}}}\n")
     }
 }

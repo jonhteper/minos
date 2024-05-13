@@ -16,7 +16,8 @@ impl ToTextRepr for Vec<Policy> {
 }
 
 impl ToTextRepr for Policy {
-    const INDENTATION: &'static str = "\t\t";
+    /// 2 tabs of indentation
+    const INDENTATION: &'static str = "        ";
     fn to_text_repr(&self) -> String {
         let ind = Self::INDENTATION;
         let allow = self.permissions().to_text_repr();
@@ -27,7 +28,8 @@ impl ToTextRepr for Policy {
 }
 
 impl ToTextRepr for Vec<Permission> {
-    const INDENTATION: &'static str = "\t\t\t";
+    /// 3 tabs of identation
+    const INDENTATION: &'static str = "            ";
 
     fn to_text_repr(&self) -> String {
         let permissions_str = self.iter().map(|p| p.0.as_ref()).collect::<Vec<&str>>();

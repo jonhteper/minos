@@ -9,6 +9,6 @@ impl ToTextRepr for Storage {
         let resources = self.resources().to_text_repr();
         let attr_resources = self.attributed_resources().to_text_repr();
 
-        format!("syntax = 0.16;\n\n\n{resources}{attr_resources}\n")
+        format!("syntax = 0.16;\n\n\n{resources}{attr_resources}")
     }
 }

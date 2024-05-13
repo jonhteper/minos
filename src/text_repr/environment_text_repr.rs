@@ -9,8 +9,12 @@ impl ToTextRepr for HashMap<Identifier, Environment> {
 
     fn to_text_repr(&self) -> String {
         let mut envs_str = String::new();
-        for env in self.values() {
+        for (index, env) in self.values().enumerate() {
             envs_str.push_str(&env.to_text_repr());
+
+            if index < self.len() - 1 {
+                envs_str.push_str("\n");
+            }
         }
 
         envs_str
@@ -18,13 +22,14 @@ impl ToTextRepr for HashMap<Identifier, Environment> {
 }
 
 impl ToTextRepr for Environment {
-    const INDENTATION: &'static str = "\t";
+    /// one tab of indentation
+    const INDENTATION: &'static str = "    ";
 
     fn to_text_repr(&self) -> String {
         let ind = Self::INDENTATION;
         let identifier = &self.identifier().0;
         let policies = self.policies().to_text_repr();
 
-        format!("{ind}env {identifier} {{\n{policies}{ind}}}\n\n")
+        format!("{ind}env {identifier} {{\n{policies}{ind}}}\n")
     }
 }
