@@ -39,10 +39,7 @@ impl MinosParserV0_16 {
             .collect()
     }
 
-    fn get_optimized_pointer(
-        values_map: &mut HashMap<String, Arc<str>>,
-        value: &str,
-    ) -> Arc<str> {
+    fn get_optimized_pointer(values_map: &mut HashMap<String, Arc<str>>, value: &str) -> Arc<str> {
         match values_map.get(value) {
             Some(val) => val.clone(),
             None => {
@@ -110,7 +107,10 @@ impl MinosParserV0_16 {
         Ok(token)
     }
 
-    pub fn parse_file_content(content: &str, values_map: &mut HashMap<String, Arc<str>>) -> MinosResult<Storage> {
+    pub fn parse_file_content(
+        content: &str,
+        values_map: &mut HashMap<String, Arc<str>>,
+    ) -> MinosResult<Storage> {
         let file_rules = Self::parse(Rule::file, content)?.next().unwrap();
         let file_token = Self::parse_token(file_rules, values_map)?;
         let storage = Storage::try_from(file_token)?;

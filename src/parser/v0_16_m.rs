@@ -24,10 +24,7 @@ impl MinosParserV0_16M {
             .collect()
     }
 
-    fn get_optimized_pointer(
-        values_map: &mut HashMap<String, Arc<str>>,
-        value: &str,
-    ) -> Arc<str> {
+    fn get_optimized_pointer(values_map: &mut HashMap<String, Arc<str>>, value: &str) -> Arc<str> {
         match values_map.get(value) {
             Some(val) => val.clone(),
             None => {
@@ -47,12 +44,10 @@ impl MinosParserV0_16M {
         pair: Pair<Rule>,
         values_map: &mut HashMap<String, Arc<str>>,
     ) -> Option<Identifier> {
-        pair.into_inner()
-            .next()
-            .map(|rule| {
-                let arc_val = Self::get_optimized_pointer(values_map, rule.as_str());
-                Identifier(arc_val)
-            })
+        pair.into_inner().next().map(|rule| {
+            let arc_val = Self::get_optimized_pointer(values_map, rule.as_str());
+            Identifier(arc_val)
+        })
     }
 
     fn parse_array(

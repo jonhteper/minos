@@ -1,4 +1,4 @@
-use std::{env, fs::File, io::Write};
+use std::env;
 
 use anyhow::anyhow;
 use chrono::Utc;

@@ -16,7 +16,7 @@ impl ToTextRepr for HashMap<Identifier, Resource> {
             resources_str.push_str(&resource.to_text_repr());
 
             if index < self.len() - 1 {
-                resources_str.push_str("\n");
+                resources_str.push('\n');
             }
         }
 
@@ -44,7 +44,7 @@ impl ToTextRepr for HashMap<(Identifier, Arc<str>), AttributedResource> {
             attr_resources_str.push_str(&attr_resource.to_text_repr());
 
             if index < self.len() - 1 {
-                attr_resources_str.push_str("\n");
+                attr_resources_str.push('\n');
             }
         }
 

@@ -3,8 +3,6 @@ use std::ops::Deref;
 
 use crate::language::policy::Permission;
 
-
-
 /// Hight level abstraction of [Permission] list.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Permissions(Vec<String>);

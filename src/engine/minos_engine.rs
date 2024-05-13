@@ -326,6 +326,6 @@ impl<'s> Engine<'s> {
     }
 
     pub fn info(&self) -> EngineInfo {
-        EngineInfo::new(&self.storage)
+        EngineInfo::new(self.storage)
     }
 }

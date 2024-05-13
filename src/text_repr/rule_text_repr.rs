@@ -14,7 +14,7 @@ impl ToTextRepr for Vec<Arc<Rule>> {
             rules_str.push_str(&rule.to_text_repr());
 
             if index < self.len() - 1 {
-                rules_str.push_str("\n");
+                rules_str.push('\n');
             }
         }
 

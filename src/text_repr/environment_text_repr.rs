@@ -13,7 +13,7 @@ impl ToTextRepr for HashMap<Identifier, Environment> {
             envs_str.push_str(&env.to_text_repr());
 
             if index < self.len() - 1 {
-                envs_str.push_str("\n");
+                envs_str.push('\n');
             }
         }
 
