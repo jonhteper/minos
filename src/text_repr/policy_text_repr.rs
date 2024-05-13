@@ -1,13 +1,27 @@
+use derived::Ctor;
+
 use crate::language::policy::{Permission, Policy};
 
 use super::to_text_repr::ToTextRepr;
 
-impl ToTextRepr for Vec<Policy> {
+#[derive(Debug, Clone, Ctor)]
+pub struct PoliciesFormatter<'a, T>
+where
+    T: IntoIterator<Item = &'a Policy>,
+{
+    pub policies: T,
+}
+
+impl<'a, T> ToTextRepr for PoliciesFormatter<'a, T>
+where
+    T: IntoIterator<Item = &'a Policy> + Clone,
+{
     const INDENTATION: &'static str = "";
 
     fn to_text_repr(&self) -> String {
         let mut policies_str = String::new();
-        for policy in self {
+
+        for policy in self.policies.clone() {
             policies_str.push_str(&policy.to_text_repr());
         }
 
