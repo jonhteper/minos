@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     language::resource::{AttributedResource, Resource},
     parser::tokens::Identifier,
+    text_repr::environment_text_repr::EnvironmentsFormatter,
 };
 
 use super::to_text_repr::ToTextRepr;
@@ -29,7 +30,9 @@ impl ToTextRepr for Resource {
 
     fn to_text_repr(&self) -> String {
         let identifier = &self.identifier().0;
-        let envs = self.environments().to_text_repr();
+        let envs_list = self.environments().values();
+        let len = envs_list.len();
+        let envs = EnvironmentsFormatter::new(envs_list, len).to_text_repr();
 
         format!("resource {identifier} {{\n{envs}}}\n")
     }
@@ -58,7 +61,9 @@ impl ToTextRepr for AttributedResource {
     fn to_text_repr(&self) -> String {
         let identifier = &self.identifier().0;
         let resource_id = format!("{:?}", self.id());
-        let envs = self.environments().to_text_repr();
+        let envs_list = self.environments().values();
+        let len = envs_list.len();
+        let envs = EnvironmentsFormatter::new(envs_list, len).to_text_repr();
 
         format!("resource {identifier} {{\nid = {resource_id};\n\n {envs}}}\n")
     }
