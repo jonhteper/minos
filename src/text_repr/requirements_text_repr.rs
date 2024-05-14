@@ -82,7 +82,7 @@ impl ToTextRepr for Value {
     fn to_text_repr(&self) -> String {
         match self {
             Value::String(v) => format!("\"{}\"", v),
-            Value::Array(arr) => format!("{:?}", arr),
+            Value::Array(arr) => format!("{:?}", arr.0),
             Value::Identifier(v) => v.0.to_string(),
         }
     }
