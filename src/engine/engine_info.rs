@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc, vec};
 
 use derived::Ctor;
 
@@ -62,6 +62,27 @@ impl<'a> EngineInfo<'a> {
                 for attr_resource in self.storage.attributed_resources().values() {
                     if attr_resource.id().deref() == id {
                         return Self::collect_policies(attr_resource.environments());
+                    }
+                }
+
+                vec![]
+            }
+        }
+    }
+
+    pub fn environments(&self, criteria: Criteria) -> Vec<&Environment> {
+        match criteria {
+            Criteria::ResourceType(ty) => {
+                let r_type = Identifier::from(ty);
+                match self.storage.resources().get(&r_type) {
+                    Some(resource) => resource.environments().values().collect(),
+                    None => vec![],
+                }
+            }
+            Criteria::ResourceId(id) => {
+                for attr_resource in self.storage.attributed_resources().values() {
+                    if attr_resource.id().deref() == id {
+                        return attr_resource.environments().values().collect();
                     }
                 }
 
