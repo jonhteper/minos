@@ -1,7 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    language::resource::{AttributedResource, Resource},
+    language::{
+        environment::Environment,
+        resource::{AttributedResource, Resource},
+    },
     parser::tokens::Identifier,
     text_repr::environment_text_repr::EnvironmentsFormatter,
 };
@@ -43,6 +46,10 @@ impl ToTextRepr for HashMap<(Identifier, Arc<str>), AttributedResource> {
 
     fn to_text_repr(&self) -> String {
         let mut attr_resources_str = String::new();
+        if !self.is_empty() {
+            attr_resources_str.push('\n'); // add an empty line to separate the resources from the attributed resources
+        }
+
         for (index, attr_resource) in self.values().enumerate() {
             attr_resources_str.push_str(&attr_resource.to_text_repr());
 
@@ -61,10 +68,11 @@ impl ToTextRepr for AttributedResource {
     fn to_text_repr(&self) -> String {
         let identifier = &self.identifier().0;
         let resource_id = format!("{:?}", self.id());
+        let resource_id_ind = Environment::INDENTATION;
         let envs_list = self.environments().values();
         let len = envs_list.len();
         let envs = EnvironmentsFormatter::new(envs_list, len).to_text_repr();
 
-        format!("resource {identifier} {{\nid = {resource_id};\n\n {envs}}}\n")
+        format!("resource {identifier} {{\n{resource_id_ind}id = {resource_id};\n\n{envs}}}\n")
     }
 }
