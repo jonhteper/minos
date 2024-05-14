@@ -19,5 +19,27 @@ resource User {
                 resource.owner = actor.id;
             }
         }
+
+        policy {
+            allow = ["upgrade"];
+
+            rule {
+                actor.roles *= ["upgrader"];
+            }
+        }
+    }
+}
+
+resource User {
+    id = "Root.user.id";
+
+    env DEFAULT {
+        policy {
+            allow = ["login"];
+
+            rule {
+                actor.groups *= ["sudo"];
+            }
+        }
     }
 }

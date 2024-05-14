@@ -488,7 +488,9 @@ fn text_repr_works() -> MinosResult<()> {
     let storage = MinosParser::parse_str(FileVersion::V0_16, FORMATTED_MINOS_FILE)?;
     let text_repr = storage.to_text_repr();
 
+    println!("{}", text_repr);
     assert_eq!(FORMATTED_MINOS_FILE, &text_repr);
+
 
     Ok(())
 }
