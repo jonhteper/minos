@@ -10,6 +10,7 @@ where
     T: IntoIterator<Item = &'a Policy>,
 {
     pub policies: T,
+    pub policies_len: usize,
 }
 
 impl<'a, T> ToTextRepr for PoliciesFormatter<'a, T>
@@ -20,9 +21,13 @@ where
 
     fn to_text_repr(&self) -> String {
         let mut policies_str = String::new();
-
-        for policy in self.policies.clone() {
+        let iter = self.policies.clone().into_iter();
+        for (index, policy) in iter.enumerate() {
             policies_str.push_str(&policy.to_text_repr());
+
+            if index < self.policies_len - 1 {
+                policies_str.push('\n');
+            }
         }
 
         policies_str

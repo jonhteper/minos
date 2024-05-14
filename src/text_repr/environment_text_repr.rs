@@ -44,7 +44,8 @@ impl ToTextRepr for Environment {
     fn to_text_repr(&self) -> String {
         let ind = Self::INDENTATION;
         let identifier = &self.identifier().0;
-        let policies_formatter = PoliciesFormatter::new(self.policies());
+        let policies_vec = self.policies();
+        let policies_formatter = PoliciesFormatter::new(policies_vec, policies_vec.len());
         let policies = policies_formatter.to_text_repr();
 
         format!("{ind}env {identifier} {{\n{policies}{ind}}}\n")
