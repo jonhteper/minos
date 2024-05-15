@@ -13,6 +13,7 @@ pub struct EngineInfo<'a> {
 }
 
 impl<'a> EngineInfo<'a> {
+    /// Return the number of policies of selected resource. Return 0 if no resource is found.
     pub fn policies_len(&self, search_criteria: Option<Criteria>) -> usize {
         if search_criteria.is_none() {
             return self.storage.policies_len();
