@@ -70,23 +70,37 @@ impl<'a> EngineInfo<'a> {
         }
     }
 
-    pub fn environments(&self, criteria: Criteria) -> Vec<&Environment> {
-        match criteria {
+    /// Returns an iterator with the resource's [`Environment`]s, if it exists.
+    ///
+    /// # Parameters
+    ///
+    /// * `search_criteria` - A `Criteria` enum that specifies the search criteria.
+    ///
+    /// # Returns
+    ///
+    /// * `Option<impl Iterator<Item = &Environment> + '_>` - An `Option` that contains an iterator with the resource's environments if it exists.
+    ///   If the resource is not found, it returns `None`.
+    ///
+    pub fn environments(
+        &self,
+        search_criteria: Criteria,
+    ) -> Option<impl Iterator<Item = &Environment> + '_> {
+        match search_criteria {
             Criteria::ResourceType(ty) => {
                 let r_type = Identifier::from(ty);
-                match self.storage.resources().get(&r_type) {
-                    Some(resource) => resource.environments().values().collect(),
-                    None => vec![],
-                }
+                self.storage
+                    .resources()
+                    .get(&r_type)
+                    .map(|r| r.environments().values())
             }
             Criteria::ResourceId(id) => {
                 for attr_resource in self.storage.attributed_resources().values() {
                     if attr_resource.id().deref() == id {
-                        return attr_resource.environments().values().collect();
+                        return Some(attr_resource.environments().values());
                     }
                 }
 
-                vec![]
+                None
             }
         }
     }
