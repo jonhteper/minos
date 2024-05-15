@@ -13,12 +13,12 @@ pub struct EngineInfo<'a> {
 }
 
 impl<'a> EngineInfo<'a> {
-    pub fn policies_len(&self, criteria: Option<Criteria>) -> usize {
-        if criteria.is_none() {
+    pub fn policies_len(&self, search_criteria: Option<Criteria>) -> usize {
+        if search_criteria.is_none() {
             return self.storage.policies_len();
         }
 
-        match criteria.unwrap() {
+        match search_criteria.unwrap() {
             Criteria::ResourceType(ty) => {
                 let r_type = Identifier::from(ty);
                 match self.storage.resources().get(&r_type) {
