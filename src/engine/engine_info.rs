@@ -1,9 +1,9 @@
-use std::{collections::HashMap, ops::Deref, sync::Arc, vec};
+use std::{ops::Deref, sync::Arc};
 
 use derived::Ctor;
 
 use crate::{
-    language::{environment::Environment, policy::Policy, storage::Storage},
+    language::{environment::Environment, storage::Storage},
     parser::tokens::Identifier,
 };
 
@@ -35,38 +35,6 @@ impl<'a> EngineInfo<'a> {
                 }
 
                 0
-            }
-        }
-    }
-
-    fn collect_policies(environments: &HashMap<Identifier, Environment>) -> Vec<&Policy> {
-        let mut resource_policies = vec![];
-        for env in environments.values() {
-            for policy in env.policies() {
-                resource_policies.push(policy);
-            }
-        }
-
-        resource_policies
-    }
-
-    pub fn policies(&self, criteria: Criteria) -> Vec<&Policy> {
-        match criteria {
-            Criteria::ResourceType(ty) => {
-                let r_type = Identifier::from(ty);
-                match self.storage.resources().get(&r_type) {
-                    Some(resource) => Self::collect_policies(resource.environments()),
-                    None => vec![],
-                }
-            }
-            Criteria::ResourceId(id) => {
-                for attr_resource in self.storage.attributed_resources().values() {
-                    if attr_resource.id().deref() == id {
-                        return Self::collect_policies(attr_resource.environments());
-                    }
-                }
-
-                vec![]
             }
         }
     }
