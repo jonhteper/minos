@@ -491,6 +491,5 @@ fn text_repr_works() -> MinosResult<()> {
     println!("{}", text_repr);
     assert_eq!(FORMATTED_MINOS_FILE, &text_repr);
 
-
     Ok(())
 }
