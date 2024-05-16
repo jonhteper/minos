@@ -7,25 +7,23 @@ use super::to_text_repr::ToTextRepr;
 #[derive(Debug, Clone, Ctor)]
 pub struct PoliciesFormatter<'a, T>
 where
-    T: IntoIterator<Item = &'a Policy>,
+    T: ExactSizeIterator<Item = &'a Policy>,
 {
     pub policies: T,
-    pub policies_len: usize,
 }
 
 impl<'a, T> ToTextRepr for PoliciesFormatter<'a, T>
 where
-    T: IntoIterator<Item = &'a Policy> + Clone,
+    T: ExactSizeIterator<Item = &'a Policy> + Clone,
 {
     const INDENTATION: &'static str = "";
 
     fn to_text_repr(&self) -> String {
         let mut policies_str = String::new();
-        let iter = self.policies.clone().into_iter();
-        for (index, policy) in iter.enumerate() {
+        for (index, policy) in self.policies.clone().enumerate() {
             policies_str.push_str(&policy.to_text_repr());
 
-            if index < self.policies_len - 1 {
+            if index < self.policies.len() - 1 {
                 policies_str.push('\n');
             }
         }

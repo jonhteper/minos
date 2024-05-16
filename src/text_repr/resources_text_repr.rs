@@ -34,8 +34,7 @@ impl ToTextRepr for Resource {
     fn to_text_repr(&self) -> String {
         let identifier = &self.identifier().0;
         let envs_list = self.environments().values();
-        let len = envs_list.len();
-        let envs = EnvironmentsFormatter::new(envs_list, len).to_text_repr();
+        let envs = EnvironmentsFormatter::new(envs_list).to_text_repr();
 
         format!("resource {identifier} {{\n{envs}}}\n")
     }
@@ -70,8 +69,7 @@ impl ToTextRepr for AttributedResource {
         let resource_id = format!("{:?}", self.id());
         let resource_id_ind = Environment::INDENTATION;
         let envs_list = self.environments().values();
-        let len = envs_list.len();
-        let envs = EnvironmentsFormatter::new(envs_list, len).to_text_repr();
+        let envs = EnvironmentsFormatter::new(envs_list).to_text_repr();
 
         format!("resource {identifier} {{\n{resource_id_ind}id = {resource_id};\n\n{envs}}}\n")
     }
