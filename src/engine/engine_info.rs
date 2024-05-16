@@ -47,13 +47,13 @@ impl<'a> EngineInfo<'a> {
     ///
     /// # Returns
     ///
-    /// * `Option<impl Iterator<Item = &Environment> + '_>` - An `Option` that contains an iterator with the resource's environments if it exists.
+    /// * `Option<impl ExactSizeIterator<Item = &Environment> + '_>` - An `Option` that contains an iterator with the resource's environments if it exists.
     ///   If the resource is not found, it returns `None`.
     ///
     pub fn environments(
         &self,
         search_criteria: Criteria,
-    ) -> Option<impl Iterator<Item = &Environment> + '_> {
+    ) -> Option<impl ExactSizeIterator<Item = &Environment> + '_> {
         match search_criteria {
             Criteria::ResourceType(ty) => {
                 let r_type = Identifier::from(ty);
@@ -96,3 +96,24 @@ pub enum Criteria<'a> {
     ResourceType(&'a str),
     ResourceId(&'a str),
 }
+
+// pub struct Environments<'a, I>
+// where
+//     I: Iterator<Item = &'a Environment>,
+// {
+//     iterator: I,
+//     len: usize,
+// }
+
+// impl<'a, I> From<&HashMap<Identifier, Environment>> for Environments<'a, I>
+// where
+//     I: Iterator<Item = &'a Environment>,
+// {
+//     fn from(map: &HashMap<Identifier, Environment>) -> Self {
+//         let values = map.values();
+//         Self {
+//             iterator: values,
+//             len: map.len(),
+//         }
+//     }
+// }
