@@ -53,7 +53,7 @@ impl<'a> EngineInfo<'a> {
     pub fn environments(
         &self,
         search_criteria: Criteria,
-    ) -> Option<impl ExactSizeIterator<Item = &Environment> + '_> {
+    ) -> Option<impl ExactSizeIterator<Item = &Environment> + '_ + Clone> {
         match search_criteria {
             Criteria::ResourceType(ty) => {
                 let r_type = Identifier::from(ty);
