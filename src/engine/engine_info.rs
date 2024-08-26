@@ -96,24 +96,3 @@ pub enum Criteria<'a> {
     ResourceType(&'a str),
     ResourceId(&'a str),
 }
-
-// pub struct Environments<'a, I>
-// where
-//     I: Iterator<Item = &'a Environment>,
-// {
-//     iterator: I,
-//     len: usize,
-// }
-
-// impl<'a, I> From<&HashMap<Identifier, Environment>> for Environments<'a, I>
-// where
-//     I: Iterator<Item = &'a Environment>,
-// {
-//     fn from(map: &HashMap<Identifier, Environment>) -> Self {
-//         let values = map.values();
-//         Self {
-//             iterator: values,
-//             len: map.len(),
-//         }
-//     }
-// }
