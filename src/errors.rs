@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, sync::Arc};
 
 use crate::parser::{v0_16, v0_16_m};
 use parse_display::ParseError;
@@ -7,7 +7,7 @@ use thiserror::Error as ThisError;
 pub type MinosResult<T> = Result<T, Error>;
 
 #[non_exhaustive]
-#[derive(Debug, ThisError, PartialEq, Eq)]
+#[derive(Debug, Clone, ThisError, PartialEq, Eq)]
 pub enum Error {
     #[error("environment '{0}' not found")]
     EnvironmentNotFound(String),
@@ -50,7 +50,7 @@ pub enum Error {
     RuleV0_16M(Box<pest::error::Error<v0_16_m::Rule>>),
 
     #[error(transparent)]
-    ParseError(#[from] ParseError),
+    ParseError(Arc<ParseError>),
 }
 
 impl From<io::Error> for Error {
@@ -68,5 +68,11 @@ impl From<pest::error::Error<v0_16::Rule>> for Error {
 impl From<pest::error::Error<v0_16_m::Rule>> for Error {
     fn from(err: pest::error::Error<v0_16_m::Rule>) -> Self {
         Self::RuleV0_16M(Box::new(err))
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(err: ParseError) -> Self {
+        Self::ParseError(Arc::new(err))
     }
 }
