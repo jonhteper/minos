@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::{fs, path::Path, str::FromStr};
 
-use lazy_static::lazy_static;
 use regex::Regex;
 
 use crate::errors::{Error, MinosResult};
@@ -15,10 +14,8 @@ pub mod tokens;
 pub(crate) mod v0_16;
 pub(crate) mod v0_16_m;
 
-lazy_static! {
-    static ref VERSION_REGEX: Regex =
-        Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+M*)").expect("regex syntax error");
-}
+static VERSION_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+M*)").expect("regex syntax error"));
 
 #[derive(Debug)]
 pub struct MinosParser;

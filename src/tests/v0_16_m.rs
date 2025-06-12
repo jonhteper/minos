@@ -1,5 +1,6 @@
+use std::sync::LazyLock;
+
 use anyhow::anyhow;
-use lazy_static::lazy_static;
 
 use crate::{
     engine::{AsActor, AsResource, FindPermissionRequest},
@@ -10,11 +11,10 @@ use crate::{
 
 const ADVANCED_MINOS_FILE_CONTENT: &str =
     include_str!("../../assets/simulation/simulation_v0_16M.minos");
-lazy_static! {
-    static ref STORAGE: Storage =
-        MinosParser::parse_str(FileVersion::V0_16M, ADVANCED_MINOS_FILE_CONTENT).unwrap();
-    static ref ENGINE: Engine<'static> = Engine::new(&STORAGE);
-}
+
+static STORAGE: LazyLock<Storage> =
+    LazyLock::new(|| MinosParser::parse_str(FileVersion::V0_16M, ADVANCED_MINOS_FILE_CONTENT).unwrap());
+static ENGINE: LazyLock<Engine<'static>> = LazyLock::new(|| Engine::new(&STORAGE));
 
 #[derive(Debug)]
 struct User<'a> {

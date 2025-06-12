@@ -1,8 +1,7 @@
-use std::env;
+use std::{env, sync::LazyLock};
 
 use anyhow::anyhow;
 use chrono::Utc;
-use lazy_static::lazy_static;
 use parse_display_derive::{Display, FromStr};
 
 use crate::{
@@ -192,11 +191,10 @@ fn simple_find_permissions_works() {
 }
 
 const ADVANCED_MINOS_V_0_16_TEXT: &str = include_str!("../../assets/simulation/simulation_v0_16.minos");
-lazy_static! {
-    static ref STORAGE_V_0_16: Storage =
-        MinosParser::parse_str(FileVersion::V0_16, ADVANCED_MINOS_V_0_16_TEXT).unwrap();
-    static ref ENGINE_V0_16: Engine<'static> = Engine::new(&STORAGE_V_0_16);
-}
+
+static STORAGE_V_0_16: LazyLock<Storage> =
+    LazyLock::new(|| MinosParser::parse_str(FileVersion::V0_16, ADVANCED_MINOS_V_0_16_TEXT).unwrap());
+static ENGINE_V0_16: LazyLock<Engine<'static>> = LazyLock::new(|| Engine::new(&STORAGE_V_0_16));
 
 #[test]
 fn file_simulation_works() -> MinosResult<()> {
