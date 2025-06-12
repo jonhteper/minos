@@ -1,7 +1,5 @@
-use std::sync::Arc;
-
-use derived::Ctor;
 use either::Either;
+use std::{borrow::Cow, sync::Arc};
 
 use crate::{
     errors::{Error, MinosResult},
@@ -51,12 +49,18 @@ struct InternalFindPermissionRequest<'a> {
     pub permission: &'a str,
 }
 
-#[derive(Debug, Copy, Clone, Ctor)]
+#[derive(Debug, Clone)]
 pub struct Engine<'s> {
-    storage: &'s Storage,
+    storage: Cow<'s, Storage>,
 }
 
 impl<'s> Engine<'s> {
+    pub fn new(storage: &'s Storage) -> Self {
+        Self {
+            storage: Cow::Borrowed(storage),
+        }
+    }
+
     fn append_permissions(
         permissions: &mut Permissions,
         environment: &Environment,
@@ -235,7 +239,7 @@ impl<'s> Engine<'s> {
 
     /// Check if the actor has the selected permission over the resource.
     ///
-    /// This method fails if:    
+    /// This method fails if:
     /// * Tha resource not exist into the [Storage].
     /// * The environment's name not exist into the [Storage].
     pub fn actor_has_permission(&self, request: FindPermissionRequest) -> MinosResult<bool> {
@@ -326,6 +330,14 @@ impl<'s> Engine<'s> {
     }
 
     pub fn info(&self) -> EngineInfo {
-        EngineInfo::new(self.storage)
+        EngineInfo::new(self.storage.as_ref())
+    }
+}
+
+impl From<Storage> for Engine<'_> {
+    fn from(storage: Storage) -> Self {
+        Self {
+            storage: Cow::Owned(storage),
+        }
     }
 }
