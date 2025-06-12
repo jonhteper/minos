@@ -94,8 +94,23 @@ impl MinosParser {
     /// * Is partial minos file.
     /// * File contains syntax errors.
     /// * File uses unsupported syntax version.
+    #[deprecated(since = "0.12.0", note = "Use `MinosParser::easy_parse_str` method instead")]
     pub fn parse_str(version: FileVersion, file_content: &str) -> MinosResult<Storage> {
         let mut values_map = HashMap::new();
+        Self::optimized_parse_str(version, file_content, &mut values_map)
+    }
+
+    /// Read and parse a valid minos file content, returns an [Storage]
+    /// built with it.
+    ///
+    /// ## Errors
+    /// * Isn't a valid minos file.
+    /// * Is partial minos file.
+    /// * File contains syntax errors.
+    /// * File uses unsupported syntax version.
+    pub fn easy_parse_str(file_content: &str) -> MinosResult<Storage> {
+        let mut values_map = HashMap::new();
+        let version = Self::get_file_version(&file_content).ok_or(Error::SyntaxNotSupported)?;
         Self::optimized_parse_str(version, file_content, &mut values_map)
     }
 }

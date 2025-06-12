@@ -10,7 +10,6 @@ use crate::{
         FindPermissionsRequest, Resource, TryIntoActor,
     },
     language::{environment::DEFAULT_ENV_IDENTIFIER, storage::Storage},
-    parser::tokens::FileVersion,
     text_repr::to_text_repr::ToTextRepr,
     Container, MinosParser, MinosResult,
 };
@@ -44,7 +43,7 @@ resource User {
 /// Test to verify that the parsing from file content, works as expected.
 #[test]
 fn parse_file_content_works() -> MinosResult<()> {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
+    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
     let resources = storage.resources();
     assert_eq!(resources.len(), 1);
     let environments = resources.get(&"User".into()).unwrap().environments();
@@ -99,7 +98,7 @@ enum SimplePermissions {
 /// Test to verify that the authorization works correctly.
 #[test]
 fn simple_authorize_works() -> MinosResult<()> {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
+    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -135,7 +134,7 @@ fn simple_authorize_works() -> MinosResult<()> {
 
 #[test]
 fn simple_find_permission_works() {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
+    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -162,7 +161,7 @@ fn simple_find_permission_works() {
 
 #[test]
 fn simple_find_permissions_works() {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT).unwrap();
+    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -193,7 +192,7 @@ fn simple_find_permissions_works() {
 const ADVANCED_MINOS_V_0_16_TEXT: &str = include_str!("../../assets/simulation/simulation_v0_16.minos");
 
 static STORAGE_V_0_16: LazyLock<Storage> =
-    LazyLock::new(|| MinosParser::parse_str(FileVersion::V0_16, ADVANCED_MINOS_V_0_16_TEXT).unwrap());
+    LazyLock::new(|| MinosParser::easy_parse_str(ADVANCED_MINOS_V_0_16_TEXT).unwrap());
 static ENGINE_V0_16: LazyLock<Engine<'static>> = LazyLock::new(|| Engine::new(&STORAGE_V_0_16));
 
 #[test]
@@ -483,7 +482,7 @@ const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v0_16.formatted.mi
 
 #[test]
 fn text_repr_works() -> MinosResult<()> {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, FORMATTED_MINOS_FILE)?;
+    let storage = MinosParser::easy_parse_str(FORMATTED_MINOS_FILE)?;
     let text_repr = storage.to_text_repr();
 
     println!("{}", text_repr);
