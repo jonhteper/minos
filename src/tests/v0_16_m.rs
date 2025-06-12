@@ -4,16 +4,14 @@ use anyhow::anyhow;
 
 use crate::{
     engine::{AsActor, AsResource, FindPermissionRequest},
-    language::storage::Storage,
     Actor, Engine, MinosParser,
 };
 
 const ADVANCED_MINOS_FILE_CONTENT: &str =
     include_str!("../../assets/simulation/simulation_v0_16M.minos");
 
-static STORAGE: LazyLock<Storage> =
+static ENGINE: LazyLock<Engine<'static>> =
     LazyLock::new(|| MinosParser::easy_parse_str(ADVANCED_MINOS_FILE_CONTENT).unwrap());
-static ENGINE: LazyLock<Engine<'static>> = LazyLock::new(|| Engine::new(&STORAGE));
 
 #[derive(Debug)]
 struct User<'a> {

@@ -7,6 +7,7 @@ use regex::Regex;
 use crate::errors::{Error, MinosResult};
 
 use crate::language::storage::Storage;
+use crate::Engine;
 
 use self::tokens::FileVersion;
 
@@ -17,6 +18,45 @@ pub(crate) mod v0_16_m;
 static VERSION_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+M*)").expect("regex syntax error"));
 
+/// Parser for Minos files.
+///
+/// Use it for individual file content, if you want to parse a directory or a file from FS,
+/// use [`Container`](crate::container::Container) instead.
+///
+/// # Usage
+/// From text
+/// ```rust
+/// use minos::parser::MinosParser;
+/// use minos::Engine;
+///
+/// const minos_text: &str =  r#"
+/// syntax = 0.16;
+/// resource User {
+///     env DEFAULT {
+///         policy {
+///             allow = ["create", "read", "update", "delete"];
+///
+///             rule {
+///                 actor.type = RootUser;
+///             }
+///
+///             rule {
+///                 actor.type = resource.type;
+///                 actor.id = resource.id;
+///             }
+///
+///             rule {
+///                 resource.owner = actor.id;
+///             }
+///         }
+///     }
+/// }
+/// "#;
+///
+/// let engine: Engine = MinosParser::easy_parse_str(minos_text).unwrap();
+///
+///
+///
 #[derive(Debug)]
 pub struct MinosParser;
 
@@ -100,7 +140,7 @@ impl MinosParser {
         Self::optimized_parse_str(version, file_content, &mut values_map)
     }
 
-    /// Read and parse a valid minos file content, returns an [Storage]
+    /// Read and parse a valid minos file content, returns an [Engine]
     /// built with it.
     ///
     /// ## Errors
@@ -108,9 +148,12 @@ impl MinosParser {
     /// * Is partial minos file.
     /// * File contains syntax errors.
     /// * File uses unsupported syntax version.
-    pub fn easy_parse_str(file_content: &str) -> MinosResult<Storage> {
+    pub fn easy_parse_str(file_content: &str) -> MinosResult<Engine> {
         let mut values_map = HashMap::new();
         let version = Self::get_file_version(&file_content).ok_or(Error::SyntaxNotSupported)?;
-        Self::optimized_parse_str(version, file_content, &mut values_map)
+        let storage = Self::optimized_parse_str(version, file_content, &mut values_map)?;
+        let engine = Engine::from(storage);
+
+        Ok(engine)
     }
 }

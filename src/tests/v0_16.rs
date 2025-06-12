@@ -9,7 +9,8 @@ use crate::{
         Actor, AsActor, AsResource, AuthorizeRequest, Engine, FindPermissionRequest,
         FindPermissionsRequest, Resource, TryIntoActor,
     },
-    language::{environment::DEFAULT_ENV_IDENTIFIER, storage::Storage},
+    language::environment::DEFAULT_ENV_IDENTIFIER,
+    parser::tokens::FileVersion,
     text_repr::to_text_repr::ToTextRepr,
     Container, MinosParser, MinosResult,
 };
@@ -42,8 +43,9 @@ resource User {
 
 /// Test to verify that the parsing from file content, works as expected.
 #[test]
+#[allow(deprecated)]
 fn parse_file_content_works() -> MinosResult<()> {
-    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
+    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
     let resources = storage.resources();
     assert_eq!(resources.len(), 1);
     let environments = resources.get(&"User".into()).unwrap().environments();
@@ -98,7 +100,7 @@ enum SimplePermissions {
 /// Test to verify that the authorization works correctly.
 #[test]
 fn simple_authorize_works() -> MinosResult<()> {
-    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
+    let engine = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -112,7 +114,6 @@ fn simple_authorize_works() -> MinosResult<()> {
         owner: None,
         status: None,
     };
-    let engine = Engine::new(&storage);
     let permissions = engine.authorize(AuthorizeRequest {
         env_name: None,
         resource: &resource,
@@ -134,7 +135,7 @@ fn simple_authorize_works() -> MinosResult<()> {
 
 #[test]
 fn simple_find_permission_works() {
-    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
+    let engine = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -148,7 +149,6 @@ fn simple_find_permission_works() {
         owner: None,
         status: None,
     };
-    let engine = Engine::new(&storage);
     let result = engine.actor_has_permission(FindPermissionRequest {
         env_name: None,
         resource: &resource,
@@ -161,7 +161,7 @@ fn simple_find_permission_works() {
 
 #[test]
 fn simple_find_permissions_works() {
-    let storage = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
+    let engine = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT).unwrap();
     let user = Actor {
         id: "Example.user.id".into(),
         type_: "User".into(),
@@ -175,7 +175,6 @@ fn simple_find_permissions_works() {
         owner: None,
         status: None,
     };
-    let engine = Engine::new(&storage);
     let result = engine.actor_has_permissions(FindPermissionsRequest {
         env_name: None,
         resource: &resource,
@@ -191,9 +190,8 @@ fn simple_find_permissions_works() {
 
 const ADVANCED_MINOS_V_0_16_TEXT: &str = include_str!("../../assets/simulation/simulation_v0_16.minos");
 
-static STORAGE_V_0_16: LazyLock<Storage> =
+static ENGINE_V0_16: LazyLock<Engine<'static>> =
     LazyLock::new(|| MinosParser::easy_parse_str(ADVANCED_MINOS_V_0_16_TEXT).unwrap());
-static ENGINE_V0_16: LazyLock<Engine<'static>> = LazyLock::new(|| Engine::new(&STORAGE_V_0_16));
 
 #[test]
 fn file_simulation_works() -> MinosResult<()> {
@@ -481,8 +479,9 @@ fn application_simulation_works() {
 const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v0_16.formatted.minos");
 
 #[test]
+#[allow(deprecated)]
 fn text_repr_works() -> MinosResult<()> {
-    let storage = MinosParser::easy_parse_str(FORMATTED_MINOS_FILE)?;
+    let storage = MinosParser::parse_str(FileVersion::V0_16, FORMATTED_MINOS_FILE)?;
     let text_repr = storage.to_text_repr();
 
     println!("{}", text_repr);
