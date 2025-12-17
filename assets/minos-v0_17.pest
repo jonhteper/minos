@@ -1,0 +1,83 @@
+file    =  { SOI ~ "syntax" ~ "=" ~ version ~ ";" ~ macro_definition* ~ (resource | attributed_resource)+ ~ EOI }
+version = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ "M"? }
+
+macro_definition = { "#" ~ identifier ~ "{" ~ ((string ~ ("," ~ string)*) | requirement+) ~ "}" }
+
+macro_call = { "#" ~ "[" ~ identifier ~ "]" }
+
+resource            = {
+    "resource" ~ identifier ~ "{" ~ ((default_env | named_env)+ | implicit_default_env) ~ "}"
+}
+attributed_resource = {
+    "resource" ~ identifier ~ "{" ~ ("id" ~ "=" ~ string ~ ";")? ~ (default_env ~ named_env+ | named_env+ | implicit_default_env) ~ "}"
+}
+
+named_env            = { "env" ~ identifier ~ "{" ~ policy+ ~ "}" }
+default_env          = { "env" ~ "DEFAULT" ~ "{" ~ policy+ ~ "}" }
+implicit_default_env = { policy+ }
+
+policy = { "policy" ~ "{" ~ allow ~ ";" ~ rule+ ~ "}" }
+
+allow = { "allow" ~ "=" ~ array }
+
+rule = { "rule" ~ "{" ~ (requirement | macro_call)+ ~ "}" }
+
+array = { "[" ~ (string | macro_call) ~ ("," ~ (string | macro_call))* ~ ","{1}? ~ "]" }
+
+requirement = { (assertion | negation | all_of_operation | any_of_operation | none_of_operation) ~ ";" }
+
+assertion = {
+    (actor_type ~ equal ~ resource_type)
+  | (resource_type ~ equal ~ actor_type)
+  | (actor_id ~ equal ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ equal ~ actor_id)
+  | ((actor_type | actor_status) ~ equal ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ equal ~ string)
+  | ((actor_groups | actor_roles) ~ equal ~ array)
+  | (resource_status ~ equal ~ identifier)
+}
+negation  = {
+    (actor_type ~ distinct ~ resource_type)
+  | (resource_type ~ distinct ~ actor_type)
+  | (actor_id ~ distinct ~ (resource_id | resource_owner))
+  | ((resource_id | resource_owner) ~ distinct ~ actor_id)
+  | ((actor_type | actor_status) ~ distinct ~ identifier)
+  | ((actor_id | resource_id | resource_owner) ~ distinct ~ string)
+  | ((actor_groups | actor_roles) ~ distinct ~ array)
+  | (resource_status ~ distinct ~ identifier)
+}
+all_of_operation    = { (actor_roles | actor_groups) ~ all_of ~ (array | string | resource_id | resource_type | resource_owner) }
+any_of_operation    = { (actor_roles | actor_groups) ~ any_of ~ array }
+none_of_operation    = { (actor_roles | actor_groups) ~ none_of ~ array }
+
+actor_id     = { "actor.id" }
+actor_type   = { "actor.type" }
+actor_status = { "actor.status" }
+actor_groups = { "actor.groups" }
+actor_roles  = { "actor.roles" }
+
+resource_id     = { "resource.id" }
+resource_type   = { "resource.type" }
+resource_owner  = { "resource.owner" }
+resource_status = { "resource.status" }
+
+equal = { "=" }
+distinct  = { "!=" }
+all_of    = { "*=" | "all_of=" }
+any_of    = { "1=" | "any_of=" }
+none_of   = { "0=" | "none_of=" }
+
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+identifier = @{
+    (ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER) ~ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | ASCII_DIGIT | "_" | "/" | "-")*
+}
+
+string       =  { "\"" ~ inner_string ~ "\"" }
+inner_string = @{ char* }
+char         =  {
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+WHITESPACE   = _{ " " | "\t" | "\r" | "\n" }
