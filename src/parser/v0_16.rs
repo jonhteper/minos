@@ -89,7 +89,7 @@ impl MinosParserV0_16 {
             Rule::resource_status => Token::ResourceAttribute(ResourceAttribute::Status),
             Rule::assertion_operator => Token::Operator(Operator::Assertion),
             Rule::negation_operator => Token::Operator(Operator::Negation),
-            Rule::search_operator => Token::Operator(Operator::Search),
+            Rule::search_operator => Token::Operator(Operator::AllOf),
             Rule::identifier => {
                 let val = Self::get_optimized_pointer(values_map, pair.as_str());
                 Token::Identifier(Identifier(val))

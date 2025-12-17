@@ -257,5 +257,5 @@ pub enum Operator {
     Negation,
 
     #[display("*=")]
-    Search,
+    AllOf,
 }
