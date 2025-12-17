@@ -254,7 +254,7 @@ pub enum Operator {
     Equal,
 
     #[display("!=")]
-    Negation,
+    Distinct,
 
     #[display("*=")]
     AllOf,
