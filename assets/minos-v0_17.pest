@@ -24,7 +24,7 @@ rule = { "rule" ~ "{" ~ (requirement | macro_call)+ ~ "}" }
 
 array = { "[" ~ (string | macro_call) ~ ("," ~ (string | macro_call))* ~ ","{1}? ~ "]" }
 
-requirement = { (assertion | negation | all_of_operation | any_of_operation | none_of_operation) ~ ";" }
+requirement = { (assertion | negation | search) ~ ";" }
 
 assertion = {
     (actor_type ~ equal ~ resource_type)
@@ -46,9 +46,7 @@ negation  = {
   | ((actor_groups | actor_roles) ~ distinct ~ array)
   | (resource_status ~ distinct ~ identifier)
 }
-all_of_operation    = { (actor_roles | actor_groups) ~ all_of ~ (array | string | resource_id | resource_type | resource_owner) }
-any_of_operation    = { (actor_roles | actor_groups) ~ any_of ~ array }
-none_of_operation    = { (actor_roles | actor_groups) ~ none_of ~ array }
+search = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
 
 actor_id     = { "actor.id" }
 actor_type   = { "actor.type" }
@@ -66,6 +64,7 @@ distinct  = { "!=" }
 all_of    = { "*=" | "all_of=" }
 any_of    = { "1=" | "any_of=" }
 none_of   = { "0=" | "none_of=" }
+search_operator = { all_of | any_of | none_of }
 
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
