@@ -171,7 +171,7 @@ impl MinosParserV0_16M {
             Rule::resource_type => Token::ResourceAttribute(ResourceAttribute::Type),
             Rule::resource_owner => Token::ResourceAttribute(ResourceAttribute::Owner),
             Rule::resource_status => Token::ResourceAttribute(ResourceAttribute::Status),
-            Rule::assertion_operator => Token::Operator(Operator::Assertion),
+            Rule::assertion_operator => Token::Operator(Operator::Equal),
             Rule::negation_operator => Token::Operator(Operator::Negation),
             Rule::search_operator => Token::Operator(Operator::AllOf),
             Rule::identifier => {

@@ -251,7 +251,7 @@ pub enum ResourceAttribute {
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum Operator {
     #[display("=")]
-    Assertion,
+    Equal,
 
     #[display("!=")]
     Negation,
