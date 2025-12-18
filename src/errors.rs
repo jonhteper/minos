@@ -30,6 +30,9 @@ pub enum Error {
     #[error("expected Token, found nothing")]
     MissingToken,
 
+    #[error("unexpected token found: {found}, expected: {expected}")]
+    UnexpectedToken { expected: &'static str, found: String },
+
     #[error("sintaxis not supported")]
     SyntaxNotSupported,
 
@@ -48,6 +51,10 @@ pub enum Error {
 
     #[error(transparent)]
     RuleV0_16M(Box<pest::error::Error<v0_16_m::Rule>>),
+
+    #[cfg(feature = "v0_17")]
+    #[error(transparent)]
+    RuleV0_17(Box<pest::error::Error<crate::parser::v0_17::Rule>>),
 
     #[error(transparent)]
     ParseError(Arc<ParseError>),
@@ -74,5 +81,12 @@ impl From<pest::error::Error<v0_16_m::Rule>> for Error {
 impl From<ParseError> for Error {
     fn from(err: ParseError) -> Self {
         Self::ParseError(Arc::new(err))
+    }
+}
+
+#[cfg(feature = "v0_17")]
+impl From<pest::error::Error<crate::parser::v0_17::Rule>> for Error {
+    fn from(err: pest::error::Error<crate::parser::v0_17::Rule>) -> Self {
+        Self::RuleV0_17(Box::new(err))
     }
 }

@@ -27,3 +27,7 @@ chrono = "0.4.26"
 parse-display-derive = "0.10.0"
 parse-display = "0.10.0"
 anyhow = "1.0.72"
+
+[features]
+default = []
+v0_17 = []

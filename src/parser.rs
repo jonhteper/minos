@@ -15,6 +15,9 @@ pub mod tokens;
 pub(crate) mod v0_16;
 pub(crate) mod v0_16_m;
 
+#[cfg(feature = "v0_17")]
+pub(crate) mod v0_17;
+
 static VERSION_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"syntax\s*=\s*(?P<VERSION>\d+\.+\d+M*)").expect("regex syntax error"));
 
@@ -121,6 +124,8 @@ impl MinosParser {
             FileVersion::V0_16M => {
                 v0_16_m::MinosParserV0_16M::parse_file_content(file_content, values_map)
             }
+            #[cfg(feature = "v0_17")]
+            FileVersion::V0_17 => v0_17::MinosPestParser::parse_file_content(file_content, values_map),
         }
     }
 

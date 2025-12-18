@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use parse_display::{Display, FromStr};
+use pest::iterators::Pair;
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum Token {
@@ -189,6 +190,10 @@ pub enum FileVersion {
     V0_16,
     #[display("0.16M")]
     V0_16M,
+
+    #[cfg(feature = "v0_17")]
+    #[display("0.17")]
+    V0_17,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -258,4 +263,26 @@ pub enum Operator {
 
     #[display("*=")]
     AllOf,
+
+    #[display("1=")]
+    AnyOf,
+
+    #[display("0=")]
+    NoneOf,
+}
+
+#[cfg(feature = "v0_17")]
+impl Operator {
+    pub fn from_pair(pair: Pair<super::v0_17::Rule>) -> Option<Self> {
+        use super::v0_17::Rule;
+        let inner = pair.into_inner().next()?;
+        match inner.as_rule() {
+            Rule::all_of => Some(Self::AllOf),
+            Rule::equal => Some(Self::Equal),
+            Rule::distinct => Some(Self::Distinct),
+            Rule::any_of => Some(Self::AnyOf),
+            Rule::none_of => Some(Self::NoneOf),
+            _ => None,
+        }
+    }
 }
