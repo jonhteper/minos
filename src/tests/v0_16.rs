@@ -10,7 +10,6 @@ use crate::{
         FindPermissionsRequest, Resource, TryIntoActor,
     },
     language::environment::DEFAULT_ENV_IDENTIFIER,
-    parser::tokens::FileVersion,
     text_repr::to_text_repr::ToTextRepr,
     Container, MinosParser, MinosResult,
 };
@@ -43,9 +42,9 @@ resource User {
 
 /// Test to verify that the parsing from file content, works as expected.
 #[test]
-#[allow(deprecated)]
 fn parse_file_content_works() -> MinosResult<()> {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, MINOS_V0_16_FILE_CONTENT)?;
+    let engine = MinosParser::easy_parse_str(MINOS_V0_16_FILE_CONTENT)?;
+    let storage = engine.storage();
     let resources = storage.resources();
     assert_eq!(resources.len(), 1);
     let environments = resources.get(&"User".into()).unwrap().environments();
@@ -479,9 +478,9 @@ fn application_simulation_works() {
 const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v0_16.formatted.minos");
 
 #[test]
-#[allow(deprecated)]
 fn text_repr_works() -> MinosResult<()> {
-    let storage = MinosParser::parse_str(FileVersion::V0_16, FORMATTED_MINOS_FILE)?;
+    let engine = MinosParser::easy_parse_str(FORMATTED_MINOS_FILE)?;
+    let storage = engine.storage();
     let text_repr = storage.to_text_repr();
 
     println!("{}", text_repr);

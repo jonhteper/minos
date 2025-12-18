@@ -332,6 +332,11 @@ impl<'s> Engine<'s> {
     pub fn info(&self) -> EngineInfo {
         EngineInfo::new(self.storage.as_ref())
     }
+
+    #[cfg(test)]
+    pub(crate) fn storage(&self) -> &Storage {
+        self.storage.as_ref()
+    }
 }
 
 impl From<Storage> for Engine<'_> {

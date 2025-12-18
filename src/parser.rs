@@ -139,6 +139,7 @@ impl MinosParser {
     /// * Is partial minos file.
     /// * File contains syntax errors.
     /// * File uses unsupported syntax version.
+    #[cfg(not(feature = "v0_17"))]
     #[deprecated(since = "0.12.0", note = "Use `MinosParser::easy_parse_str` method instead")]
     pub fn parse_str(version: FileVersion, file_content: &str) -> MinosResult<Storage> {
         let mut values_map = HashMap::new();
