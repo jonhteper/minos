@@ -162,4 +162,10 @@ impl MinosParser {
 
         Ok(engine)
     }
+
+    #[cfg(feature = "v0_17")]
+    #[inline]
+    pub fn parse_str(file_content: &str) -> MinosResult<Engine> {
+        Self::easy_parse_str(file_content)
+    }
 }
