@@ -1,54 +1,60 @@
 syntax = 0.17;
 
 
-resource User {
-    env DEFAULT {
-        policy {
-            allow = ["create", "read", "update", "delete"];
 
-            rule {
-                actor.type = RootUser;
-            }
+resource File {
+    policy {
+        allow = ["read", "copy", "write", "trash"];
 
-            rule {
-                actor.type = resource.type;
-                actor.id = resource.id;
-            }
-
-            rule {
-                resource.owner = actor.id;
-            }
+        rule {
+            actor.type = Root;
         }
 
-        policy {
-            allow = ["upgrade"];
+        rule {
+            resource.owner = actor.id;
+            actor.status != Banned;
+        }
 
-            rule {
-                actor.roles *= ["upgrader"];
-                actor.roles 0= "guest";
-            }
-
-            rule {
-                actor.groups 1= [
-                    "sudo",
-                    "sysadmin",
-                ];
-            }
-
+        rule {
+            actor.groups ?= [
+                "sudo",
+                "sysadmin",
+            ];
+            actor.status != Banned;
         }
     }
-}
 
-resource User {
-    id = "Root.user.id";
+    policy {
+        allow = ["read"];
 
-    env DEFAULT {
-        policy {
-            allow = ["login"];
-
-            rule {
-                actor.groups *= "sudo";
-            }
+        rule {
+            actor.type = Guest;
         }
     }
+
+    policy {
+        allow = ["create"];
+
+        rule {
+            actor.type != Guest;
+        }
+    }
+
+    policy {
+        allow = ["delete"];
+
+        rule {
+            resource.owner = actor.id;
+            actor.status != Banned;
+            actor.roles !*= [
+                "minor",
+                "supervised"
+            ];
+        }
+
+        rule {
+            actor.type = Root;
+        }
+    }
+
 }
