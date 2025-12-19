@@ -176,7 +176,7 @@ impl MinosPestParser {
             Rule::search_operator => {
                 let string_operator = pair.as_str().to_string();
                 let operator = Operator::from_pair(pair).ok_or(Error::UnexpectedToken {
-                    expected: "*=, 1=, 0=",
+                    expected: "*=, ?=, !*=",
                     found: string_operator,
                 })?;
                 Token::Operator(operator)

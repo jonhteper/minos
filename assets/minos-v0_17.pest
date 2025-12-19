@@ -46,7 +46,7 @@ negation  = {
   | ((actor_groups | actor_roles) ~ distinct ~ array)
   | (resource_status ~ distinct ~ identifier)
 }
-search = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
+search    = { (actor_roles | actor_groups) ~ search_operator ~ (array | string | resource_id | resource_type | resource_owner) }
 
 actor_id     = { "actor.id" }
 actor_type   = { "actor.type" }
@@ -59,11 +59,11 @@ resource_type   = { "resource.type" }
 resource_owner  = { "resource.owner" }
 resource_status = { "resource.status" }
 
-equal = { "=" }
-distinct  = { "!=" }
-all_of    = { "*=" | "all_of=" }
-any_of    = { "1=" | "any_of=" }
-none_of   = { "0=" | "none_of=" }
+equal           = { "=" }
+distinct        = { "!=" }
+all_of          = { "*=" | "&&=" | "all_of=" }
+any_of          = { "?=" | "||=" | "any_of=" }
+none_of         = { "!*=" | "!&=" | "none_of=" }
 search_operator = { all_of | any_of | none_of }
 
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
