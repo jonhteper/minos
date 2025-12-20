@@ -264,10 +264,21 @@ pub enum Operator {
     #[display("*=")]
     AllOf,
 
-    #[display("1=")]
+    #[cfg(feature = "v0_17")]
+    #[display("{0}")]
+    Search(SearchOperator),
+}
+
+#[cfg(feature = "v0_17")]
+#[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
+pub enum SearchOperator {
+    #[display("*=")]
+    AllOf,
+
+    #[display("?=")]
     AnyOf,
 
-    #[display("0=")]
+    #[display("!*=")]
     NoneOf,
 }
 
@@ -277,11 +288,11 @@ impl Operator {
         use super::v0_17::Rule;
         let inner = pair.into_inner().next()?;
         match inner.as_rule() {
-            Rule::all_of => Some(Self::AllOf),
             Rule::equal => Some(Self::Equal),
             Rule::distinct => Some(Self::Distinct),
-            Rule::any_of => Some(Self::AnyOf),
-            Rule::none_of => Some(Self::NoneOf),
+            Rule::all_of => Some(Self::Search(SearchOperator::AllOf)),
+            Rule::any_of => Some(Self::Search(SearchOperator::AnyOf)),
+            Rule::none_of => Some(Self::Search(SearchOperator::NoneOf)),
             _ => None,
         }
     }

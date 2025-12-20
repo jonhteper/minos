@@ -6,7 +6,7 @@ use getset::Getters;
 use crate::{
     engine::{ActorRepr, ResourceRepr},
     errors::Error,
-    parser::tokens::{ActorAttribute, Array},
+    parser::tokens::{ActorAttribute, Array, Operator, SearchOperator},
 };
 
 use crate::parser::tokens::{Identifier, ResourceAttribute, Token};
@@ -185,11 +185,12 @@ impl TryFrom<&Vec<Token>> for Negation {
 #[getset(get = "pub")]
 pub struct Search {
     left: Attribute,
+    operator: SearchOperator,
     right: ComparableValue,
 }
 
 impl Search {
-    pub fn find_list_in_list(reference: &[Arc<str>], to_find_values: &Array) -> bool {
+    pub fn find_all_of_in_list(reference: &[Arc<str>], to_find_values: &Array) -> bool {
         for value in &to_find_values.0 {
             if !reference.contains(value) {
                 return false;
@@ -199,19 +200,63 @@ impl Search {
         true
     }
 
+    pub fn find_none_of_in_list(reference: &[Arc<str>], to_find_values: &Array) -> bool {
+        for value in &to_find_values.0 {
+            if reference.contains(value) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn find_any_of_in_list(reference: &[Arc<str>], to_find_values: &Array) -> bool {
+        for value in &to_find_values.0 {
+            if reference.contains(value) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    #[inline]
+    fn find_value_in_groups(&self, actor: &ActorRepr, value: &Arc<str>) -> bool {
+        match self.operator {
+            SearchOperator::AllOf | SearchOperator::AnyOf => actor.groups().contains(value),
+            SearchOperator::NoneOf => !actor.groups().contains(value),
+        }
+    }
+
+    #[inline]
+    fn find_value_in_roles(&self, actor: &ActorRepr, value: &Arc<str>) -> bool {
+        match self.operator {
+            SearchOperator::AllOf | SearchOperator::AnyOf => actor.roles().contains(value),
+            SearchOperator::NoneOf => !actor.roles().contains(value),
+        }
+    }
+
     pub(crate) fn apply(&self, actor: &ActorRepr, resource: &ResourceRepr) -> Option<bool> {
         match (&self.left, &self.right) {
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::Array(value))) => {
-                Some(Self::find_list_in_list(actor.groups(), value))
+                match self.operator {
+                    SearchOperator::AllOf => Some(Self::find_all_of_in_list(actor.groups(), value)),
+                    SearchOperator::AnyOf => Some(Self::find_any_of_in_list(actor.groups(), value)),
+                    SearchOperator::NoneOf => Some(Self::find_none_of_in_list(actor.groups(), value)),
+                }
             }
             (Attribute::Actor(ActorAttribute::Groups), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.groups().contains(value))
+                Some(self.find_value_in_groups(actor, value))
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::Array(value))) => {
-                Some(Self::find_list_in_list(actor.roles(), value))
+                match self.operator {
+                    SearchOperator::AllOf => Some(Self::find_all_of_in_list(actor.roles(), value)),
+                    SearchOperator::AnyOf => Some(Self::find_any_of_in_list(actor.roles(), value)),
+                    SearchOperator::NoneOf => Some(Self::find_none_of_in_list(actor.roles(), value)),
+                }
             }
             (Attribute::Actor(ActorAttribute::Roles), ComparableValue::Value(Value::String(value))) => {
-                Some(actor.roles().contains(value))
+                Some(self.find_value_in_roles(actor, value))
             }
             (
                 Attribute::Actor(ActorAttribute::Groups),
@@ -219,8 +264,9 @@ impl Search {
             ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
-                    Some(Value::String(value)) => Some(actor.groups().contains(&value)),
-                    Some(Value::Identifier(value)) => Some(actor.groups().contains(&value.0)),
+                    Some(Value::String(value)) | Some(Value::Identifier(Identifier(value))) => {
+                        Some(self.find_value_in_groups(actor, &value))
+                    }
                     _ => None,
                 }
             }
@@ -230,8 +276,9 @@ impl Search {
             ) => {
                 let value = resource.get_attribute(*attr);
                 match value {
-                    Some(Value::String(value)) => Some(actor.roles().contains(&value)),
-                    Some(Value::Identifier(value)) => Some(actor.roles().contains(&value.0)),
+                    Some(Value::String(value)) | Some(Value::Identifier(Identifier(value))) => {
+                        Some(self.find_value_in_roles(actor, &value))
+                    }
                     _ => None,
                 }
             }
@@ -244,8 +291,28 @@ impl TryFrom<&Vec<Token>> for Search {
     type Error = Error;
     fn try_from(token: &Vec<Token>) -> Result<Self, Self::Error> {
         let left = Attribute::try_from(token.first().ok_or(Error::MissingToken)?)?;
+        let operator = SearchOperator::try_from(token.get(1).ok_or(Error::MissingToken)?)?;
         let right = ComparableValue::try_from(token.get(2).ok_or(Error::MissingToken)?)?;
 
-        Ok(Self { left, right })
+        Ok(Self {
+            left,
+            operator,
+            right,
+        })
+    }
+}
+
+impl TryFrom<&Token> for SearchOperator {
+    type Error = Error;
+
+    fn try_from(token: &Token) -> Result<Self, Self::Error> {
+        match token {
+            Token::Operator(Operator::AllOf) => Ok(SearchOperator::AllOf),
+            Token::Operator(Operator::Search(s)) => Ok(*s),
+            _ => Err(Error::InvalidToken {
+                expected: "AllOf (*=), AnyOf (?=), NoneOf (!*=)",
+                found: token.to_string(),
+            }),
+        }
     }
 }
