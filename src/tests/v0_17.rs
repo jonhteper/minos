@@ -2,10 +2,7 @@ use std::{borrow::Cow, collections::HashMap, marker::PhantomData, sync::LazyLock
 
 use parse_display::{Display, FromStr};
 
-use crate::{
-    engine::{AsActor, AsResource, FindPermissionRequest},
-    Actor,
-};
+use crate::engine::{AsActor, AsResource, FindPermissionRequest};
 
 const MINOS_FILE_REFERENCE: &str = include_str!("../../assets/v0_17.minos");
 
@@ -210,14 +207,6 @@ impl User {
             _ty: PhantomData,
         }
     }
-
-    fn ban(&mut self) {
-        self.is_banned = true;
-    }
-
-    fn unban(&mut self) {
-        self.is_banned = false;
-    }
 }
 
 impl AsActor for User<Regular> {
@@ -266,15 +255,47 @@ impl AsActor for User<Root> {
 fn auth_process_works() {
     let mut file_system = FileSystem::new(&MINOS_ENGINE);
 
-    let mut user = User::new("Jonh Doe", vec!["sudo".to_string()], vec![]);
+    let john = User::new("John Doe", vec![], vec![]);
 
-    let file = file_system
-        .create_file(&user, "hello world.txt")
+    let _ = file_system
+        .create_file(&john, "hello world.txt")
         .expect("Error creating file");
 
-    user.roles.push("supervised".to_string());
+    file_system
+        .delete_file(&john, "hello world.txt")
+        .expect("Error deleting file");
+
+    let _ = file_system
+        .create_file(&john, "report.txt")
+        .expect("Error creating file");
+
+    let mut jane = User::new("Jane Doe", vec![], vec![]);
+    let _ = file_system
+        .read_file(&jane, "report.txt")
+        .expect_err("Jane should not be able to read the file");
+
+    jane.groups.push("sudo".to_string());
+
+    let _ = file_system
+        .read_file(&jane, "report.txt")
+        .expect("Jane should be able to read the file");
 
     file_system
-        .delete_file(&user, "hello world.txt")
-        .expect("Error deleting file");
+        .delete_file(&jane, "report.txt")
+        .expect_err("Jane should not be able to delete the file");
+
+    let guest = User::new_guest();
+    let _ = file_system
+        .read_file(&guest, "report.txt")
+        .expect("Guest should be able to read the file");
+
+    file_system
+        .trash_file(&guest, "report.txt")
+        .expect_err("Guest should not be able to trash the file");
+
+    let root = User::new_root();
+
+    file_system
+        .delete_file(&root, "report.txt")
+        .expect("Root should be able to delete the file");
 }
