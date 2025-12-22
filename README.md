@@ -4,9 +4,158 @@
 
 Authorization library for Minos authorization language. This repository contains the language definition, the parser and the authorization engine.
 
-## Minos authorization
+## Usage
 
-...
+The Minos library provides three main components for handling authorization:
+
+### MinosParser
+
+`MinosParser` is responsible for interpreting authorization policies from text written in the Minos language. It parses the language syntax and transforms it into a structured representation that can be used by the authorization engine.
+
+```rust
+// Example of parsing a Minos policy file
+let minos_policy_text = r#"
+syntax = 0.16;
+resource User {
+    env DEFAULT {
+        policy {
+            allow = ["create", "read", "update", "delete"];
+            rule {
+                actor.type = resource.type;
+                actor.id = resource.id;
+            }
+        }
+    }
+}
+"#;
+
+// Parse the content and get an engine directly
+let engine = MinosParser::easy_parse_str(minos_policy_text)?;
+```
+
+### Engine
+
+`Engine` is the authorization engine that evaluates access requests against the parsed policies. It determines whether a particular actor has permission to perform an action on a resource.
+
+```rust
+// Check if an actor has a specific permission on a resource
+let request = FindPermissionRequest {
+    env_name: None, // Uses DEFAULT environment
+    actor: &actor,
+    resource: &resource,
+    permission: "read".to_string(),
+}
+let result = engine.actor_has_permission(request)?;
+
+if result {
+    // Access granted
+} else {
+    // Access denied
+}
+
+// Get all permissions an actor has on a resource
+let permissions = engine.authorize(AuthorizeRequest {
+    env_name: None, // Uses DEFAULT environment
+    actor: &actor,
+    resource: &resource,
+})?;
+
+// Check multiple permissions at once
+let request = FindPermissionsRequest {
+    env_name: None,
+    resource: &resource,
+    actor: &actor,
+    permissions: vec!["create".to_string(), "read".to_string()],
+};
+
+let result = engine.actor_has_permissions(request)?;
+```
+
+### Container
+
+`Container` is a high-level abstraction for working with multiple policy files. It uses `MinosParser` internally to parse the files and can provide an `Engine` instance for making authorization queries.
+
+```rust
+// Create a container with policy files from a directory
+let mut path = env::current_dir()?;
+path.push("policies");
+let container = Container::new("app-id", "My Authorization Container", vec![path]).load()?;
+
+// Access the engine from the container
+let engine = container.engine();
+
+// Use the engine to perform authorization checks
+let request = FindPermissionRequest {
+    env_name: Some("PRODUCTION"),
+    actor: &actor,
+    resource: &resource,
+    permission: "update".to_string(),
+};
+let is_authorized = engine.actor_has_permission(request)?;
+```
+
+### Integration with Application Logic
+
+Here's how you might integrate Minos into your application:
+
+```rust
+struct User {
+    id: String,
+    // Other user fields...
+}
+
+impl AsActor for User {
+    fn as_actor(&self) -> Actor {
+        Actor {
+            id: self.id.clone(),
+            type_: "User".to_string(),
+            groups: vec![],
+            roles: vec![],
+            status: None,
+        }
+    }
+}
+
+struct Document {
+    id: String,
+    owner: String,
+    // Other document fields...
+}
+
+impl AsResource for Document {
+    fn as_resource(&self) -> Resource {
+        Resource {
+            id: Some(self.id.clone()),
+            type_: "Document".to_string(),
+            owner: Some(self.owner.clone()),
+            status: None,
+        }
+    }
+}
+
+// In your application logic:
+fn update_document(document: &mut Document, user: &User, engine: &Engine) -> Result<(), Error> {
+    // Check if user has permission to update
+    let request = FindPermissionRequest {
+        env_name: None,
+        actor: &user.as_actor(),
+        resource: &document.as_resource(),
+        permission: "update".to_string(),
+    };
+
+    if !engine.actor_has_permission(request)? {
+        return Err("Permission denied".into());
+    }
+
+    // If permission granted, proceed with update
+    // ...
+
+    Ok(())
+}
+```
+
+For detailed API documentation, refer to the code documentation or examples in the repository.
+
 
 ## Minos Language
 The Minos lang is a Domain-specific language, created for write authorization policies.
@@ -20,11 +169,11 @@ syntax = 0.16;
 resource User {
 	/* Environment declaration */
     env DEFAULT {
-    	/* policy declaration */ 
+    	/* policy declaration */
         policy {
         	/* Permissions granted if at least one rule is met */
             allow = ["create", "read", "update", "delete"];
-			
+
 			/* Rule declaration */
             rule {
                 actor.type = RootUser;
@@ -131,7 +280,7 @@ resource User {
 }
 ```
 
-We can see, that in the `Testing` environment, a `RootUser` can manipulate the `Users`, but in 
+We can see, that in the `Testing` environment, a `RootUser` can manipulate the `Users`, but in
 `Production` only the `User` can manipulate it self.
 
 Is important to mention that when exist two or more environment, use the implicit `DEFAULT` isn't possible. Since in this case the `DEFAULT` block not exists and is necessary to indicate the environment's name in the authorization process.
@@ -222,8 +371,8 @@ resource File {
         }
         /* start of adition --- */
         rule {
-        	resource.id = "confidential.john.data.file.id";
-        	actor.id = "john.user.Id";
+        	  resource.id = "confidential.john.data.file.id";
+          	actor.id = "john.user.Id";
         }
         /* --- end of adition */
     }
@@ -291,7 +440,7 @@ Additionally, is possible to enhance the rule, adding the `actor.type` requireme
 /*... */
 rule {
     actor.type = Employee;
-	resource.owner = actor.id;
+    resource.owner = actor.id;
 }
 /*...*/
 ```
@@ -310,8 +459,8 @@ resource File {
             actor.type = User;
         }
         rule {
-        	resource.id = "confidential.john.data.file.id";
-        	actor.id = "john.user.Id";
+           	resource.id = "confidential.john.data.file.id";
+           	actor.id = "john.user.Id";
         }
     }
 }
@@ -365,7 +514,7 @@ resource File {
 /* in file2.minos */
 resource File {
     policy {
-        allow = ["read"];        
+        allow = ["read"];
         rule {
         	resource.id = "confidential.john.data.file.id";
         	actor.id = "john.user.Id";
@@ -395,7 +544,7 @@ Macros behave like abbreviations. And are zero cost in runtime, because are "exp
 
 *WARNING*: The macro syntax are only available in versions its ends with `M` character. For example: `version = 0.16M;` can use macros, but `version = 0.16;` can't. Why? Because the files with macros needs special algorithms to expand its during parsing time and we can avoid this operations if us are sure that the files not use its.
 
-For example, the next files will are equals, after parsed: 
+For example, the next files will are equals, after parsed:
 
 ```minos
 syntax = 0.16M;
@@ -527,7 +676,7 @@ Currently only be two macro types: macros with permissions, and macros with requ
        "delete",
        "sudo", /* ❌ */
    }
-   
+
    #CORRECT_MACRO_DEFINITION {
        "create",
        "delete",
@@ -535,14 +684,14 @@ Currently only be two macro types: macros with permissions, and macros with requ
    }
    ```
 
-   
+
 
 2. Every requirement within a macro must end with a colon (`;`).
    ```minos
    #BAD_MACRO_DEFINITION {
        actor.status = Active /* ❌ */
    }
-   
+
    #CORRECT_MACRO_DEFINITION { /* ✅ */
        actor.id = resource.id;
        actor.type = resource.type;
@@ -556,7 +705,7 @@ Currently only be two macro types: macros with permissions, and macros with requ
    	actor.status = active; /* <----- requirement ❌ */
    	"create"/* <--- permisssion ❌ */
    }
-   
+
    #INVALID_MACRO_2 {
    	resource User { <--- resource block ❌ */
    		policy {
@@ -564,7 +713,7 @@ Currently only be two macro types: macros with permissions, and macros with requ
    		}
    	}
    }
-   
+
    #INVALID_MACRO_3 {
    	#[INVALID_MACRO] /* <--- macro call ❌ */
    }
@@ -583,7 +732,7 @@ Currently only be two macro types: macros with permissions, and macros with requ
    				actor.type = SuperUser;
    			}
    		}
-   		
+
    		#[POLICY_MACRO] /* <---- bad macro calling ❌ */
    	}
    }
@@ -595,13 +744,13 @@ Currently only be two macro types: macros with permissions, and macros with requ
        allow = [
            #[DEFAULT_PERMISSIONS]; /* <---- Don't use semicolon! ❌ */
        ];
-       
+
        rule {
        	#[FOO] /* ✅ */
        	#[BAZZ] /* ✅ */
        }
    }
-   
+
    policy {
    	allow = [
    		#[DEFAULT_PERMISSIONS], /* <---- Valid macro call ✅ */
@@ -609,7 +758,7 @@ Currently only be two macro types: macros with permissions, and macros with requ
    		#[ADVANCED_PERMISSIONS], /* <---- Valid macro call ✅ */
    	]
    }
-   
+
    ```
 
 3. Never call macros with incompatible content.
@@ -618,24 +767,21 @@ Currently only be two macro types: macros with permissions, and macros with requ
    	"read",
    	"update",
    }
-   
+
    #[BY_SELF_AUTH] {
    	actor.type = resource.type;
    	actor.id = resource.id;
    }
-   
+
    resource File {
    	policy {
    		allow = [
            #[BY_SELF_AUTH] /*<--- invalid token found: "Requirement", expected: "String" ❌ */
    		]
-   		
+
    		rule {
    		    #[ALLOW_MACRO] /*<--- invalid token found: "String", expected: "Requirement" ❌ */
    		}
    	}
    }
    ```
-
-   
-
