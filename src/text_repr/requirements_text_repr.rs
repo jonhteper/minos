@@ -58,8 +58,9 @@ impl ToTextRepr for Search {
 
     fn to_text_repr(&self) -> String {
         format!(
-            "{} *= {}",
+            "{} {} {}",
             self.left().to_text_repr(),
+            self.operator(),
             self.right().to_text_repr()
         )
     }
