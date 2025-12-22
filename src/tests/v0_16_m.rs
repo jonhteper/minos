@@ -8,7 +8,7 @@ use crate::{
 };
 
 const ADVANCED_MINOS_FILE_CONTENT: &str =
-    include_str!("../../assets/simulation/simulation_v0_16M.minos");
+    include_str!("../../assets/v16/simulation/simulation_v0_16M.minos");
 
 static ENGINE: LazyLock<Engine<'static>> =
     LazyLock::new(|| MinosParser::easy_parse_str(ADVANCED_MINOS_FILE_CONTENT).unwrap());

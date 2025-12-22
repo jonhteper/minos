@@ -64,7 +64,7 @@ fn parse_file_content_works() -> MinosResult<()> {
 #[test]
 fn build_container_works() -> MinosResult<()> {
     let mut path = env::current_dir()?;
-    path.push("assets");
+    path.push("assets/v16");
     let container = Container::new("1".to_string(), "Test Container".to_string(), vec![path]).load()?;
 
     assert!(container.storage().resources().len() > 0);
@@ -187,7 +187,8 @@ fn simple_find_permissions_works() {
     assert!(result.is_ok());
 }
 
-const ADVANCED_MINOS_V_0_16_TEXT: &str = include_str!("../../assets/simulation/simulation_v0_16.minos");
+const ADVANCED_MINOS_V_0_16_TEXT: &str =
+    include_str!("../../assets/v16/simulation/simulation_v0_16.minos");
 
 static ENGINE_V0_16: LazyLock<Engine<'static>> =
     LazyLock::new(|| MinosParser::easy_parse_str(ADVANCED_MINOS_V_0_16_TEXT).unwrap());
@@ -475,7 +476,7 @@ fn application_simulation_works() {
     assert!(operation_result.is_ok());
 }
 
-const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v0_16.formatted.minos");
+const FORMATTED_MINOS_FILE: &str = include_str!("../../assets/v16/v0_16.formatted.minos");
 
 #[test]
 fn text_repr_works() -> MinosResult<()> {
