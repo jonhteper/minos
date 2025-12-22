@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use parse_display::{Display, FromStr};
-use pest::iterators::Pair;
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum Token {
@@ -264,12 +263,10 @@ pub enum Operator {
     #[display("*=")]
     AllOf,
 
-    #[cfg(feature = "v0_17")]
     #[display("{0}")]
     Search(SearchOperator),
 }
 
-#[cfg(feature = "v0_17")]
 #[derive(Debug, Clone, Copy, Display, FromStr, PartialEq, Eq)]
 pub enum SearchOperator {
     #[display("*=")]
@@ -284,7 +281,7 @@ pub enum SearchOperator {
 
 #[cfg(feature = "v0_17")]
 impl Operator {
-    pub fn from_pair(pair: Pair<super::v0_17::Rule>) -> Option<Self> {
+    pub fn from_pair(pair: pest::iterators::Pair<super::v0_17::Rule>) -> Option<Self> {
         use super::v0_17::Rule;
         let inner = pair.into_inner().next()?;
         match inner.as_rule() {
